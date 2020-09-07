@@ -40,7 +40,7 @@ async def reaction_channeler(payload):
         from_channel = client.get_channel(payload.channel_id)
         message = await from_channel.fetch_message(payload.message_id)
 
-        embed = discord.Embed(title = message.content, description = "#" + message.channel.name, url=message.jump_url)
+        embed = discord.Embed(title = message.content, description = "#" + message.channel.name)
         embed.set_author(name=payload.emoji.name + ":reaction_channeler", url="https://github.com/tetsuya-ki/discord-bot-heroku/blob/master/bot.py")
         embed.set_thumbnail(url=message.author.avatar_url)
         embed.add_field(name="作成日時", value=message.created_at)
