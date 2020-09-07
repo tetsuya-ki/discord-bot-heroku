@@ -1,5 +1,6 @@
 import discord
 import settings
+import datetime
 
 client = discord.Client()
 
@@ -43,7 +44,11 @@ async def reaction_channeler(payload):
         embed = discord.Embed(title = message.content, description = "#" + message.channel.name)
         embed.set_author(name=payload.emoji.name + ":reaction_channeler", url="https://github.com/tetsuya-ki/discord-bot-heroku/blob/master/bot.py")
         embed.set_thumbnail(url=message.author.avatar_url)
-        embed.add_field(name="作成日時", value=message.created_at)
+
+        created_at = message.created_at.replace(tzinfo=datetime.timezone.utc)
+        created_at_jst = created_at.astimezone(datetime.timezone(datetime.timedelta(hours=9)))
+
+        embed.add_field(name="作成日時", value=created_at_jst.strftime('%Y/%m/%d(%a) %H:%M:%S'))
 
     if (payload.emoji.name == '🔔'):
         to_channel = client.get_channel(settings.REACTION_CHANNELER_BELL)
@@ -65,12 +70,12 @@ async def reaction_channeler(payload):
 async def on_raw_reaction_add(payload):
     await pin_message(payload)
     await reaction_channeler(payload)
-    
+
 # リアクション削除時に実行されるイベントハンドラを定義
 @client.event
 async def on_raw_reaction_remove(payload):
     await unpin_message(payload)
-    
+
 # メッセージ送付時に実行されるイベントハンドラを定義
 @client.event
 async def on_message(message):
