@@ -39,22 +39,25 @@ async def reaction_channeler(payload):
     if ((payload.emoji.name == '💯') or (payload.emoji.name == '🔔') or (payload.emoji.name == '🏁')):
         from_channel = client.get_channel(payload.channel_id)
         message = await from_channel.fetch_message(payload.message_id)
-        embed = discord.Embed(title = message.content, description = "#" + message.channel.name)
-        embed.set_author(name=payload.emoji.name + ":reaction_channeler", url=message.jump_url)
+
+        embed = discord.Embed(title = message.content, description = "#" + message.channel.name, url=message.jump_url)
+        embed.set_author(name=payload.emoji.name + ":reaction_channeler", url="https://github.com/tetsuya-ki/discord-bot-heroku/blob/master/bot.py")
+        embed.set_thumbnail(url=message.author.avatar_url)
+        embed.add_field(name="作成日時", value=message.created_at)
 
     if (payload.emoji.name == '🔔'):
         to_channel = client.get_channel(settings.REACTION_CHANNELER_BELL)
-        await to_channel.send("news:" + message.jump_url, embed=embed)
+        await to_channel.send("news: " + message.jump_url, embed=embed)
         return
 
     if (payload.emoji.name == '🏁'):
         to_channel = client.get_channel(settings.REACTION_CHANNELER_FLAG)
-        await to_channel.send("general:" + message.jump_url, embed=embed)
+        await to_channel.send("general: " + message.jump_url, embed=embed)
         return
 
     if (payload.emoji.name == '💯'):
         to_channel = client.get_channel(settings.REACTION_CHANNELER_100)
-        await to_channel.send("★注目★:" + message.jump_url, embed=embed)
+        await to_channel.send("★注目★: " + message.jump_url, embed=embed)
         return
 
 # リアクション追加時に実行されるイベントハンドラを定義
