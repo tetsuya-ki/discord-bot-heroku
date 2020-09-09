@@ -12,5 +12,5 @@ BOTは[こちら](https://discord.com/developers/applications)で作成し、ト
 
 3. start bot
 
-    mac: `python3 bot.py`  
-    windows: `py -3 bot.py`
+    mac: `python3 assitantbot.py`  
+    windows: `py -3 assitantbot.py`
