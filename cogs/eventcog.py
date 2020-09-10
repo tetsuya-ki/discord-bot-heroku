@@ -72,7 +72,7 @@ class EventCog(commands.Cog):
             if len(contents) != 1 :
                 contents[0] += " ＊長いので分割しました＊"
             embed = discord.Embed(title = contents[0], description = "<#" + str(message.channel.id) + ">", type="rich")
-            embed.set_author(name=payload.emoji.name + ":reaction_channeler", url="https://github.com/tetsuya-ki/discord-bot-heroku/blob/master/bot.py")
+            embed.set_author(name=payload.emoji.name + ":reaction_channeler", url="https://github.com/tetsuya-ki/discord-bot-heroku/")
             embed.set_thumbnail(url=message.author.avatar_url)
 
             created_at = message.created_at.replace(tzinfo=datetime.timezone.utc)
