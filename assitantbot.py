@@ -7,6 +7,7 @@ import traceback # エラー表示のためインポート
 INITIAL_EXTENSIONS = [
     'cogs.eventcog'
     , 'cogs.messagecog'
+    , 'cogs.admincog'
 ]
 
 # クラス定義。ClientのサブクラスであるBotクラスを継承。
