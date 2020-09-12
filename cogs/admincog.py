@@ -50,8 +50,11 @@ class AdminCog(commands.Cog):
                 embed.add_field(name="before.channel", value=entry.changes.before.channel)
             if hasattr(entry.changes.after, 'channel'):
                 embed.add_field(name="after.channel", value=entry.changes.after.channel)
-        print(msg)
-        print(entry.changes)
+
+        if (settings.IS_DEBUG):
+            print(msg)
+            print(entry.changes)
+
         await to_channel.send(msg, embed=embed)
 
     # メッセージの削除
@@ -84,6 +87,68 @@ class AdminCog(commands.Cog):
         if isinstance(error, commands.CommandError):
             print(error)
             await ctx.send(error)
+
+    # チャンネル作成時に実行されるイベントハンドラを定義
+    @commands.Cog.listener()
+    async def on_guild_channel_create(self, channel: discord.abc.GuildChannel):
+        event_text = '作成'
+        await self.on_guild_channel_xxx(channel, event_text)
+
+    # チャンネル削除時に実行されるイベントハンドラを定義
+    @commands.Cog.listener()
+    async def on_guild_channel_delete(self, channel: discord.abc.GuildChannel):
+        event_text = '削除'
+        await self.on_guild_channel_xxx(channel, event_text)
+
+    # チャンネル作成/削除時のメッセージを作成
+    async def on_guild_channel_xxx(self, channel: discord.abc.GuildChannel, event_text):
+        guild = channel.guild
+        str = 'id: {0}, name: {1}, type:{2}が{3}されました'.format(channel.id, channel.name, channel.type, event_text)
+
+        if isinstance(channel, discord.TextChannel):
+            str = 'id: {0}, name: #{1}, type:{2}が{3}されました'.format(channel.id, channel.name, channel.type, event_text)
+            category = guild.get_channel(channel.category_id)
+            if category is not None:
+                str += '\nCategory: {0}, channel: <#{1}>'.format(category.name, channel.id)
+            else:
+                str += '\nchannel: <#{0}>'.format(channel.id)
+        elif isinstance(channel, discord.VoiceChannel):
+            category = guild.get_channel(channel.category_id)
+            if category is not None:
+                str += '\nCategory: {0}'.format(category.name)
+        if (settings.IS_DEBUG):
+            print(f'***{str}***')
+        await self.sendGuildChannel(guild, str, channel.created_at)
+
+    # メンバーGuild参加時に実行されるイベントハンドラを定義
+    @commands.Cog.listener()
+    async def on_member_join(self, member: discord.Member):
+        event_text = '参加'
+        await self.on_member_xxx(member, event_text)
+
+    # メンバーGuild脱退時に実行されるイベントハンドラを定義
+    @commands.Cog.listener()
+    async def on_member_remove(self, member: discord.Member):
+        event_text = '脱退'
+        await self.on_member_xxx(member, event_text)
+
+    # メンバーの参加/脱退時のメッセージを作成
+    async def on_member_xxx(self, member: discord.Member, event_text):
+        guild = member.guild
+        str = 'member: {0}が{1}しました'.format(member, event_text)
+
+        if (settings.IS_DEBUG):
+            print(f'***{str}***')
+
+        await self.sendGuildChannel(guild, str, member.joined_at)
+
+    # 監査ログをチャンネルに送信
+    async def sendGuildChannel(self, guild, string, created_time):
+        to_channel = guild.get_channel(settings.AUDIT_LOG_SEND_CHANNEL)
+        created_at = created_time.replace(tzinfo=datetime.timezone.utc)
+        created_at_jst = created_at.astimezone(datetime.timezone(datetime.timedelta(hours=9))).strftime('%Y/%m/%d(%a) %H:%M:%S')
+        msg = '{1}: {0}'.format(string, created_at_jst)
+        await to_channel.send(msg)
 
 def setup(bot):
     bot.add_cog(AdminCog(bot)) # AdminCogにBotを渡してインスタンス化し、Botにコグとして登録する
