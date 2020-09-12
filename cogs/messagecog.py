@@ -30,6 +30,13 @@ class MessageCog(commands.Cog):
         msg = await make_team.make_specified_len(ctx, specified_num)
         await ctx.channel.send(msg)
 
+    # ボイスチャンネルに接続しているメンバーリストを取得
+    @commands.command()
+    async def vcmembers(self, ctx):
+        make_team = MakeTeam()
+        msg = await make_team.get_members(ctx)
+        await ctx.channel.send(msg)
+
     # poll機能
     @commands.command()
     async def poll(self, ctx, arg1=None, *args):
