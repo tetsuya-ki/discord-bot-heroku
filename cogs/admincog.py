@@ -15,29 +15,59 @@ class AdminCog(commands.Cog):
     # 監査ログの取得
     @commands.command()
     async def getAuditLog(self, ctx, limit_num=None):
+        first_entry_times = 0
         oldest_first_flag = True
+        audit_log = 0
 
         if limit_num is None:
             limit_num = 3000
             oldest_first_flag = True
+            first_entry_times = first_entry_times + 1
         elif limit_num.isdecimal():
             limit_num = int(limit_num)
             oldest_first_flag = False
 
         to_channel = ctx.guild.get_channel(settings.AUDIT_LOG_SEND_CHANNEL)
+        start = f'start getAuditLog ({audit_log}回で開始)'
+
+        if (settings.IS_DEBUG):
+            print(f'oldest_first_flag:{oldest_first_flag}')
+            print(f'limit_num:{limit_num}')
+            await to_channel.send(start)
+
+        print(start)
+        first_entry_list = await ctx.guild.audit_logs(limit=1, oldest_first=oldest_first_flag).flatten()
+        first_entry = first_entry_list[0]
+        if (settings.IS_DEBUG):
+            print(f'{audit_log}: (fet:{first_entry_times}) {first_entry}')
 
         async for entry in ctx.guild.audit_logs(limit=limit_num, oldest_first=oldest_first_flag):
-                await self.sendAuditLogEntry(ctx, to_channel, entry)
+            if first_entry.id == entry.id:
+                first_entry_times = first_entry_times + 1
+
+            audit_log = audit_log + 1
+            await self.sendAuditLogEntry(ctx, to_channel, entry, audit_log)
+
+            if (settings.IS_DEBUG):
+                print(f'{audit_log}: (fet:{first_entry_times}) {entry}')
+
+            if first_entry_times > 1:
+                break
+
+        end = f'end getAuditLog ({audit_log}回で終了)'
+        if (settings.IS_DEBUG):
+            await to_channel.send(end)
+        print(end)
 
     # 監査ログをチャンネルに送信
-    async def sendAuditLogEntry(self, ctx, to_channel, entry):
+    async def sendAuditLogEntry(self, ctx, to_channel, entry, audit_log_times):
         created_at = entry.created_at.replace(tzinfo=datetime.timezone.utc)
         created_at_jst = created_at.astimezone(datetime.timezone(datetime.timedelta(hours=9))).strftime('%Y/%m/%d(%a) %H:%M:%S')
         msg = '{1}: {0.user} did **{0.action}** to {0.target}'.format(entry, created_at_jst)
         embed = None
 
         if entry.changes is not None:
-            embed = discord.Embed(title = 'entry_changes')
+            embed = discord.Embed(title = 'entry_changes', description = f'entry.id: {entry.id}, audit_log_times: {audit_log_times}')
             embed.set_author(name="sendAuditLogEntry", url="https://github.com/tetsuya-ki/discord-bot-heroku/")
 
             if hasattr(entry, 'changes'):
