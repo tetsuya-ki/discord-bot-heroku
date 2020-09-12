@@ -18,6 +18,7 @@ class AdminCog(commands.Cog):
         oldest_first_flag = True
 
         if limit_num is None:
+            limit_num = 3000
             oldest_first_flag = True
         elif limit_num.isdecimal():
             limit_num = int(limit_num)
