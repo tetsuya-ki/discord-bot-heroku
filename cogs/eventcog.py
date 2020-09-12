@@ -54,6 +54,9 @@ class EventCog(commands.Cog):
 
     # あれする非同期関数を定義
     async def reaction_channeler(self, payload: discord.RawReactionActionEvent):
+        if settings.IS_DEBUG:
+            print(f'*****emoji***** Name: {payload.emoji.name} Id: {payload.emoji.id}')
+
         # 絵文字が異なる場合は対応しない
         if ((payload.emoji.name != '💯') and (payload.emoji.name != '🔔') and payload.emoji.name != '🏁'):
             return

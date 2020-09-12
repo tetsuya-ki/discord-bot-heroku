@@ -9,7 +9,7 @@ class MakeTeam:
         self.vc_members = [] # ボイスチャンネルに接続しているメンバー
         self.mem_len = 0
         self.vc_len = 0
-        self.vc_state_err = '実行できません。ボイスチャンネルに入ってコマンドを実行してください。'
+        self.vc_state_err = ''
 
     def set_mem(self, ctx):
         guild = ctx.guild
@@ -17,12 +17,17 @@ class MakeTeam:
         self.vc_len = len(self.v_channels)
 
         if len(self.v_channels) < 1:
+            self.vc_state_err = 'ボイスチャンネルがないため実行できません。ボイスチャンネル作成後、再度実行してください。'
             return False
 
         # Guildにあるボイスチャンネルごと、メンバリストを追加していく
         for v_channel in self.v_channels:
             for vc_member in v_channel.members:
                 self.vc_members.append(vc_member) # VCメンバリスト取得
+
+        if len(self.vc_members) < 1:
+            self.vc_state_err = 'ボイスチャンネルに接続しているメンバーがいません。ボイスチャンネル接続後、再度実行してください。'
+            return False
 
         self.mem_len = len(self.vc_members) # 人数取得
 
@@ -40,8 +45,10 @@ class MakeTeam:
 
         # 指定数の確認
         if party_num > self.vc_len:
-            return f'Guildにあるボイスチャンネルの数を超えているため実行できません。{self.vc_len}より小さい数を指定ください。'
-        if party_num > self.mem_len or party_num <= 0:
+            return f'Guildにあるボイスチャンネルの数を超えているため実行できません。{self.vc_len}以下の数を指定ください。'
+        if party_num > self.mem_len:
+            return f'指定された`party_num:{party_num}`がボイスチャンネルに接続しているメンバ数({self.mem_len})より大きいため、実行できません。(チーム数を指定しない場合は、デフォルトで2が指定されます）`'
+        if party_num <= 0:
             return '実行できません。チーム分けできる数を指定してください。(チーム数を指定しない場合は、デフォルトで2が指定されます)'
 
         # メンバーリストをシャッフル

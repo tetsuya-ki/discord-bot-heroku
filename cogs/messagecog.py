@@ -1,5 +1,8 @@
+import discord
 from discord.ext import commands # Bot Commands Frameworkのインポート
 from .modules.grouping import MakeTeam
+
+POLL_CHAR = ['🇦','🇧','🇨','🇩','🇪','🇫','🇬','🇭','🇮','🇯','🇰','🇱','🇲','🇳','🇴','🇵','🇶','🇷','🇸','🇹']
 
 # コグとして用いるクラスを定義。
 class MessageCog(commands.Cog):
@@ -26,6 +29,41 @@ class MessageCog(commands.Cog):
         make_team = MakeTeam()
         msg = await make_team.make_specified_len(ctx, specified_num)
         await ctx.channel.send(msg)
+
+    # poll機能
+    @commands.command()
+    async def poll(self, ctx, arg1=None, *args):
+        usage = '/pollの使い方\n複数選択（1〜20まで）: \n `/poll 今日のランチは？ お好み焼き カレーライス`\n Yes/No: \n`/poll 明日は晴れる？`'
+        msg = f'🗳 **{arg1}**'
+
+        if arg1 is None:
+            await ctx.channel.send(usage)
+        elif len(args) == 0:
+            message = await ctx.channel.send(msg)
+            await message.add_reaction('⭕')
+            await message.add_reaction('❌')
+        elif len(args) > 20:
+            await ctx.channel.send(f'複数選択の場合、引数は1〜20にしてください。（{len(args)}個与えられています。）')
+        else:
+            embed = discord.Embed()
+            for  emoji, arg in zip(POLL_CHAR, args):
+                embed.add_field(name=emoji, value=arg) # inline=False
+            message = await ctx.channel.send(msg, embed=embed)
+
+            for  emoji, arg in zip(POLL_CHAR, args):
+                await message.add_reaction(emoji)
+
+    @team.error
+    async def team_error(self, ctx, error):
+        if isinstance(error, commands.CommandError):
+            print(error)
+            await ctx.send(error)
+
+    @group.error
+    async def group_error(self, ctx, error):
+        if isinstance(error, commands.CommandError):
+            print(error)
+            await ctx.send(error)
 
 def setup(bot):
     bot.add_cog(MessageCog(bot)) # MessageCogにBotを渡してインスタンス化し、Botにコグとして登録する
