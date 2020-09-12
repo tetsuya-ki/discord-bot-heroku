@@ -27,5 +27,17 @@ class MessageCog(commands.Cog):
         msg = await make_team.make_specified_len(ctx, specified_num)
         await ctx.channel.send(msg)
 
+    @team.error
+    async def team_error(self, ctx, error):
+        if isinstance(error, commands.CommandError):
+            print(error)
+            await ctx.send(error)
+
+    @group.error
+    async def group_error(self, ctx, error):
+        if isinstance(error, commands.CommandError):
+            print(error)
+            await ctx.send(error)
+
 def setup(bot):
     bot.add_cog(MessageCog(bot)) # MessageCogにBotを渡してインスタンス化し、Botにコグとして登録する
