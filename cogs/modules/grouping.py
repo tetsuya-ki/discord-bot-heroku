@@ -10,6 +10,7 @@ class MakeTeam:
         self.mem_len = 0
         self.vc_len = 0
         self.vc_state_err = ''
+        self.vc_list = ''
 
     def set_mem(self, ctx):
         guild = ctx.guild
@@ -22,8 +23,10 @@ class MakeTeam:
 
         # Guildにあるボイスチャンネルごと、メンバリストを追加していく
         for v_channel in self.v_channels:
+            self.vc_list += '🔈' + v_channel.name + '\n'
             for vc_member in v_channel.members:
                 self.vc_members.append(vc_member) # VCメンバリスト取得
+                self.vc_list += '> ' + vc_member.name + '\n'
 
         if len(self.vc_members) < 1:
             self.vc_state_err = 'ボイスチャンネルに接続しているメンバーがいません。ボイスチャンネル接続後、再度実行してください。'
@@ -32,6 +35,12 @@ class MakeTeam:
         self.mem_len = len(self.vc_members) # 人数取得
 
         return True
+
+    # メンバー取得
+    async def get_members(self, ctx):
+        if self.set_mem(ctx) is False:
+            return self.vc_state_err
+        return self.vc_list
 
     # チーム数を指定した場合のチーム分け
     async def make_party_num(self, ctx, party_num, remainder_flag='false'):
