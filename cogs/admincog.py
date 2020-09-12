@@ -15,6 +15,7 @@ class AdminCog(commands.Cog):
     # 監査ログの取得
     @commands.command()
     async def getAuditLog(self, ctx, limit_num=None):
+        oldest_first_flag = True
 
         if limit_num is None:
             oldest_first_flag = True
@@ -32,6 +33,7 @@ class AdminCog(commands.Cog):
         created_at = entry.created_at.replace(tzinfo=datetime.timezone.utc)
         created_at_jst = created_at.astimezone(datetime.timezone(datetime.timedelta(hours=9))).strftime('%Y/%m/%d(%a) %H:%M:%S')
         msg = '{1}: {0.user} did **{0.action}** to {0.target}'.format(entry, created_at_jst)
+        embed = None
 
         if entry.changes is not None:
             embed = discord.Embed(title = 'entry_changes')
