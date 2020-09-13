@@ -69,13 +69,13 @@ class MakeTeam:
             if remainder_num != 0:
                 for r in range(remainder_num):
                     remainder.append(self.vc_members.pop().name)
-                team_string.append("=====余り=====")
+                team_string.append('=====余り=====')
                 team_string.extend(remainder)
 
         # チーム分け
         for i in range(party_num):
             # 表示
-            team_string.append("=====チーム"+str(i+1)+"=====")
+            team_string.append('=====チーム'+str(i+1)+'=====')
             team_members = self.vc_members[i:self.mem_len:party_num]
             team_string.extend([j.name for j in team_members])
             # 振り分け
@@ -109,12 +109,12 @@ class MakeTeam:
         if remainder_num != 0:
             for r in range(remainder_num):
                 remainder.append(self.vc_members.pop().name)
-            team_string.append("=====余り=====")
+            team_string.append('=====余り=====')
             team_string.extend(remainder)
 
         # チーム分け
         for i in range(party_num):
-            team_string.append("=====チーム"+str(i+1)+"=====")
+            team_string.append('=====チーム'+str(i+1)+'=====')
             team_members = self.vc_members[i:self.mem_len:party_num]
             team_string.extend([j.name for j in team_members])
 

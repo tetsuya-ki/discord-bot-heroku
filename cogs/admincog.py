@@ -5,16 +5,23 @@ from .modules import settings
 import traceback
 
 # コグとして用いるクラスを定義。
-class AdminCog(commands.Cog):
-
+class AdminCog(commands.Cog, name='管理用'):
+    """
+    管理用の機能です。
+    """
     # AdminCogクラスのコンストラクタ。Botを受取り、インスタンス変数として保持。
     def __init__(self, bot):
         self.bot = bot
         self.command_author = None
 
     # 監査ログの取得
-    @commands.command()
+    @commands.command(aliases=['getal','auditlog','gal'],description='監査ログを取得します')
     async def getAuditLog(self, ctx, limit_num=None):
+        """
+        監査ログを取得します。ただし、とても読みづらい形式です。。。
+        引数が未指定の場合、古いものを先頭に3,000件分取得し、チャンネルに投稿します。
+        引数が指定された場合、新しいものを先頭に指定された件数取得し、チャンネルに投稿します。
+        """
         first_entry_times = 0
         oldest_first_flag = True
         audit_log = 0
@@ -68,21 +75,21 @@ class AdminCog(commands.Cog):
 
         if entry.changes is not None:
             embed = discord.Embed(title = 'entry_changes', description = f'entry.id: {entry.id}, audit_log_times: {audit_log_times}')
-            embed.set_author(name="sendAuditLogEntry", url="https://github.com/tetsuya-ki/discord-bot-heroku/")
+            embed.set_author(name='sendAuditLogEntry', url='https://github.com/tetsuya-ki/discord-bot-heroku/')
 
             if hasattr(entry, 'changes'):
-                embed.add_field(name="changes", value=entry.changes)
+                embed.add_field(name='changes', value=entry.changes)
             if hasattr(entry.changes.after, 'overwrites'):
-                embed.add_field(name="after.overwrites", value=entry.changes.after.overwrites)
+                embed.add_field(name='after.overwrites', value=entry.changes.after.overwrites)
             if hasattr(entry.changes.before, 'roles'):
-                embed.add_field(name="before.roles", value=entry.changes.before.roles)
+                embed.add_field(name='before.roles', value=entry.changes.before.roles)
             if hasattr(entry.changes.after, 'roles'):
-                embed.add_field(name="after.roles", value=entry.changes.after.roles)
+                embed.add_field(name='after.roles', value=entry.changes.after.roles)
                 print(entry.changes.after.roles)
             if hasattr(entry.changes.before, 'channel'):
-                embed.add_field(name="before.channel", value=entry.changes.before.channel)
+                embed.add_field(name='before.channel', value=entry.changes.before.channel)
             if hasattr(entry.changes.after, 'channel'):
-                embed.add_field(name="after.channel", value=entry.changes.after.channel)
+                embed.add_field(name='after.channel', value=entry.changes.after.channel)
 
         if (settings.IS_DEBUG):
             print(msg)
@@ -91,26 +98,34 @@ class AdminCog(commands.Cog):
         await to_channel.send(msg, embed=embed)
 
     # メッセージの削除
-    @commands.command()
+    @commands.command(aliases=['pg','del','delete'],description='メッセージを削除します')
     async def purge(self, ctx, limit_num=None):
+        """
+        自分かBOTのメッセージを削除します。
+        削除するメッセージの数が必要です。
+        """
         self.command_author = ctx.author
+        # botかコマンドの実行主かチェック
+        def is_me(m):
+            return self.command_author == m.author or m.author.bot
+
         if limit_num is None:
-            await ctx.channel.send('オプションとして、1以上の数値を指定してください。')
+            deleted = await ctx.channel.purge(limit=1, check=is_me)
+            await ctx.channel.send('オプションとして、1以上の数値を指定してください。\nあなたのコマンド：`{0}`'.format(ctx.message.clean_content))
             return
         if limit_num.isdecimal():
             limit_num = int(limit_num)
         else:
-            limit_num = 10
+            deleted = await ctx.channel.purge(limit=1, check=is_me)
+            await ctx.channel.send('有効な数字ではないようです。オプションは1以上の数値を指定してください。\nあなたのコマンド：`{0}`'.format(ctx.message.clean_content))
+            return
 
         if limit_num > 100:
             limit_num = 100
         elif limit_num < 1:
-            await ctx.channel.send('オプションは1以上の数値を指定してください。')
+            deleted = await ctx.channel.purge(limit=1, check=is_me)
+            await ctx.channel.send('オプションは1以上の数値を指定してください。\nあなたのコマンド：`{0}`'.format(ctx.message.clean_content))
             return
-
-        # botかコマンドの実行主かチェック
-        def is_me(m):
-            return self.command_author == m.author or m.author.bot
 
         deleted = await ctx.channel.purge(limit=limit_num, check=is_me)
         await ctx.channel.send('{0}個のメッセージを削除しました。\nあなたのコマンド：`{1}`'.format(len(deleted), ctx.message.clean_content))
