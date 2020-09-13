@@ -5,6 +5,10 @@ from .modules import settings
 
 # コグとして用いるクラスを定義。
 class EventCog(commands.Cog):
+    """
+    イベント発生時に動作する機能をまとめたもの。
+    コマンドを使ってなにかやったりする機能はありません。
+    """
 
     # EventCogクラスのコンストラクタ。Botを受取り、インスタンス変数として保持。
     def __init__(self, bot):
@@ -67,43 +71,43 @@ class EventCog(commands.Cog):
             message = await from_channel.fetch_message(payload.message_id)
 
             if settings.IS_DEBUG:
-                print("guild:"+ str(guild))
-                print("from_channel: "+ str(from_channel))
-                print("message: " + str(message))
+                print('guild:'+ str(guild))
+                print('from_channel: '+ str(from_channel))
+                print('message: ' + str(message))
 
             contents = [message.clean_content[i: i+200] for i in range(0, len(message.clean_content), 200)]
             if len(contents) != 1 :
-                contents[0] += " ＊長いので分割しました＊"
-            embed = discord.Embed(title = contents[0], description = "<#" + str(message.channel.id) + ">", type="rich")
-            embed.set_author(name=payload.emoji.name + ":reaction_channeler", url="https://github.com/tetsuya-ki/discord-bot-heroku/")
+                contents[0] += ' ＊長いので分割しました＊'
+            embed = discord.Embed(title = contents[0], description = '<#' + str(message.channel.id) + '>', type='rich')
+            embed.set_author(name=payload.emoji.name + ':reaction_channeler', url='https://github.com/tetsuya-ki/discord-bot-heroku/')
             embed.set_thumbnail(url=message.author.avatar_url)
 
             created_at = message.created_at.replace(tzinfo=datetime.timezone.utc)
             created_at_jst = created_at.astimezone(datetime.timezone(datetime.timedelta(hours=9)))
 
-            embed.add_field(name="作成日時", value=created_at_jst.strftime('%Y/%m/%d(%a) %H:%M:%S'))
+            embed.add_field(name='作成日時', value=created_at_jst.strftime('%Y/%m/%d(%a) %H:%M:%S'))
 
             if len(contents) != 1 :
                 for addText in contents[1:]:
-                    embed.add_field(name="addText", value=addText + " ＊長いので分割しました＊", inline=False)
+                    embed.add_field(name='addText', value=addText + ' ＊長いので分割しました＊', inline=False)
 
         if (payload.emoji.name == '🔔'):
             to_channel = guild.get_channel(settings.REACTION_CHANNELER_BELL)
             if settings.IS_DEBUG:
-                print("setting:"+str(settings.REACTION_CHANNELER_BELL))
-                print("to_channel: "+str(to_channel))
+                print('setting:'+str(settings.REACTION_CHANNELER_BELL))
+                print('to_channel: '+str(to_channel))
 
-            await to_channel.send("news: " + message.jump_url, embed=embed)
+            await to_channel.send('news: ' + message.jump_url, embed=embed)
             return
 
         if (payload.emoji.name == '🏁'):
             to_channel = guild.get_channel(settings.REACTION_CHANNELER_FLAG)
-            await to_channel.send("general: " + message.jump_url, embed=embed)
+            await to_channel.send('general: ' + message.jump_url, embed=embed)
             return
 
         if (payload.emoji.name == '💯'):
             to_channel = guild.get_channel(settings.REACTION_CHANNELER_100)
-            await to_channel.send("★注目★: " + message.jump_url, embed=embed)
+            await to_channel.send('★注目★: ' + message.jump_url, embed=embed)
             return
 
 # Bot本体側からコグを読み込む際に呼び出される関数。
