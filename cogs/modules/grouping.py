@@ -23,6 +23,16 @@ class MakeTeam:
 
         # Guildにあるボイスチャンネルごと、メンバリストを追加していく
         for v_channel in self.v_channels:
+            # ボイスチャンネルに権限の上書きがある場合、@everyoneがallowされていないなら、存在しないものとみなす
+            # 例）@everyoneは閲覧できず、@Managerは接続できる場合は下記のような感じ
+            # {<Role id=465376233115353098 name='@everyone'>: <discord.permissions.PermissionOverwrite object at 0x10a41d0d8>, <Role id=584261699742203925 name='Manager'>: <discord.permissions.PermissionOverwrite object at 0x10a41d528>}
+            # @everyoneは(<Permissions value=0>, <Permissions value=1048576>)
+            # @Managerは(<Permissions value=1048576>, <Permissions value=0>)
+            # https://discordpy.readthedocs.io/ja/latest/api.html#discord.PermissionOverwrite.pair
+            # > Returns the (allow, deny) pair from this overwrite.
+            if(v_channel.overwrites):
+                if(v_channel.overwrites[guild.default_role].pair()[0].value == 0):
+                    continue
             self.vc_list += '🔈' + v_channel.name + '\n'
             for vc_member in v_channel.members:
                 self.vc_members.append(vc_member) # VCメンバリスト取得
