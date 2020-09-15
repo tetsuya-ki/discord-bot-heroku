@@ -109,26 +109,28 @@ class AdminCog(commands.Cog, name='管理用'):
         def is_me(m):
             return self.command_author == m.author or m.author.bot
 
+        # 指定がない、または、不正な場合は、コマンドを削除。そうではない場合、コマンドを削除し、指定の数だけ削除する
         if limit_num is None:
-            deleted = await ctx.channel.purge(limit=1, check=is_me)
+            await ctx.channel.purge(limit=1, check=is_me)
             await ctx.channel.send('オプションとして、1以上の数値を指定してください。\nあなたのコマンド：`{0}`'.format(ctx.message.clean_content))
             return
         if limit_num.isdecimal():
-            limit_num = int(limit_num)
+            limit_num = int(limit_num) + 1
         else:
-            deleted = await ctx.channel.purge(limit=1, check=is_me)
+            await ctx.channel.purge(limit=1, check=is_me)
             await ctx.channel.send('有効な数字ではないようです。オプションは1以上の数値を指定してください。\nあなたのコマンド：`{0}`'.format(ctx.message.clean_content))
             return
 
-        if limit_num > 100:
-            limit_num = 100
-        elif limit_num < 1:
-            deleted = await ctx.channel.purge(limit=1, check=is_me)
+        if limit_num > 1000:
+            limit_num = 1000
+        elif limit_num < 2:
+            await ctx.channel.purge(limit=1, check=is_me)
             await ctx.channel.send('オプションは1以上の数値を指定してください。\nあなたのコマンド：`{0}`'.format(ctx.message.clean_content))
             return
 
+        # 違和感を持たせないため、コマンドを削除した分を省いた削除数を通知する。
         deleted = await ctx.channel.purge(limit=limit_num, check=is_me)
-        await ctx.channel.send('{0}個のメッセージを削除しました。\nあなたのコマンド：`{1}`'.format(len(deleted), ctx.message.clean_content))
+        await ctx.channel.send('{0}個のメッセージを削除しました。\nあなたのコマンド：`{1}`'.format(len(deleted) - 1, ctx.message.clean_content))
 
     @getAuditLog.error
     async def getAuditLog_error(self, ctx, error):
