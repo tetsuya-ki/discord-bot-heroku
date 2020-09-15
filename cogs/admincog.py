@@ -1,3 +1,4 @@
+from datetime import date
 import discord
 from discord.ext import commands # Bot Commands Frameworkのインポート
 import datetime
@@ -174,30 +175,32 @@ class AdminCog(commands.Cog, name='管理用'):
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
         event_text = '参加'
-        await self.on_member_xxx(member, event_text)
+        await self.on_member_xxx(member, event_text, member.joined_at)
 
     # メンバーGuild脱退時に実行されるイベントハンドラを定義
     @commands.Cog.listener()
     async def on_member_remove(self, member: discord.Member):
         event_text = '脱退'
-        await self.on_member_xxx(member, event_text)
+        now = datetime.datetime.now()
+        now_tz = now.astimezone(datetime.timezone(datetime.timedelta(hours=0)))
+        await self.on_member_xxx(member, event_text, now_tz)
 
     # メンバーの参加/脱退時のメッセージを作成
-    async def on_member_xxx(self, member: discord.Member, event_text):
+    async def on_member_xxx(self, member: discord.Member, event_text: str, dt: datetime):
         guild = member.guild
         str = 'member: {0}が{1}しました'.format(member, event_text)
 
         if (settings.IS_DEBUG):
             print(f'***{str}***')
 
-        await self.sendGuildChannel(guild, str, member.joined_at)
+        await self.sendGuildChannel(guild, str, dt)
 
     # 監査ログをチャンネルに送信
-    async def sendGuildChannel(self, guild, string, created_time):
+    async def sendGuildChannel(self, guild: discord.Guild, str: str, dt: datetime):
         to_channel = guild.get_channel(settings.AUDIT_LOG_SEND_CHANNEL)
-        created_at = created_time.replace(tzinfo=datetime.timezone.utc)
-        created_at_jst = created_at.astimezone(datetime.timezone(datetime.timedelta(hours=9))).strftime('%Y/%m/%d(%a) %H:%M:%S')
-        msg = '{1}: {0}'.format(string, created_at_jst)
+        dt_tz = dt.replace(tzinfo=datetime.timezone.utc)
+        dt_jst = dt_tz.astimezone(datetime.timezone(datetime.timedelta(hours=9))).strftime('%Y/%m/%d(%a) %H:%M:%S')
+        msg = '{1}: {0}'.format(str, dt_jst)
         await to_channel.send(msg)
 
 def setup(bot):
