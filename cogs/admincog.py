@@ -1,8 +1,10 @@
+from datetime import date
 import discord
+from discord import channel
 from discord.ext import commands # Bot Commands Frameworkのインポート
 import datetime
 from .modules import settings
-import traceback
+import asyncio
 
 # コグとして用いるクラスを定義。
 class AdminCog(commands.Cog, name='管理用'):
@@ -109,32 +111,131 @@ class AdminCog(commands.Cog, name='管理用'):
         def is_me(m):
             return self.command_author == m.author or m.author.bot
 
+        # 指定がない、または、不正な場合は、コマンドを削除。そうではない場合、コマンドを削除し、指定の数だけ削除する
         if limit_num is None:
-            deleted = await ctx.channel.purge(limit=1, check=is_me)
+            await ctx.channel.purge(limit=1, check=is_me)
             await ctx.channel.send('オプションとして、1以上の数値を指定してください。\nあなたのコマンド：`{0}`'.format(ctx.message.clean_content))
             return
         if limit_num.isdecimal():
-            limit_num = int(limit_num)
+            limit_num = int(limit_num) + 1
         else:
-            deleted = await ctx.channel.purge(limit=1, check=is_me)
+            await ctx.channel.purge(limit=1, check=is_me)
             await ctx.channel.send('有効な数字ではないようです。オプションは1以上の数値を指定してください。\nあなたのコマンド：`{0}`'.format(ctx.message.clean_content))
             return
 
-        if limit_num > 100:
-            limit_num = 100
-        elif limit_num < 1:
-            deleted = await ctx.channel.purge(limit=1, check=is_me)
+        if limit_num > 1000:
+            limit_num = 1000
+        elif limit_num < 2:
+            await ctx.channel.purge(limit=1, check=is_me)
             await ctx.channel.send('オプションは1以上の数値を指定してください。\nあなたのコマンド：`{0}`'.format(ctx.message.clean_content))
             return
 
+        # 違和感を持たせないため、コマンドを削除した分を省いた削除数を通知する。
         deleted = await ctx.channel.purge(limit=limit_num, check=is_me)
-        await ctx.channel.send('{0}個のメッセージを削除しました。\nあなたのコマンド：`{1}`'.format(len(deleted), ctx.message.clean_content))
+        await ctx.channel.send('{0}個のメッセージを削除しました。\nあなたのコマンド：`{1}`'.format(len(deleted) - 1, ctx.message.clean_content))
 
     @getAuditLog.error
     async def getAuditLog_error(self, ctx, error):
         if isinstance(error, commands.CommandError):
             print(error)
             await ctx.send(error)
+
+    # チャンネル管理コマンド群
+    @commands.group(aliases=['ch'], description='チャンネルを操作するコマンド（サブコマンド必須）')
+    async def channel(self, ctx):
+        """
+        チャンネルを管理するコマンド群です。このコマンドだけでは管理できません。
+        チャンネルを作成したい場合は、`make`を入力し、チャンネル名を指定してください。
+        トピックを変更したい場合は、`topic`を入力し、トピックに設定した文字列を指定してください。
+        """
+        # サブコマンドが指定されていない場合、メッセージを送信する。
+        if ctx.invoked_subcommand is None:
+            await ctx.send('このコマンドにはサブコマンドが必要です。')
+
+    # channelコマンドのサブコマンドmake
+    # チャンネルを作成する
+    @channel.command(aliases=['mk', 'craft'], description='チャンネルを作成します')
+    async def make(self, ctx, channelName=None):
+        """
+        引数に渡したチャンネル名でテキストチャンネルを作成します（コマンドを打ったチャンネルの所属するカテゴリに作成されます）。
+        10秒以内に👌(ok_hand)のリアクションをつけないと実行されませんので、素早く対応ください。
+        """
+        self.command_author = ctx.author
+        # チャンネル名がない場合は実施不可
+        if channelName is None:
+            await ctx.channel.purge(limit=1)
+            await ctx.channel.send('チャンネル名を指定してください。\nあなたのコマンド：`{0}`'.format(ctx.message.clean_content))
+            return
+
+        # 念の為、確認する
+        confirm_text = f'チャンネル **{channelName}** を作成してよろしいですか？ 問題ない場合、10秒以内に👌(ok_hand)のリアクションをつけてください。\nあなたのコマンド：`{ctx.message.clean_content}`'
+        await ctx.channel.purge(limit=1)
+        await ctx.channel.send(confirm_text)
+
+        def check(reaction, user):
+                return user == self.command_author and str(reaction.emoji) == '👌'
+
+        # リアクション待ち
+        try:
+            reaction, user = await self.bot.wait_for('reaction_add', timeout=10.0, check=check)
+        except asyncio.TimeoutError:
+            await ctx.channel.send('→リアクションがなかったのでキャンセルしました！')
+        else:
+            # メッセージの所属するカテゴリにテキストチャンネルを作成する
+            guild = ctx.channel.guild
+            category_id = ctx.message.channel.category_id
+            category = guild.get_channel(category_id)
+            try:
+                # カテゴリが存在しない場合と存在する場合で処理を分ける
+                if category is None:
+                    new_channel = await guild.create_text_channel(name=channelName)
+                else:
+                    new_channel = await category.create_text_channel(name=channelName)
+            except discord.errors.Forbidden:
+                await ctx.channel.send('→権限がないため、実行できませんでした！')
+            else:
+                await ctx.channel.send(f'<#{new_channel.id}>を作成しました！')
+
+    # channelコマンドのサブコマンドtopic
+    # チャンネルのトピックを設定する
+    @channel.command(aliases=['t', 'tp'], description='チャンネルにトピックを設定します')
+    async def topic(self, ctx, topicWord=None):
+        """
+        引数に渡した文字列でテキストチャンネルのトピックを設定します。
+        10秒以内に👌(ok_hand)のリアクションをつけないと実行されませんので、素早く対応ください。
+        ＊改行したい場合はトピックに二重引用符をつけて指定してください。
+        """
+        self.command_author = ctx.author
+        # トピックがない場合は実施不可
+        if topicWord is None:
+            await ctx.channel.purge(limit=1)
+            await ctx.channel.send('トピックを指定してください。\nあなたのコマンド：`{0}`'.format(ctx.message.clean_content))
+            return
+
+        # 念の為、確認する
+        original_topic = ''
+        if ctx.channel.topic is not None:
+            original_topic = f'このチャンネルには、トピックとして既に**「{ctx.channel.topic}」**が設定されています。\nそれでも、'
+        confirm_text = f'{original_topic}このチャンネルのトピックに**「{topicWord}」** を設定しますか？ 問題ない場合、10秒以内に👌(ok_hand)のリアクションをつけてください。\nあなたのコマンド：`{ctx.message.clean_content}`'
+        await ctx.channel.purge(limit=1)
+        await ctx.channel.send(confirm_text)
+
+        def check(reaction, user):
+                return user == self.command_author and str(reaction.emoji) == '👌'
+
+        # リアクション待ち
+        try:
+            reaction, user = await self.bot.wait_for('reaction_add', timeout=10.0, check=check)
+        except asyncio.TimeoutError:
+            await ctx.channel.send('→リアクションがなかったのでキャンセルしました！')
+        else:
+            # チャンネルにトピックを設定する　
+            try:
+                await ctx.channel.edit(topic=topicWord)
+            except discord.errors.Forbidden:
+                await ctx.channel.send('→権限がないため、実行できませんでした！')
+            else:
+                await ctx.channel.send(f'チャンネル「{ctx.channel.name}」のトピックに**「{topicWord}」**を設定しました！')
 
     # チャンネル作成時に実行されるイベントハンドラを定義
     @commands.Cog.listener()
@@ -172,30 +273,32 @@ class AdminCog(commands.Cog, name='管理用'):
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
         event_text = '参加'
-        await self.on_member_xxx(member, event_text)
+        await self.on_member_xxx(member, event_text, member.joined_at)
 
     # メンバーGuild脱退時に実行されるイベントハンドラを定義
     @commands.Cog.listener()
     async def on_member_remove(self, member: discord.Member):
         event_text = '脱退'
-        await self.on_member_xxx(member, event_text)
+        now = datetime.datetime.now()
+        now_tz = now.astimezone(datetime.timezone(datetime.timedelta(hours=0)))
+        await self.on_member_xxx(member, event_text, now_tz)
 
     # メンバーの参加/脱退時のメッセージを作成
-    async def on_member_xxx(self, member: discord.Member, event_text):
+    async def on_member_xxx(self, member: discord.Member, event_text: str, dt: datetime):
         guild = member.guild
         str = 'member: {0}が{1}しました'.format(member, event_text)
 
         if (settings.IS_DEBUG):
             print(f'***{str}***')
 
-        await self.sendGuildChannel(guild, str, member.joined_at)
+        await self.sendGuildChannel(guild, str, dt)
 
     # 監査ログをチャンネルに送信
-    async def sendGuildChannel(self, guild, string, created_time):
+    async def sendGuildChannel(self, guild: discord.Guild, str: str, dt: datetime):
         to_channel = guild.get_channel(settings.AUDIT_LOG_SEND_CHANNEL)
-        created_at = created_time.replace(tzinfo=datetime.timezone.utc)
-        created_at_jst = created_at.astimezone(datetime.timezone(datetime.timedelta(hours=9))).strftime('%Y/%m/%d(%a) %H:%M:%S')
-        msg = '{1}: {0}'.format(string, created_at_jst)
+        dt_tz = dt.replace(tzinfo=datetime.timezone.utc)
+        dt_jst = dt_tz.astimezone(datetime.timezone(datetime.timedelta(hours=9))).strftime('%Y/%m/%d(%a) %H:%M:%S')
+        msg = '{1}: {0}'.format(str, dt_jst)
         await to_channel.send(msg)
 
 def setup(bot):
