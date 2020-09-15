@@ -110,7 +110,7 @@ class Help(commands.HelpCommand):
 
     async def send_command_help(self,command):
         params = ' '.join(command.clean_params.keys())
-        embed = discord.Embed(title=f'{self.context.prefix}{command.qualified_name} {params}',
+        embed = discord.Embed(title=f'{self.context.prefix}{command.qualified_name} ***{params}***',
             description=command.description,color=HELP_COLOR_NORMAL)
         if command.aliases:
             embed.add_field(name='有効なエイリアス：',value='`' + '`, `'.join(command.aliases) + '`',inline=False)
