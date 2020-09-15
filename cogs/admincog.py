@@ -1,9 +1,10 @@
 from datetime import date
 import discord
+from discord import channel
 from discord.ext import commands # Bot Commands Frameworkのインポート
 import datetime
 from .modules import settings
-import traceback
+import asyncio
 
 # コグとして用いるクラスを定義。
 class AdminCog(commands.Cog, name='管理用'):
@@ -138,6 +139,103 @@ class AdminCog(commands.Cog, name='管理用'):
         if isinstance(error, commands.CommandError):
             print(error)
             await ctx.send(error)
+
+    # チャンネル管理コマンド群
+    @commands.group(aliases=['ch'], description='チャンネルを操作するコマンド（サブコマンド必須）')
+    async def channel(self, ctx):
+        """
+        チャンネルを管理するコマンド群です。このコマンドだけでは管理できません。
+        チャンネルを作成したい場合は、`make`を入力し、チャンネル名を指定してください。
+        トピックを変更したい場合は、`topic`を入力し、トピックに設定した文字列を指定してください。
+        """
+        # サブコマンドが指定されていない場合、メッセージを送信する。
+        if ctx.invoked_subcommand is None:
+            await ctx.send('このコマンドにはサブコマンドが必要です。')
+
+    # channelコマンドのサブコマンドmake
+    # チャンネルを作成する
+    @channel.command(aliases=['mk', 'craft'], description='チャンネルを作成します')
+    async def make(self, ctx, channelName=None):
+        """
+        引数に渡したチャンネル名でテキストチャンネルを作成します（コマンドを打ったチャンネルの所属するカテゴリに作成されます）。
+        10秒以内に👌(ok_hand)のリアクションをつけないと実行されませんので、素早く対応ください。
+        """
+        self.command_author = ctx.author
+        # チャンネル名がない場合は実施不可
+        if channelName is None:
+            await ctx.channel.purge(limit=1)
+            await ctx.channel.send('チャンネル名を指定してください。\nあなたのコマンド：`{0}`'.format(ctx.message.clean_content))
+            return
+
+        # 念の為、確認する
+        confirm_text = f'チャンネル **{channelName}** を作成してよろしいですか？ 問題ない場合、10秒以内に👌(ok_hand)のリアクションをつけてください。\nあなたのコマンド：`{ctx.message.clean_content}`'
+        await ctx.channel.purge(limit=1)
+        await ctx.channel.send(confirm_text)
+
+        def check(reaction, user):
+                return user == self.command_author and str(reaction.emoji) == '👌'
+
+        # リアクション待ち
+        try:
+            reaction, user = await self.bot.wait_for('reaction_add', timeout=10.0, check=check)
+        except asyncio.TimeoutError:
+            await ctx.channel.send('→リアクションがなかったのでキャンセルしました！')
+        else:
+            # メッセージの所属するカテゴリにテキストチャンネルを作成する
+            guild = ctx.channel.guild
+            category_id = ctx.message.channel.category_id
+            category = guild.get_channel(category_id)
+            try:
+                # カテゴリが存在しない場合と存在する場合で処理を分ける
+                if category is None:
+                    new_channel = await guild.create_text_channel(name=channelName)
+                else:
+                    new_channel = await category.create_text_channel(name=channelName)
+            except discord.errors.Forbidden:
+                await ctx.channel.send('→権限がないため、実行できませんでした！')
+            else:
+                await ctx.channel.send(f'<#{new_channel.id}>を作成しました！')
+
+    # channelコマンドのサブコマンドtopic
+    # チャンネルのトピックを設定する
+    @channel.command(aliases=['t', 'tp'], description='チャンネルにトピックを設定します')
+    async def topic(self, ctx, topicWord=None):
+        """
+        引数に渡した文字列でテキストチャンネルのトピックを設定します。
+        10秒以内に👌(ok_hand)のリアクションをつけないと実行されませんので、素早く対応ください。
+        ＊改行したい場合はトピックに二重引用符をつけて指定してください。
+        """
+        self.command_author = ctx.author
+        # トピックがない場合は実施不可
+        if topicWord is None:
+            await ctx.channel.purge(limit=1)
+            await ctx.channel.send('トピックを指定してください。\nあなたのコマンド：`{0}`'.format(ctx.message.clean_content))
+            return
+
+        # 念の為、確認する
+        original_topic = ''
+        if ctx.channel.topic is not None:
+            original_topic = f'このチャンネルには、トピックとして既に**「{ctx.channel.topic}」**が設定されています。\nそれでも、'
+        confirm_text = f'{original_topic}このチャンネルのトピックに**「{topicWord}」** を設定しますか？ 問題ない場合、10秒以内に👌(ok_hand)のリアクションをつけてください。\nあなたのコマンド：`{ctx.message.clean_content}`'
+        await ctx.channel.purge(limit=1)
+        await ctx.channel.send(confirm_text)
+
+        def check(reaction, user):
+                return user == self.command_author and str(reaction.emoji) == '👌'
+
+        # リアクション待ち
+        try:
+            reaction, user = await self.bot.wait_for('reaction_add', timeout=10.0, check=check)
+        except asyncio.TimeoutError:
+            await ctx.channel.send('→リアクションがなかったのでキャンセルしました！')
+        else:
+            # チャンネルにトピックを設定する　
+            try:
+                await ctx.channel.edit(topic=topicWord)
+            except discord.errors.Forbidden:
+                await ctx.channel.send('→権限がないため、実行できませんでした！')
+            else:
+                await ctx.channel.send(f'チャンネル「{ctx.channel.name}」のトピックに**「{topicWord}」**を設定しました！')
 
     # チャンネル作成時に実行されるイベントハンドラを定義
     @commands.Cog.listener()
