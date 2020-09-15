@@ -41,7 +41,7 @@ class Help(commands.HelpCommand):
     def __init__(self):
         # スーパークラスのコンストラクタに値を渡して実行。
         super().__init__()
-        self.no_category = 'カテゴリ未設定'
+        self.no_category = '__カテゴリ未設定__'
         self.command_attrs['description'] = 'コマンドリストを表示します。'
         # ここでメソッドのオーバーライドを行います。
 
@@ -52,7 +52,7 @@ class Help(commands.HelpCommand):
             """
             content = ''
             command_list = category.walk_commands()
-            for cmd in await self.filter_commands(command_list,sort=True):
+            for cmd in await self.filter_commands(command_list,sort=False):
                 if cmd.root_parent:
                     # cmd.root_parent は「根」なので、根からの距離に応じてインデントを増やす
                     index = cmd.parents.index(cmd.root_parent)
@@ -71,13 +71,13 @@ class Help(commands.HelpCommand):
             return enclosure + textwrap.dedent(content) + enclosure
 
     async def send_bot_help(self,mapping):
-        embed = discord.Embed(title='＊＊コマンドリスト＊＊',color=HELP_COLOR_NORMAL)
+        embed = discord.Embed(title='**＊＊コマンドリスト＊＊**',color=HELP_COLOR_NORMAL)
         if self.context.bot.description:
             # もしBOTに description 属性が定義されているなら、それも埋め込みに追加する
             embed.description = self.context.bot.description
         for cog in mapping:
             if cog:
-                cog_name = cog.qualified_name
+                cog_name = '__' + cog.qualified_name + '__'
             else:
                 # mappingのキーはNoneになる可能性もある
                 # もしキーがNoneなら、自身のno_category属性を参照する
