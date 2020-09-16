@@ -48,8 +48,7 @@ class MakeTeam:
 
     # メンバー取得
     async def get_members(self, ctx):
-        if self.set_mem(ctx) is False:
-            return self.vc_state_err
+        self.set_mem(ctx)
         return self.vc_list
 
     # チーム数を指定した場合のチーム分け
