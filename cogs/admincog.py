@@ -167,13 +167,23 @@ class AdminCog(commands.Cog, name='管理用'):
             await ctx.channel.send('チャンネル名を指定してください。\nあなたのコマンド：`{0}`'.format(ctx.message.clean_content))
             return
 
+        # メッセージの所属するカテゴリを取得
+        guild = ctx.channel.guild
+        category_id = ctx.message.channel.category_id
+        category = guild.get_channel(category_id)
+
+        # カテゴリーが存在するなら、カテゴリーについて確認メッセージに記載する
+        category_text = ''
+        if category is not None:
+            category_text = f'カテゴリー「**{category.name}**」に、\n';
+
         # 念の為、確認する
-        confirm_text = f'チャンネル **{channelName}** を作成してよろしいですか？ 問題ない場合、10秒以内に👌(ok_hand)のリアクションをつけてください。\nあなたのコマンド：`{ctx.message.clean_content}`'
+        confirm_text = f'{category_text}パブリックなチャンネル **{channelName}** を作成してよろしいですか？ 問題ない場合、10秒以内に👌(ok_hand)のリアクションをつけてください。\nあなたのコマンド：`{ctx.message.clean_content}`'
         await ctx.channel.purge(limit=1)
         await ctx.channel.send(confirm_text)
 
         def check(reaction, user):
-                return user == self.command_author and str(reaction.emoji) == '👌'
+            return user == self.command_author and str(reaction.emoji) == '👌'
 
         # リアクション待ち
         try:
@@ -181,20 +191,108 @@ class AdminCog(commands.Cog, name='管理用'):
         except asyncio.TimeoutError:
             await ctx.channel.send('→リアクションがなかったのでキャンセルしました！')
         else:
-            # メッセージの所属するカテゴリにテキストチャンネルを作成する
-            guild = ctx.channel.guild
-            category_id = ctx.message.channel.category_id
-            category = guild.get_channel(category_id)
             try:
                 # カテゴリが存在しない場合と存在する場合で処理を分ける
                 if category is None:
                     new_channel = await guild.create_text_channel(name=channelName)
                 else:
+                    # メッセージの所属するカテゴリにテキストチャンネルを作成する
                     new_channel = await category.create_text_channel(name=channelName)
             except discord.errors.Forbidden:
                 await ctx.channel.send('→権限がないため、実行できませんでした！')
             else:
                 await ctx.channel.send(f'<#{new_channel.id}>を作成しました！')
+
+    # channelコマンドのサブコマンドprivateMake
+    # チャンネルを作成する
+    @channel.command(aliases=['pmk', 'pcraft', 'primk'], description='プライベートチャンネルを作成します')
+    async def privateMake(self, ctx, channelName=None):
+        """
+        引数に渡したチャンネル名でプライベートなテキストチャンネルを作成します（コマンドを打ったチャンネルの所属するカテゴリに作成されます）。
+        10秒以内に👌(ok_hand)のリアクションをつけないと実行されませんので、素早く対応ください。
+        """
+        self.command_author = ctx.author
+
+        # チャンネル名がない場合は実施不可
+        if channelName is None:
+            await ctx.channel.purge(limit=1)
+            await ctx.channel.send('チャンネル名を指定してください。\nあなたのコマンド：`{0}`'.format(ctx.message.clean_content))
+            return
+
+        # トップロールが@everyoneの場合は実施不可
+        if ctx.author.top_role.position == 0:
+            await ctx.channel.purge(limit=1)
+            await ctx.channel.send('everyone権限しか保持していない場合、このコマンドは使用できません。\nあなたのコマンド：`{0}`'.format(ctx.message.clean_content))
+            return
+
+        # メッセージの所属するカテゴリを取得
+        guild = ctx.channel.guild
+        category_id = ctx.message.channel.category_id
+        category = guild.get_channel(category_id)
+
+        # カテゴリーが存在するなら、カテゴリーについて確認メッセージに記載する
+        category_text = ''
+        if category is not None:
+            category_text = f'カテゴリー「**{category.name}**」に、\n';
+
+        # Guildのロールを取得し、@everyone以外のロールで最も下位なロール以上は書き込めるような辞書型overwritesを作成
+        permissions = []
+        for guild_role in ctx.guild.roles:
+            # authorのeveryoneの1つ上のロールよりも下位のポジションの場合
+            if guild_role.position < ctx.author.roles[1].position:
+                permissions.append(
+                    discord.PermissionOverwrite(
+                        read_messages=False
+                        ,read_message_history=False
+                    )
+                )
+            else:
+                permissions.append(
+                    discord.PermissionOverwrite(
+                        read_messages=True
+                        ,read_message_history=True
+                    )
+                )
+        overwrites = dict(zip(ctx.guild.roles, permissions))
+
+        if settings.IS_DEBUG:
+            print('-----author\'s role-----------------------------------------------------------')
+            for author_role in ctx.author.roles:
+                print(f'id:{author_role.id}, name:{author_role.name}, position:{author_role.position}')
+            print('-----------------------------------------------------------------')
+            print('-----Guild\'s role-----------------------------------------------------------')
+            for guild_role in ctx.guild.roles:
+                print(f'id:{guild_role.id}, name:{guild_role.name}, position:{guild_role.position}')
+            print('-----------------------------------------------------------------')
+
+        # 念の為、確認する
+        confirm_text = f'{category_text}プライベートなチャンネル **{channelName}** を作成してよろしいですか()？ 問題ない場合、10秒以内に👌(ok_hand)のリアクションをつけてください。\nあなたのコマンド：`{ctx.message.clean_content}`'
+        await ctx.channel.purge(limit=1)
+        await ctx.channel.send(confirm_text)
+
+        def check(reaction, user):
+            return user == self.command_author and str(reaction.emoji) == '👌'
+
+        # リアクション待ち
+        try:
+            reaction, user = await self.bot.wait_for('reaction_add', timeout=10.0, check=check)
+        except asyncio.TimeoutError:
+            await ctx.channel.purge(limit=1)
+            await ctx.channel.send('＊リアクションがなかったのでキャンセルしました！(プライベートなチャンネルを立てようとしていました。)')
+        else:
+            try:
+                # カテゴリが存在しない場合と存在する場合で処理を分ける
+                if category is None:
+                    new_channel = await guild.create_text_channel(name=channelName, overwrites=overwrites)
+                else:
+                    # メッセージの所属するカテゴリにテキストチャンネルを作成する
+                    new_channel = await category.create_text_channel(name=channelName, overwrites=overwrites)
+            except discord.errors.Forbidden:
+                await ctx.channel.purge(limit=1)
+                await ctx.channel.send('＊権限がないため、実行できませんでした！(プライベートなチャンネルを立てようとしていました。)')
+            else:
+                await ctx.channel.purge(limit=1)
+                await ctx.channel.send(f'`/channel privateMake`コマンドでプライベートなチャンネルを作成しました！')
 
     # channelコマンドのサブコマンドtopic
     # チャンネルのトピックを設定する
