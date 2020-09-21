@@ -199,7 +199,7 @@ class AdminCog(commands.Cog, name='管理用'):
     # channelコマンドのサブコマンドtopic
     # チャンネルのトピックを設定する
     @channel.command(aliases=['t', 'tp'], description='チャンネルにトピックを設定します')
-    async def topic(self, ctx, topicWord=None):
+    async def topic(self, ctx, *, topicWord=None):
         """
         引数に渡した文字列でテキストチャンネルのトピックを設定します。
         10秒以内に👌(ok_hand)のリアクションをつけないと実行されませんので、素早く対応ください。
