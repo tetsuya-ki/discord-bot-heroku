@@ -319,7 +319,7 @@ class AdminCog(commands.Cog, name='管理用'):
         await ctx.channel.send(confirm_text)
 
         def check(reaction, user):
-                return user == self.command_author and str(reaction.emoji) == '👌'
+            return user == self.command_author and str(reaction.emoji) == '👌'
 
         # リアクション待ち
         try:
@@ -327,7 +327,7 @@ class AdminCog(commands.Cog, name='管理用'):
         except asyncio.TimeoutError:
             await ctx.channel.send('→リアクションがなかったのでキャンセルしました！')
         else:
-            # チャンネルにトピックを設定する　
+            # チャンネルにトピックを設定する
             try:
                 await ctx.channel.edit(topic=topicWord)
             except discord.errors.Forbidden:
