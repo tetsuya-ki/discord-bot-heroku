@@ -240,19 +240,9 @@ class AdminCog(commands.Cog, name='管理用'):
         for guild_role in ctx.guild.roles:
             # authorのeveryoneの1つ上のロールよりも下位のポジションの場合
             if guild_role.position < ctx.author.roles[1].position:
-                permissions.append(
-                    discord.PermissionOverwrite(
-                        read_messages=False
-                        ,read_message_history=False
-                    )
-                )
+                permissions.append(discord.PermissionOverwrite(read_messages=False))
             else:
-                permissions.append(
-                    discord.PermissionOverwrite(
-                        read_messages=True
-                        ,read_message_history=True
-                    )
-                )
+                permissions.append(discord.PermissionOverwrite(read_messages=True))
         overwrites = dict(zip(ctx.guild.roles, permissions))
 
         if settings.IS_DEBUG:
