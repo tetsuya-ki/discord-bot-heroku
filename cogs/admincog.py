@@ -327,8 +327,8 @@ class AdminCog(commands.Cog, name='管理用'):
 
     # channelコマンドのサブコマンドroleDel
     # チャンネルのロールを削除する（テキストチャンネルが見えないようにする）
-    @channel.command(aliases=['rd', 'delrole', 'dr'], description='チャンネルのロールを削除します')
-    async def roleDel(self, ctx, targetRole=None):
+    @channel.command(aliases=['rd', 'roledel', 'deleterole' 'delrole', 'dr'], description='チャンネルのロールを削除します')
+    async def roleDelete(self, ctx, targetRole=None):
         """
         指定したロールがテキストチャンネルを見れないように設定します（自分とおなじ権限まで指定可能（ただしチャンネルに閲覧できるロールがない場合、表示されなくなります！））。
         10秒以内に👌(ok_hand)のリアクションをつけないと実行されませんので、素早く対応ください。
@@ -382,7 +382,7 @@ class AdminCog(commands.Cog, name='管理用'):
             print(bot_overwrites_pair)
             # 権限が初期設定なら
             if (bot_overwrites_pair[0].value == 0) and (bot_overwrites_pair[1].value == 0):
-                bot_overwrite = discord.PermissionOverwrite(read_messages=True)
+                bot_overwrite = discord.PermissionOverwrite(read_messages=True,read_message_history=True)
                 botRoleUpdateFlag = True
             if targetRole == bot_role.name:
                 attention_text = f'＊＊これを実行するとBOTが書き込めなくなるため、**権限削除に成功した場合でもチャンネルに結果が表示されません**。\n'
