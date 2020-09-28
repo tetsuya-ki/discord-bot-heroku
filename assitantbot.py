@@ -7,9 +7,9 @@ import traceback # エラー表示のためインポート
 
 # 読み込むCogの名前を格納
 INITIAL_EXTENSIONS = [
-    'cogs.eventcog'
-    , 'cogs.messagecog'
+    'cogs.messagecog'
     , 'cogs.admincog'
+    , 'cogs.reactionchannelercog'
 ]
 
 # カラー
