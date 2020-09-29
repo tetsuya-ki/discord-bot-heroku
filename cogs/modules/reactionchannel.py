@@ -69,11 +69,10 @@ class ReactionChannel:
         guild = ctx.guild
         additem = f'{reaction}+{channel}'
         print(f'＊＊追加のチェック＊＊, reaction: {reaction}, channel: {channel}')
-        print(guild.emojis)
-        # 絵文字が不正な場合(guildに登録された絵文字なら'yes'のような文字が入っているし、そうでない場合は1文字のはず)
+        # 絵文字が不正な場合(guildに登録された絵文字なら'yes'のような文字が入っているし、そうでない場合は1文字のはず -> 🐈‍⬛,がありえるので緩和)
         emoji = discord.utils.get(guild.emojis, name=reaction_id)
-        if emoji is None and len(reaction) > 1:
-            self.rc_err = '絵文字が不正なので登録できません。'
+        if emoji is None and len(reaction) > 4:
+            self.rc_err = f'絵文字が不正なので登録できません。(reaction: {reaction})'
             return False
 
         # チャンネルが不正な場合

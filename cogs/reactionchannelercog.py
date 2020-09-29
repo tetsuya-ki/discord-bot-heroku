@@ -10,7 +10,7 @@ class ReactionChannelerCog(commands.Cog, name="リアクションチャンネラ
     """
     リアクションチャンネラー機能のカテゴリ(リアクションをもとに実行するアクション含む)。
     """
-    SPLIT_SIZE = 500
+    SPLIT_SIZE = 1900
 
     # ReactionChannelerCogクラスのコンストラクタ。Botを受取り、インスタンス変数として保持。
     def __init__(self, bot):
