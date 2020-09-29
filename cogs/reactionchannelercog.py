@@ -13,10 +13,11 @@ class ReactionChannelerCog(commands.Cog, name="リアクションチャネラー
     # ReactionChannelerCogクラスのコンストラクタ。Botを受取り、インスタンス変数として保持。
     def __init__(self, bot):
         self.bot = bot
+        self.reaction_channel = ReactionChannel()
 
     # リアクションチャネラーコマンド群
     @commands.group(aliases=['rch','reaction', 'reach'], description='リアクションチャネラーを操作するコマンド（サブコマンド必須）')
-    async def reactionChanneneler(self, ctx):
+    async def reactionChanneler(self, ctx):
         """
         リアクションチャネラーを管理するコマンド群です。このコマンドだけでは管理できません。
         リアクションチャネラーを追加したい場合は、`add`を入力し、絵文字とチャンネル名を指定してください。
@@ -28,41 +29,37 @@ class ReactionChannelerCog(commands.Cog, name="リアクションチャネラー
             await ctx.send('このコマンドにはサブコマンドが必要です。')
 
     # リアクションチャネラー追加
-    @reactionChanneneler.command(aliases=['a','ad'], description='リアクションチャネラーを追加するサブコマンド')
+    @reactionChanneler.command(aliases=['a','ad'], description='リアクションチャネラーを追加するサブコマンド')
     async def add(self, ctx, reaction:str=None, channel:str=None):
         # リアクション、チャンネルがない場合は実施不可
         if reaction is None or channel is None:
             await ctx.channel.purge(limit=1)
             await ctx.channel.send('リアクションとチャンネルを指定してください。\nあなたのコマンド：`{0}`'.format(ctx.message.clean_content))
             return
-        reaction_channel = ReactionChannel()
-        msg = reaction_channel.add(ctx, reaction, channel)
+        msg = self.reaction_channel.add(ctx, reaction, channel)
         await ctx.channel.send(msg)
 
     # リアクションチャネラー確認
-    @reactionChanneneler.command(aliases=['l','ls', 'lst'], description='現在登録されているリアクションチャネラーを確認するサブコマンド')
+    @reactionChanneler.command(aliases=['l','ls', 'lst'], description='現在登録されているリアクションチャネラーを確認するサブコマンド')
     async def list(self, ctx):
-        reaction_channel = ReactionChannel()
-        msg = reaction_channel.list(ctx)
+        msg = self.reaction_channel.list(ctx)
         await ctx.channel.send(msg)
 
     # リアクションチャネラー全削除
-    @reactionChanneneler.command(aliases=['prg','pg'], description='Guildのリアクションチャネラーを全削除するサブコマンド')
+    @reactionChanneler.command(aliases=['prg','pg'], description='Guildのリアクションチャネラーを全削除するサブコマンド')
     async def purge(self, ctx):
-        reaction_channel = ReactionChannel()
-        msg = reaction_channel.purge(ctx)
+        msg = self.reaction_channel.purge(ctx)
         await ctx.channel.send(msg)
 
     # リアクションチャネラー削除（１種類）
-    @reactionChanneneler.command(aliases=['d','del'], description='リアクションチャネラーを削除するサブコマンド')
+    @reactionChanneler.command(aliases=['d','del'], description='リアクションチャネラーを削除するサブコマンド')
     async def delete(self, ctx, reaction:str=None, channel:str=None):
         # リアクション、チャンネルがない場合は実施不可
         if reaction is None or channel is None:
             await ctx.channel.purge(limit=1)
             await ctx.channel.send('リアクションとチャンネルを指定してください。\nあなたのコマンド：`{0}`'.format(ctx.message.clean_content))
             return
-        reaction_channel = ReactionChannel()
-        msg = reaction_channel.delete(ctx, reaction, channel)
+        msg = self.reaction_channel.delete(ctx, reaction, channel)
         await ctx.channel.send(msg)
 
     # リアクション追加時に実行されるイベントハンドラを定義
@@ -110,8 +107,7 @@ class ReactionChannelerCog(commands.Cog, name="リアクションチャネラー
     async def reaction_channeler(self, payload: discord.RawReactionActionEvent):
         # リアクションチャネラーを読み込む
         guild = self.bot.get_guild(payload.guild_id)
-        reaction_channel = ReactionChannel()
-        reaction_channel.set_rc(guild)
+        self.reaction_channel.set_rc(guild)
 
         # リアクションから絵文字を取り出す（ギルド絵文字への変換も行う）
         emoji = payload.emoji.name
@@ -119,7 +115,7 @@ class ReactionChannelerCog(commands.Cog, name="リアクションチャネラー
             emoji = f'<:{payload.emoji.name}:{payload.emoji.id}>'
 
         # 入力された絵文字でフィルターされたリストを生成する
-        filtered_list = [rc for rc in reaction_channel.guild_reaction_channels if emoji in rc]
+        filtered_list = [rc for rc in self.reaction_channel.guild_reaction_channels if emoji in rc]
 
         if settings.IS_DEBUG:
             print(f'*****emoji***** {emoji}')
