@@ -16,9 +16,14 @@ class ReactionChannel:
 
     # 初期設定
     def set_rc(self, guild:discord.Guild):
-        print('＊＊読み込み＊＊')
+        # 既に読み込まれている場合は、読み込みしない
+        if self.rc_len != 0:
+            print('__読み込み不要__')
+            return
+
         # 読み込み
         try:
+            print('＊＊読み込み＊＊')
             file_path = join(dirname(__file__), 'files' + os.sep + self.FILE)
             with open(file_path, mode='rb') as f:
                 self.reaction_channels = pickle.load(f)
@@ -43,7 +48,7 @@ class ReactionChannel:
             with open(file_path, mode='wb') as f:
                 pickle.dump(self.reaction_channels, f)
         except pickle.PickleError:
-            # 読み込みに失敗したらなにもしない
+            # 書き込みに失敗したらなにもしない
             self.rc_err = '保管に失敗しました。'
 
     # 追加するリアクションチャネルが問題ないかチェック
@@ -136,11 +141,14 @@ class ReactionChannel:
         guild = ctx.guild
         self.set_rc(guild)
         self.reaction_channels = [rc for rc in self.reaction_channels if guild.id not in rc ]
+        self.guild_reaction_channels = []
+        self.guild_rc_txt_lists = []
+        self.rc_len = 0
         # 保管
         if self.save() is False:
             return self.rc_err
 
-        return 'リアクションチャンネルの削除に成功しました！'
+        return 'すべてのリアクションチャンネルの削除に成功しました！'
 
     # 削除
     def delete(self, ctx, reaction:str, channel:str):

@@ -105,6 +105,7 @@ class AdminCog(commands.Cog, name='管理用'):
         """
         自分かBOTのメッセージを削除します。
         削除するメッセージの数が必要です。
+        なお、BOTにメッセージの管理権限、メッセージの履歴閲覧権限、メッセージの閲覧権限がない場合は失敗します。
         """
         self.command_author = ctx.author
         # botかコマンドの実行主かチェック
@@ -144,9 +145,11 @@ class AdminCog(commands.Cog, name='管理用'):
     @commands.group(aliases=['ch'], description='チャンネルを操作するコマンド（サブコマンド必須）')
     async def channel(self, ctx):
         """
-        チャンネルを管理するコマンド群です。このコマンドだけでは管理できません。
-        チャンネルを作成したい場合は、`make`を入力し、チャンネル名を指定してください。
-        トピックを変更したい場合は、`topic`を入力し、トピックに設定した文字列を指定してください。
+        チャンネルを管理するコマンド群です。このコマンドだけでは管理できません。半角スペースの後、続けて以下のサブコマンドを入力ください。
+        - チャンネルを作成したい場合は、`make`を入力し、チャンネル名を指定してください。
+        - プライベートなチャンネルを作成したい場合は`privateMake`を入力し、チャンネル名を指定してください。
+        - チャンネルを閲覧できるロールを削除したい場合、`roleDelete`を入力し、ロール名を指定してください。
+        - トピックを変更したい場合は、`topic`を入力し、トピックに設定したい文字列を指定してください。
         """
         # サブコマンドが指定されていない場合、メッセージを送信する。
         if ctx.invoked_subcommand is None:
@@ -154,7 +157,7 @@ class AdminCog(commands.Cog, name='管理用'):
 
     # channelコマンドのサブコマンドmake
     # チャンネルを作成する
-    @channel.command(aliases=['mk', 'craft'], description='チャンネルを作成します')
+    @channel.command(aliases=['c','m','mk','craft'], description='チャンネルを作成します')
     async def make(self, ctx, channelName=None):
         """
         引数に渡したチャンネル名でテキストチャンネルを作成します（コマンドを打ったチャンネルの所属するカテゴリに作成されます）。
@@ -205,7 +208,7 @@ class AdminCog(commands.Cog, name='管理用'):
 
     # channelコマンドのサブコマンドprivateMake
     # チャンネルを作成する
-    @channel.command(aliases=['pmk', 'pcraft', 'primk'], description='プライベートチャンネルを作成します')
+    @channel.command(aliases=['p','pm','pmk', 'pcraft', 'primk'], description='プライベートチャンネルを作成します')
     async def privateMake(self, ctx, channelName=None):
         """
         引数に渡したチャンネル名でプライベートなテキストチャンネルを作成します（コマンドを打ったチャンネルの所属するカテゴリに作成されます）。
@@ -291,7 +294,6 @@ class AdminCog(commands.Cog, name='管理用'):
         """
         引数に渡した文字列でテキストチャンネルのトピックを設定します。
         10秒以内に👌(ok_hand)のリアクションをつけないと実行されませんので、素早く対応ください。
-        ＊改行したい場合はトピックに二重引用符をつけて指定してください。
         """
         self.command_author = ctx.author
         # トピックがない場合は実施不可

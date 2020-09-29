@@ -5,7 +5,7 @@ from .modules.grouping import MakeTeam
 POLL_CHAR = ['🇦','🇧','🇨','🇩','🇪','🇫','🇬','🇭','🇮','🇯','🇰','🇱','🇲','🇳','🇴','🇵','🇶','🇷','🇸','🇹']
 
 # コグとして用いるクラスを定義。
-class MessageCog(commands.Cog, name="通常用"):
+class MessageCog(commands.Cog, name='通常用'):
     """
     コマンドを元に動作する機能のカテゴリ。
     """
@@ -15,7 +15,7 @@ class MessageCog(commands.Cog, name="通常用"):
         self.bot = bot
 
     # メンバー数が均等になるチーム分け
-    @commands.command(aliases=["tm"], description="メンバー数が均等になるように、指定された数に分けます")
+    @commands.command(aliases=['t','tm'], description='チーム数指定：メンバー数が均等になるように、指定された数に分けます')
     async def team(self, ctx, specified_num=2):
         """
         このコマンドを実行すると、Guildにあるボイスチャンネルの数を計測し、それぞれに接続しているメンバーのリストを作成し、指定された数に振り分けます。
@@ -28,7 +28,7 @@ class MessageCog(commands.Cog, name="通常用"):
         await ctx.channel.send(msg)
 
     # メンバー数を指定してチーム分け
-    @commands.command(aliases=["gp"], description="指定されたメンバー数になるように、適当な数のチームに分けます")
+    @commands.command(aliases=['g','gp'], description='メンバー数を指定：指定されたメンバー数になるように、適当な数のチームに分けます')
     async def group(self, ctx, specified_num=1):
         """
         このコマンドを実行すると、Guildにあるボイスチャンネルの数を計測し、それぞれに接続しているメンバーのリストを作成し、指定された数のメンバー数になるようにチームを振り分けます。
@@ -40,7 +40,7 @@ class MessageCog(commands.Cog, name="通常用"):
         await ctx.channel.send(msg)
 
     # ボイスチャンネルに接続しているメンバーリストを取得
-    @commands.command(aliases=["vcm","vm","vc","vcmember"], description="ボイスチャンネルに接続しているメンバーリストを取得します")
+    @commands.command(aliases=['v','vcm','vm','vc','vcmember'], description='ボイスチャンネルに接続しているメンバーリストを取得します')
     async def vcmembers(self, ctx):
         """
         このコマンドを実行すると、Guildにあるボイスチャンネルの数を計測し、それぞれに接続しているメンバーのリストを作成し、チャンネルに投稿します。
@@ -50,7 +50,7 @@ class MessageCog(commands.Cog, name="通常用"):
         await ctx.channel.send(msg)
 
     # poll機能
-    @commands.command(aliases=["p","pl"], description="簡易的な投票機能です（引数が1つの場合と2以上の場合で動作が変わります）")
+    @commands.command(aliases=['p','pl'], description='簡易的な投票機能です（引数が1つの場合と2以上の場合で動作が変わります）')
     async def poll(self, ctx, arg1=None, *args):
         """
         このコマンドを実行すると、リアクションを利用し簡易的な投票ができます。
