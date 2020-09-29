@@ -3,9 +3,11 @@ import discord
 from discord.utils import get
 import os
 from os.path import join, dirname
+import base64
+import json
 
 class ReactionChannel:
-    FILE = 'reaction-channel.pickle'
+    FILE = 'reaction-channel.json'
 
     def __init__(self):
         self.reaction_channels = []
@@ -25,15 +27,21 @@ class ReactionChannel:
         try:
             print('＊＊読み込み＊＊')
             file_path = join(dirname(__file__), 'files' + os.sep + self.FILE)
-            with open(file_path, mode='rb') as f:
-                self.reaction_channels = pickle.load(f)
-            self.guild_reaction_channels = [rc[1:] for rc in self.reaction_channels if guild.id in rc]
+            dict = {}
+            with open(file_path, mode='r') as f:
+                dict = json.load(f)
+                serialize = dict["pickle"]
+                self.reaction_channels = pickle.loads(base64.b64decode(serialize.encode()))
+            self.guild_reaction_channels = [rc[1:] for rc in self.reaction_channels if str(guild.id) in map(str, rc)]
             # joinするので文字列に変換し、リストに追加する
             for rc in self.guild_reaction_channels:
                 self.guild_rc_txt_lists.append('+'.join(map(str, rc)))
             self.rc_len = len(self.guild_reaction_channels)
         except FileNotFoundError:
             # 読み込みに失敗したらなにもしない
+            print
+        except json.JSONDecodeError:
+            # JSON変換失敗したらなにもしない
             print
         except EOFError:
             # 読み込みに失敗したらなにもしない
@@ -43,10 +51,12 @@ class ReactionChannel:
     def save(self):
         print('＊＊書き込み＊＊')
         file_path = join(dirname(__file__), 'files' + os.sep + self.FILE)
+        serialized = base64.b64encode(pickle.dumps(self.reaction_channels)).decode("utf-8")
+        dict = {"pickle": serialized}
         # 書き込み
         try:
-            with open(file_path, mode='wb') as f:
-                pickle.dump(self.reaction_channels, f)
+            with open(file_path, mode='w') as f:
+                json.dump(dict, f)
         except pickle.PickleError:
             # 書き込みに失敗したらなにもしない
             self.rc_err = '保管に失敗しました。'
@@ -120,7 +130,8 @@ class ReactionChannel:
         if self.save() is False:
             return self.rc_err
 
-        return f'リアクションチャンネルの登録に成功しました！\n{reaction} → <#{get_channel.id}>'
+        serialized = base64.b64encode(pickle.dumps(self.reaction_channels)).decode("utf-8")
+        return f'リアクションチャンネルの登録に成功しました！\n{reaction} → <#{get_channel.id}>\n----\n{serialized}'
 
     def list(self, ctx):
         guild = ctx.guild
@@ -148,7 +159,8 @@ class ReactionChannel:
         if self.save() is False:
             return self.rc_err
 
-        return 'すべてのリアクションチャンネルの削除に成功しました！'
+        serialized = base64.b64encode(pickle.dumps(self.reaction_channels)).decode("utf-8")
+        return f'全てのリアクションチャンネラーの削除に成功しました！\n----\n{serialized}'
 
     # 削除
     def delete(self, ctx, reaction:str, channel:str):
@@ -183,4 +195,5 @@ class ReactionChannel:
         if self.save() is False:
             return self.rc_err
 
-        return f'リアクションチャンネルの削除に成功しました！\n{reaction} → <#{get_channel.id}>'
+        serialized = base64.b64encode(pickle.dumps(self.reaction_channels)).decode("utf-8")
+        return f'リアクションチャンネラーの削除に成功しました！\n{reaction} → <#{get_channel.id}>\n----\n{serialized}'
