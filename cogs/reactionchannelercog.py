@@ -197,7 +197,7 @@ class ReactionChannelerCog(commands.Cog, name="リアクションチャンネラ
                 for addText in contents[1:]:
                     embed.add_field(name='addText', value=addText + ' ＊長いので分割しました＊', inline=False)
 
-            to_channel = guild.get_channel(reaction[2])
+            to_channel = guild.get_channel(int(reaction[2]))
             if settings.IS_DEBUG:
                 print('setting:'+str(reaction[2]))
                 print('to_channel: '+str(to_channel))
