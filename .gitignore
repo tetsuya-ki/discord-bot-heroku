@@ -92,3 +92,6 @@ venv.bak/
 
 # pickles
 *.pickle
+
+# file
+first_time
