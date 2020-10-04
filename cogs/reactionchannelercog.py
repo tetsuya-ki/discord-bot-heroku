@@ -15,7 +15,13 @@ class ReactionChannelerCog(commands.Cog, name="リアクションチャンネラ
     # ReactionChannelerCogクラスのコンストラクタ。Botを受取り、インスタンス変数として保持。
     def __init__(self, bot):
         self.bot = bot
-        self.reaction_channel = ReactionChannel()
+        self.reaction_channel = ReactionChannel(self.bot.guilds, self.bot)
+
+    # cogが準備できたら読み込みする
+    @commands.Cog.listener()
+    async def on_ready(self):
+        print("load cog")
+        self.reaction_channel = ReactionChannel(self.bot.guilds, self.bot)
 
     # リアクションチャンネラーコマンド群
     @commands.group(aliases=['rch','reaction','reach'], description='リアクションチャンネラーを操作するコマンド（サブコマンド必須）')
@@ -43,16 +49,8 @@ class ReactionChannelerCog(commands.Cog, name="リアクションチャンネラ
             await ctx.channel.purge(limit=1)
             await ctx.channel.send('リアクションとチャンネルを指定してください。\nあなたのコマンド：`{0}`'.format(ctx.message.clean_content))
             return
-        msg = self.reaction_channel.add(ctx, reaction, channel)
-
-        # 長文メッセージ分割対応
-        contents = [msg[i: i+self.SPLIT_SIZE] for i in range(0, len(msg), self.SPLIT_SIZE)]
-        if len(contents) != 1 :
-            contents[0] += ' ＊長いので分割しました＊'
-        await ctx.channel.send(contents[0])
-        if len(contents) != 1 :
-            for addText in contents[1:]:
-                await ctx.channel.send(addText + ' ＊長いので分割しました＊')
+        msg = await self.reaction_channel.add(ctx, reaction, channel)
+        await ctx.channel.send(msg)
 
     # リアクションチャンネラー確認
     @reactionChanneler.command(aliases=['l','ls','lst'], description='現在登録されているリアクションチャンネラーを確認するサブコマンド')
@@ -61,7 +59,7 @@ class ReactionChannelerCog(commands.Cog, name="リアクションチャンネラ
         リアクションチャンネラー（＊）で反応する絵文字とチャンネルのリストを表示します。
         ＊指定した絵文字でリアクションされた時、チャンネルに通知する機能のこと
         """
-        msg = self.reaction_channel.list(ctx)
+        msg = await self.reaction_channel.list(ctx)
         await ctx.channel.send(msg)
 
     # リアクションチャンネラー全削除
@@ -87,7 +85,7 @@ class ReactionChannelerCog(commands.Cog, name="リアクションチャンネラ
         except asyncio.TimeoutError:
             await ctx.channel.send('→リアクションがなかったのでキャンセルしました！')
         else:
-            msg = self.reaction_channel.purge(ctx)
+            msg = await self.reaction_channel.purge(ctx)
             await ctx.channel.send(msg)
 
     # リアクションチャンネラー削除（１種類）
@@ -103,21 +101,16 @@ class ReactionChannelerCog(commands.Cog, name="リアクションチャンネラ
             await ctx.channel.purge(limit=1)
             await ctx.channel.send('リアクションとチャンネルを指定してください。\nあなたのコマンド：`{0}`'.format(ctx.message.clean_content))
             return
-        msg = self.reaction_channel.delete(ctx, reaction, channel)
-        # 長文メッセージ分割対応
-        contents = [msg[i: i+self.SPLIT_SIZE] for i in range(0, len(msg), self.SPLIT_SIZE)]
-        if len(contents) != 1 :
-            contents[0] += ' ＊長いので分割しました＊'
-        await ctx.channel.send(contents[0])
-        if len(contents) != 1 :
-            for addText in contents[1:]:
-                await ctx.channel.send(addText + ' ＊長いので分割しました＊')
+        msg = await self.reaction_channel.delete(ctx, reaction, channel)
+        await ctx.channel.send(msg)
 
     # リアクション追加時に実行されるイベントハンドラを定義
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
         if payload.member.bot:# BOTアカウントは無視する
             return
+        if payload.emoji.name == '👌':# ok_handは確認に使っているので無視する
+            return 
         await self.pin_message(payload)
         await self.reaction_channeler(payload)
 
@@ -158,7 +151,7 @@ class ReactionChannelerCog(commands.Cog, name="リアクションチャンネラ
     async def reaction_channeler(self, payload: discord.RawReactionActionEvent):
         # リアクションチャンネラーを読み込む
         guild = self.bot.get_guild(payload.guild_id)
-        self.reaction_channel.set_rc(guild)
+        await self.reaction_channel.set_rc(guild)
 
         # リアクションから絵文字を取り出す（ギルド絵文字への変換も行う）
         emoji = payload.emoji.name
