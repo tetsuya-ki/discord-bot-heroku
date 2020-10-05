@@ -14,5 +14,5 @@ load_dotenv(dotenv_path)
 
 DISCORD_TOKEN = os.environ.get('DISCORD_TOKEN')
 IS_DEBUG = if_env(os.environ.get('IS_DEBUG'))
-AUDIT_LOG_SEND_CHANNEL = int(os.environ.get('AUDIT_LOG_SEND_CHANNEL'))
+AUDIT_LOG_SEND_CHANNEL = os.environ.get('AUDIT_LOG_SEND_CHANNEL')
 IS_HEROKU = if_env(os.environ.get('IS_HEROKU'))
