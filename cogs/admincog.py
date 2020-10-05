@@ -4,6 +4,7 @@ from discord import channel
 from discord.ext import commands # Bot Commands Frameworkのインポート
 import datetime
 from .modules import settings
+from .modules.auditlogchannel import AuditLogChannel
 import asyncio
 
 # コグとして用いるクラスを定義。
@@ -15,6 +16,7 @@ class AdminCog(commands.Cog, name='管理用'):
     def __init__(self, bot):
         self.bot = bot
         self.command_author = None
+        self.audit_log_channel = AuditLogChannel()
 
     # 監査ログの取得
     @commands.command(aliases=['getal','auditlog','gal'],description='監査ログを取得します')
@@ -36,7 +38,12 @@ class AdminCog(commands.Cog, name='管理用'):
             limit_num = int(limit_num)
             oldest_first_flag = False
 
-        to_channel = ctx.guild.get_channel(settings.AUDIT_LOG_SEND_CHANNEL)
+        if await self.audit_log_channel.get_ch(ctx.guild) is False:
+            print(self.audit_log_channel.alc_err)
+            return
+        else:
+            to_channel = self.audit_log_channel.channel
+
         start = f'start getAuditLog ({audit_log}回で開始)'
 
         if (settings.IS_DEBUG):
@@ -471,7 +478,11 @@ class AdminCog(commands.Cog, name='管理用'):
 
     # 監査ログをチャンネルに送信
     async def sendGuildChannel(self, guild: discord.Guild, str: str, dt: datetime):
-        to_channel = guild.get_channel(settings.AUDIT_LOG_SEND_CHANNEL)
+        if await self.audit_log_channel.get_ch(guild) is False:
+            print(self.audit_log_channel.alc_err)
+            return
+        else:
+            to_channel = self.audit_log_channel.channel
         dt_tz = dt.replace(tzinfo=datetime.timezone.utc)
         dt_jst = dt_tz.astimezone(datetime.timezone(datetime.timedelta(hours=9))).strftime('%Y/%m/%d(%a) %H:%M:%S')
         msg = '{1}: {0}'.format(str, dt_jst)
