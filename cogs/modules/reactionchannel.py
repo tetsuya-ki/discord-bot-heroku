@@ -95,6 +95,14 @@ class ReactionChannel:
 
     # 初期設定
     async def set_rc(self, guild:discord.Guild):
+        # ギルド別リアクションチャンネラー読み込み
+        self.guild_reaction_channels = [rc[1:] for rc in self.reaction_channels if str(guild.id) in map(str, rc)]
+        # joinするので文字列に変換し、リストに追加する
+        self.guild_rc_txt_lists = []
+        for rc in self.guild_reaction_channels:
+            self.guild_rc_txt_lists.append('+'.join(map(str, rc)))
+        self.rc_len = len(self.guild_reaction_channels)
+
         # 既に読み込まれている場合は、読み込みしない
         if self.rc_len != 0:
             print('__読み込み不要__')
@@ -114,6 +122,7 @@ class ReactionChannel:
                 self.reaction_channels = pickle.loads(base64.b64decode(serialize.encode()))
             self.guild_reaction_channels = [rc[1:] for rc in self.reaction_channels if str(guild.id) in map(str, rc)]
             # joinするので文字列に変換し、リストに追加する
+            self.guild_rc_txt_lists = []
             for rc in self.guild_reaction_channels:
                 self.guild_rc_txt_lists.append('+'.join(map(str, rc)))
             self.rc_len = len(self.guild_reaction_channels)
