@@ -33,7 +33,6 @@ class AssistantBot(commands.Bot):
     # Botの準備完了時に呼び出されるイベント
     async def on_ready(self):
         print('We have logged in as {0}'.format(self.user))
-        print(bot.guilds)
 
 # クラス定義。HelpCommandクラスを継承。
 class Help(commands.HelpCommand):
