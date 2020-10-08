@@ -45,6 +45,10 @@ class ReactionChannel:
                     get_control_channel = discord.utils.get(guild.text_channels, name=self.REACTION_CHANNEL)
                     if get_control_channel is not None:
                         last_message = await get_control_channel.history(limit=1).flatten()
+                        if settings.IS_DEBUG:
+                            print(f'＋＋＋＋{last_message}＋＋＋＋')
+                            print(f'len: {len(last_message)}, con: {last_message[0].content}, attchSize:{len(last_message[0].attachments)}')
+                            print(f'date: {Attachment_file_date} <<<<<<< {last_message[0].created_at}, {Attachment_file_date < last_message[0].created_at}')
                         # last_messageがない場合以外で、reaction-channel.jsonが本文である場合、ファイルを取得する
                         if len(last_message) != 0 and last_message[0].content == self.FILE:
                             if len(last_message[0].attachments) > 0:
@@ -62,6 +66,8 @@ class ReactionChannel:
             if settings.IS_DEBUG:
                 if not os.path.exists(file_path_first_time):
                     print(f'{file_path_first_time}は作成できませんでした')
+                else:
+                    print(f'{file_path_first_time}は作成できています')
                 print('get_discord_attachment_file is over!')
 
     async def set_discord_attachment_file(self, guild:discord.Guild):
