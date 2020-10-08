@@ -28,31 +28,36 @@ class ReactionChannel:
             if settings.IS_DEBUG:
                 print('Heroku mode.start get_discord_attachment_file.')
             # # ファイルをチェックし、存在しなければ最初と見做す
-            if not os.path.exists('first_time'):
-                with open('first_time','w') as f:
-                    print('存在しない')
-                    Attachment_file_date = None
+            file_path_first_time = join(dirname(__file__), 'first_time')
+            if not os.path.exists(file_path_first_time):
+                with open(file_path_first_time, 'w') as f:
+                    print(f'{file_path_first_time}が存在しないので、作成を試みます')
+                Attachment_file_date = None
 
-                    # BotがログインしているGuildごとに繰り返す
-                    for guild in self.guilds:
-                        # チャンネルのチェック
-                        get_control_channel = discord.utils.get(guild.text_channels, name=self.REACTION_CHANNEL)
-                        if get_control_channel is not None:
-                            last_message = await get_control_channel.history(limit=1).flatten()
-                            # last_messageがない場合以外で、reaction-channel.jsonが本文である場合、ファイルを取得する
-                            if len(last_message) == 0:
-                                return
-                            elif last_message[0].content == self.FILE:
-                                if len(last_message[0].attachments) > 0:
+                # BotがログインしているGuildごとに繰り返す
+                for guild in self.guilds:
+                    # チャンネルのチェック
+                    if settings.IS_DEBUG:
+                        print('チャンネル読み込み')
+                    get_control_channel = discord.utils.get(guild.text_channels, name=self.REACTION_CHANNEL)
+                    if get_control_channel is not None:
+                        last_message = await get_control_channel.history(limit=1).flatten()
+                        # last_messageがない場合以外で、reaction-channel.jsonが本文である場合、ファイルを取得する
+                        if len(last_message) == 0:
+                            return
+                        elif last_message[0].content == self.FILE:
+                            if len(last_message[0].attachments) > 0:
 
-                                    # 日付が新しい場合、ファイルを取得
-                                    if Attachment_file_date is None or Attachment_file_date < last_message[0].created_at:
-                                        Attachment_file_date = last_message[0].created_at
-                                        file_path = join(dirname(__file__), 'files' + os.sep + self.FILE)
-                                        await last_message[0].attachments[0].save(file_path)
-                                        print(f'channel_file_save:{guild.name}')
-        if settings.IS_DEBUG:
-            print('get_discord_attachment_file is over!')
+                                # 日付が新しい場合、ファイルを取得
+                                if Attachment_file_date is None or Attachment_file_date < last_message[0].created_at:
+                                    Attachment_file_date = last_message[0].created_at
+                                    file_path = join(dirname(__file__), 'files' + os.sep + self.FILE)
+                                    await last_message[0].attachments[0].save(file_path)
+                                    print(f'channel_file_save:{guild.name}')
+            if settings.IS_DEBUG:
+                if not os.path.exists(file_path_first_time):
+                    print(f'{file_path_first_time}は作成できませんでした')
+                print('get_discord_attachment_file is over!')
 
     async def set_discord_attachment_file(self, guild:discord.Guild):
         # Herokuの時のみ実施
@@ -90,8 +95,8 @@ class ReactionChannel:
             await get_control_channel.send(self.FILE, file=discord.File(file_path))
             print((f'＊＊＊{get_control_channel.name}へファイルを添付しました！＊＊＊'))
 
-        if settings.IS_DEBUG:
-            print('set_discord_attachment_file is over!')
+            if settings.IS_DEBUG:
+                print('set_discord_attachment_file is over!')
 
     # 初期設定
     async def set_rc(self, guild:discord.Guild):
