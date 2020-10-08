@@ -49,7 +49,8 @@ class ReactionChannel:
                             print(f'＋＋＋＋{last_message}＋＋＋＋')
                             if len(last_message) != 0: 
                                 print(f'len: {len(last_message)}, con: {last_message[0].content}, attchSize:{len(last_message[0].attachments)}')
-                                print(f'date: {Attachment_file_date} <<<<<<< {last_message[0].created_at}, {Attachment_file_date < last_message[0].created_at}')
+                                if Attachment_file_date is not None:
+                                    print(f'date: {Attachment_file_date} <<<<<<< {last_message[0].created_at}, {Attachment_file_date < last_message[0].created_at}')
                         # last_messageがない場合以外で、reaction-channel.jsonが本文である場合、ファイルを取得する
                         if len(last_message) != 0 and last_message[0].content == self.FILE:
                             if len(last_message[0].attachments) > 0:
