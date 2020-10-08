@@ -15,12 +15,12 @@ class ReactionChannelerCog(commands.Cog, name="リアクションチャンネラ
     # ReactionChannelerCogクラスのコンストラクタ。Botを受取り、インスタンス変数として保持。
     def __init__(self, bot):
         self.bot = bot
-        self.reaction_channel = ReactionChannel(self.bot.guilds, self.bot)
+        self.reaction_channel = None
 
     # cogが準備できたら読み込みする
     @commands.Cog.listener()
     async def on_ready(self):
-        print("load cog")
+        print(f"load reaction-channeler's guilds{self.bot.guilds}")
         self.reaction_channel = ReactionChannel(self.bot.guilds, self.bot)
 
     # リアクションチャンネラーコマンド群
