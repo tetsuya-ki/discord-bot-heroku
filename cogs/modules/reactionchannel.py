@@ -23,7 +23,7 @@ class ReactionChannel:
         self.rc_err = ''
 
     # Heroku対応
-    async def get_discord_attachment_file(self, guild:discord.Guild):
+    async def get_discord_attachment_file(self):
         # Herokuの時のみ実施
         if settings.IS_HEROKU:
             if settings.IS_DEBUG:
@@ -47,8 +47,9 @@ class ReactionChannel:
                         last_message = await get_control_channel.history(limit=1).flatten()
                         if settings.IS_DEBUG:
                             print(f'＋＋＋＋{last_message}＋＋＋＋')
-                            print(f'len: {len(last_message)}, con: {last_message[0].content}, attchSize:{len(last_message[0].attachments)}')
-                            print(f'date: {Attachment_file_date} <<<<<<< {last_message[0].created_at}, {Attachment_file_date < last_message[0].created_at}')
+                            if len(last_message) != 0: 
+                                print(f'len: {len(last_message)}, con: {last_message[0].content}, attchSize:{len(last_message[0].attachments)}')
+                                print(f'date: {Attachment_file_date} <<<<<<< {last_message[0].created_at}, {Attachment_file_date < last_message[0].created_at}')
                         # last_messageがない場合以外で、reaction-channel.jsonが本文である場合、ファイルを取得する
                         if len(last_message) != 0 and last_message[0].content == self.FILE:
                             if len(last_message[0].attachments) > 0:
@@ -127,7 +128,7 @@ class ReactionChannel:
         # 読み込み
         try:
             # Herokuの時のみ、チャンネルからファイルを取得する
-            await self.get_discord_attachment_file(guild)
+            await self.get_discord_attachment_file()
 
             print(f'＊＊読み込み＊＊')
             file_path = join(dirname(__file__), 'files' + os.sep + self.FILE)
