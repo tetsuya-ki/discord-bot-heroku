@@ -7,6 +7,7 @@ from os.path import join, dirname
 import base64
 import json
 from . import settings
+import datetime
 
 class ReactionChannel:
     FILE = 'reaction-channel.json'
@@ -31,6 +32,8 @@ class ReactionChannel:
             file_path_first_time = join(dirname(__file__), 'first_time')
             if not os.path.exists(file_path_first_time):
                 with open(file_path_first_time, 'w') as f:
+                    now = datetime.datetime.now()
+                    f.write(now.astimezone(datetime.timezone(datetime.timedelta(hours=9))).strftime('%Y/%m/%d(%a) %H:%M:%S'))
                     print(f'{file_path_first_time}が存在しないので、作成を試みます')
                 Attachment_file_date = None
 
@@ -38,22 +41,24 @@ class ReactionChannel:
                 for guild in self.guilds:
                     # チャンネルのチェック
                     if settings.IS_DEBUG:
-                        print('チャンネル読み込み')
+                        print(f'{guild}: チャンネル読み込み')
                     get_control_channel = discord.utils.get(guild.text_channels, name=self.REACTION_CHANNEL)
                     if get_control_channel is not None:
                         last_message = await get_control_channel.history(limit=1).flatten()
                         # last_messageがない場合以外で、reaction-channel.jsonが本文である場合、ファイルを取得する
-                        if len(last_message) == 0:
-                            return
-                        elif last_message[0].content == self.FILE:
+                        if len(last_message) != 0 and last_message[0].content == self.FILE:
                             if len(last_message[0].attachments) > 0:
-
                                 # 日付が新しい場合、ファイルを取得
                                 if Attachment_file_date is None or Attachment_file_date < last_message[0].created_at:
                                     Attachment_file_date = last_message[0].created_at
                                     file_path = join(dirname(__file__), 'files' + os.sep + self.FILE)
                                     await last_message[0].attachments[0].save(file_path)
                                     print(f'channel_file_save:{guild.name}')
+                    else:
+                        print(f'{guild}: に所定のチャンネルがありません')
+            else:
+                if settings.IS_DEBUG:
+                    print(f'{file_path_first_time}が存在します')
             if settings.IS_DEBUG:
                 if not os.path.exists(file_path_first_time):
                     print(f'{file_path_first_time}は作成できませんでした')
