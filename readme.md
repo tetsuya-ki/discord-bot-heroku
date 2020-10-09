@@ -20,8 +20,11 @@ BOTは[こちら](https://discord.com/developers/applications)で作成し、ト
 0. botを作っておく  
 BOTは[こちら](https://discord.com/developers/applications)で作成し、トークンを取得する（トークンは厳重に管理すること！）
 
-1. make docker image  
+1-1. make docker image(build yourself)
     `docker build --pull --rm -f Dockerfile -t discordbotheroku:latest .`
+
+1-2.pull docker hub image
+    `docker pull tk2812/discord-bot-heroku:latest`
 
 2. make .env-docker  
 `.env-docker.sample`を参考に`.env-docker`を作成する(=の両端はスペース無しが良さそう。以下のスタイルなら動いた)  
@@ -34,3 +37,5 @@ BOTは[こちら](https://discord.com/developers/applications)で作成し、ト
 3. run docker container  
     このBOTの場合、環境変数はファイル指定がオススメだが、普通に指定しても動くはず。  
     `docker run --env-file ./cogs/modules/files/.env-docker discordbotheroku:latest`
+    もしくは
+    `docker run --env-file ./cogs/modules/files/.env-docker docker.io/tk2812/discord-bot-heroku:latest`
