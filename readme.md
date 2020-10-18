@@ -6,11 +6,11 @@ Discord用のBot。discord.pyのBot Commands Frameworkを使用して実装。�
 
 1. [機能](#機能)
 
-1. [通常用カテゴリ(messagecog.pyで実装)](#通常用カテゴリ(messagecog.pyで実装))
+1. [通常用カテゴリ(messagecog.pyで実装)](#通常用カテゴリmessagecogpyで実装)
 
-1. [管理用カテゴリ(admincog.pyで実装)](#管理用カテゴリ(admincog.pyで実装))
+1. [管理用カテゴリ(admincog.pyで実装)](#管理用カテゴリadmincogpyで実装)
 
-1. [リアクションチャンネラーカテゴリ(reactioncyhannelercog.pyで実装)](#リアクションチャンネラーカテゴリ(reactioncyhannelercog.pyで実装))
+1. [リアクションチャンネラーカテゴリ(reactioncyhannelercog.pyで実装)](#リアクションチャンネラーカテゴリreactioncyhannelercogpyで実装)
 
 1. [カテゴリ未設定](#カテゴリ未設定)
 
