@@ -5,7 +5,7 @@ attrs==20.2.0
 chardet==3.0.4
 colorama==0.4.3
 DateTime==4.3
-discord.py==1.4.1
+discord.py==1.5.1
 idna==2.10
 isort==5.5.1
 lazy-object-proxy==1.4.3
