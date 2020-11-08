@@ -96,3 +96,6 @@ venv.bak/
 # file
 first_time
 .env-docker
+
+# temp
+temp/
