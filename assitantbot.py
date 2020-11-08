@@ -9,6 +9,7 @@ INITIAL_EXTENSIONS = [
     'cogs.messagecog'
     , 'cogs.admincog'
     , 'cogs.reactionchannelercog'
+    , 'cogs.onmessagecog'
 ]
 
 # カラー
