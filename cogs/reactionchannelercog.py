@@ -174,6 +174,17 @@ class ReactionChannelerCog(commands.Cog, name="リアクションチャンネラ
                 print('from_channel: '+ str(from_channel))
                 print('message: ' + str(message))
 
+            # 設定によって、すでに登録されたリアクションは無視する
+            if settings.FIRST_REACTION_CHECK:
+                if settings.IS_DEBUG:
+                    print('reactions:'+ str(message.reactions))
+                    print('reactions_type_count:'+ str(len(message.reactions)))
+                for message_reaction in message.reactions:
+                    if emoji == str(message_reaction) and message_reaction.count > 1:
+                        if settings.IS_DEBUG:
+                            print('Already reaction added. emoji_count:'+ str(message_reaction.count))
+                        return
+
             contents = [message.clean_content[i: i+200] for i in range(0, len(message.clean_content), 200)]
             if len(contents) != 1 :
                 contents[0] += ' ＊長いので分割しました＊'
