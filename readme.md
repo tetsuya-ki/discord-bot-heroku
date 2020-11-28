@@ -24,31 +24,84 @@ Discord用のBot。discord.pyのBot Commands Frameworkを使用して実装。�
 
 ### 通常用カテゴリ(messagecog.pyで実装)
 
-`/group` メンバー数を指定：指定されたメンバー数になるように、適当な数のチームに分ける(コマンド実行者がボイスチャンネルに接続している必要アリ。サーバーに複数のボイスチャンネルがある必要アリ。Zoomのブレイクアウトルーム機能からインスパイアされ、作成したもの)
+`/group` メンバー数を指定：指定されたメンバー数になるように、適当な数のチームに分ける(コマンド実行者がボイスチャンネルに接続している必要アリ。サーバーに複数のボイスチャンネルがある必要アリ。Zoomのブレイクアウトルーム機能からインスパイアされ、作成したもの)  
+![image(group](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/group.png?raw=true)
 
-`/poll` 簡易的な投票機能（引数が1つの場合と2以上の場合で動作が変わる）。
+`/poll` 簡易的な投票機能（引数が1つの場合と2以上の場合で動作が変わる）。  
 
-`/team` チーム数指定：メンバー数が均等になるよう、指定された数に分ける(コマンド実行者がボイスチャンネルに接続している必要アリ。サーバーに複数のボイスチャンネルがある必要アリ。Zoomのブレイクアウトルーム機能からインスパイアされ、作成したもの)
+- 引数が1件の場合、YES, NOの投票となる  
+![image(group](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/poll_1.png?raw=true)  
 
-`/vcmembers` ボイスチャンネルに接続しているメンバーリストを取得
+- 引数が2件以上の場合、1つ目の引数がタイトルになり、2件目以降が投票される項目になる  
+![image(group](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/poll_2.png?raw=true)
+
+`/team` チーム数指定：メンバー数が均等になるよう、指定された数に分ける(コマンド実行者がボイスチャンネルに接続している必要アリ。サーバーに複数のボイスチャンネルがある必要アリ。Zoomのブレイクアウトルーム機能からインスパイアされ、作成したもの)  
+![image(group](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/team.png?raw=true)
+
+`/vcmembers` ボイスチャンネルに接続しているメンバーリストを取得  
+![image(group](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/vcmembers.png?raw=true)
 
 ### 管理用カテゴリ(admincog.pyで実装)
 
-`/channel` チャンネルを操作するコマンド（サブコマンド必須）。チャンネルの操作権限を渡すと、削除も可能だから嫌だなと思って作ったコマンド。
+`/channel` チャンネルを操作するコマンド（サブコマンド必須）。チャンネルの操作権限を渡すと、削除も可能だから嫌だなと思って作ったコマンド。  
+
+- サブコマンド`make`でPublicなチャンネルを作成  
+![image(group](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/channel_make.png?raw=true)  
+
+- サブコマンド`privateMake`でPrivateなチャンネルを作成  
+![image(group](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/channel_privateMake.png?raw=true)  
+
+- サブコマンド`roleDelete`でチャンネルからロールを削除  
+![image(group](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/channel_roleDelete.png?raw=true)  
+
+- サブコマンド`roleDelete`でチャンネルからロールを削除失敗  
+![image(group](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/channel_roleDelete(error).png?raw=true)
 
 `/getAuditLog` 監査ログを取得。とっても重たい上に見づらい。。。いつかなんとかしたい（[AuditLogChanges](https://discordpy.readthedocs.io/ja/latest/api.html#discord.AuditLogChanges)をわかりやすく表示する方法あるのかな。。。）
 
-`/purge` メッセージを削除（Botと自分のメッセージのみ削除される）
+`/purge` メッセージを削除（Botと自分のメッセージのみ削除される）  
+![image(group](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/purge.png?raw=true)
 
 ### リアクションチャンネラーカテゴリ(reactionchannelercog.pyで実装)
 
 `/reactionChanneler` リアクションチャンネラーを操作するコマンド（サブコマンド必須）。Slackのリアク字チャンネラーからインスパイアされ、作成したもの。
 
+- リアクションチャンネラー追加  
+![image(group](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/reactionChanneler_add.png?raw=true)
+
+- リアクションチャンネラー削除  
+![image(group](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/reactionChanneler_delete.png?raw=true)
+
+- リアクションチャンネラー表示  
+![image(group](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/reactionChanneler_list.png?raw=true)
+
+- リアクションチャンネラー全削除  
+![image(group](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/reactionChanneler_purge.png?raw=true)
+
 その他、リアクションによって発動する機能をまとめている。:pushpin:をつけると、ピン留めする機能（メッセージ編集権限を与えるのは微妙だが、ピン留めさせたかったため）や、リアクションによってチャンネルに投稿する機能（リアクションチャンネラー機能とする）
+
+-:pushpin:　のイベント  
+![image(pushpin)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/event_pushpin.png?raw=True)
+
+- リアクションチャンネラーの対象のリアクションを追加すると、  
+![image(pushpin)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/event_reaction.png?raw=True)
+
+- 予め指定されたチャンネルへリンクが投稿される  
+![image(pushpin)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/event_reaction_added.png?raw=True)
 
 ### カテゴリ未設定
 
 `/help` ヘルプを表示(`/help channel`のように指定すると説明が返答される)  
+
+- `help`コマンドでこのBOTの使えるコマンドが表示される  
+![image(group](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/help.png?raw=true)  
+
+- サブコマンドも（あれば）で指定できる  
+![image(group](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/help_subcommand.png?raw=true)  
+
+- サブコマンドのサブコマンドも（あれば）指定できる  
+![image(group](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/help_subcommand_subcommand.png?raw=true)
+
 
 ## 環境変数の説明
 
