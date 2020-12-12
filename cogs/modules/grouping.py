@@ -11,10 +11,16 @@ class MakeTeam:
         self.vc_len = 0
         self.vc_state_err = ''
         self.vc_list = ''
+        self.my_connected_vc_only_flg = False
 
     def set_mem(self, ctx):
         guild = ctx.guild
-        self.v_channels = guild.voice_channels
+
+        if self.my_connected_vc_only_flg:
+            self.v_channels = [ctx.author.voice.channel]
+        else:
+            self.v_channels = guild.voice_channels
+
         self.vc_len = len(self.v_channels)
 
         if len(self.v_channels) < 1:
