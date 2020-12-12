@@ -12,6 +12,8 @@ Discord用のBot。discord.pyのBot Commands Frameworkを使用して実装。�
 
 1. [リアクションチャンネラーカテゴリ(reactionchannelercog.pyで実装)](#リアクションチャンネラーカテゴリreactionchannelercogpyで実装)
 
+1. [ゲームカテゴリ(gamecog.pyで実装)](#ゲームカテゴリgamecog.pyで実装)
+
 1. [カテゴリ未設定](#カテゴリ未設定)
 
 1. [環境変数の説明](#環境変数の説明)
@@ -86,8 +88,12 @@ Discord用のBot。discord.pyのBot Commands Frameworkを使用して実装。�
 - リアクションチャンネラーの対象のリアクションを追加すると、  
 ![image(pushpin)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/event_reaction.png?raw=True)
 
-- 予め指定されたチャンネルへリンクが投稿される  
+- あらかじめ指定されたチャンネルへリンクが投稿される  
 ![image(pushpin)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/event_reaction_added.png?raw=True)
+
+### ゲームカテゴリ(gamecog.pyで実装)
+
+`/wordwolf` ワードウルフを行うコマンド
 
 ### カテゴリ未設定
 
@@ -101,7 +107,6 @@ Discord用のBot。discord.pyのBot Commands Frameworkを使用して実装。�
 
 - サブコマンドのサブコマンドも（あれば）指定できる  
 ![image(group](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/help_subcommand_subcommand.png?raw=true)
-
 
 ## 環境変数の説明
 
