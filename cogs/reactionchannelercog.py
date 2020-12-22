@@ -3,6 +3,7 @@ from discord.ext import commands # Bot Commands Frameworkのインポート
 import datetime
 from .modules.reactionchannel import ReactionChannel
 from .modules import settings
+from .onmessagecog import OnMessageCog
 import asyncio
 
 # コグとして用いるクラスを定義。
@@ -16,12 +17,14 @@ class ReactionChannelerCog(commands.Cog, name="リアクションチャンネラ
     def __init__(self, bot):
         self.bot = bot
         self.reaction_channel = None
+        self.onmessagecog = None
 
     # cogが準備できたら読み込みする
     @commands.Cog.listener()
     async def on_ready(self):
         print(f"load reaction-channeler's guilds{self.bot.guilds}")
         self.reaction_channel = ReactionChannel(self.bot.guilds, self.bot)
+        self.onmessagecog = OnMessageCog(self.bot)
 
     # リアクションチャンネラーコマンド群
     @commands.group(aliases=['rch','reaction','reach'], description='リアクションチャンネラーを操作するコマンド（サブコマンド必須）')
@@ -107,9 +110,11 @@ class ReactionChannelerCog(commands.Cog, name="リアクションチャンネラ
     # リアクション追加時に実行されるイベントハンドラを定義
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
+        loop = asyncio.get_event_loop()
         if payload.member.bot:# BOTアカウントは無視する
             return
-        if payload.emoji.name == '👌':# ok_handは確認に使っているので無視する
+        if payload.emoji.name == '👌':# ok_handは確認に使っているので無視する(と思っていたが別機能として使用)
+            await self.save_file(payload)
             return 
         await self.pin_message(payload)
         await self.reaction_channeler(payload)
@@ -207,6 +212,13 @@ class ReactionChannelerCog(commands.Cog, name="リアクションチャンネラ
                 print('to_channel: '+str(to_channel))
 
             await to_channel.send(reaction[1] + ': ' + message.jump_url, embed=embed)
+
+    # 画像を保存
+    async def save_file(self, payload: discord.RawReactionActionEvent):
+        guild = self.bot.get_guild(payload.guild_id)
+        channel = guild.get_channel(payload.channel_id)
+        message = await channel.fetch_message(payload.message_id)
+        await self.onmessagecog.save_message_file(message)
 
 # Bot本体側からコグを読み込む際に呼び出される関数。
 def setup(bot):
