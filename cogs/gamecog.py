@@ -18,11 +18,12 @@ class GameCog(commands.Cog, name='ゲーム用'):
         self.bot = bot
 
     # ワードウルフ機能
-    @commands.command(aliases=['word','ww'], description='ワードウルフ機能(少数派のワードを当てるゲーム)')
+    @commands.command(aliases=['word','ww'], description='ワードウルフ機能(少数派のワードを与えられた人を当てるゲーム)')
     async def wordWolf(self, ctx, answer_minutes=None):
         """
         コマンド実行者が参加しているボイスチャンネルでワードウルフ始めます（BOTからDMが来ますがびっくりしないでください）
         引数(answer_minutes)として投票開始までの時間（3などの正数。単位は「分」）を与えることができます。デフォルトは2分です。
+        3人増えるごとにワードウルフは増加します(3−5人→ワードウルフは1人、6−8人→ワードウルフは2人)
         """
         make_team = MakeTeam()
         make_team.my_connected_vc_only_flg = True
@@ -56,8 +57,8 @@ class GameCog(commands.Cog, name='ゲーム用'):
 
         # ワードウルフの数設定
         wolf_numbers = make_team.mem_len // 3
-        msg =   f'ワードウルフを始めます！　この中に、**{wolf_numbers}人のワードウルフ**が紛れ込んでいます。\n'\
-                f'投票でワードウルフを当てることができたら、市民の勝ち。間違えて「市民をワードウルフ」だと示してしまった場合、ワードウルフの勝ちです！！\n'\
+        msg =   f'ワードウルフを始めます！　この中に、**{wolf_numbers}人のワードウルフ**が紛れ込んでいます(本人も知りません！)。\n'\
+                f'投票でワードウルフを当てることができたら、市民の勝ち。**間違えて「市民をワードウルフ」だと示してしまった場合、ワードウルフの勝ち**です！！\n'\
                 f'DMに送られたお題を確認し、**{answer_minutes}分話し合いののち、投票を実施**してください！！　今から開始します！'
         await ctx.send(msg)
 
