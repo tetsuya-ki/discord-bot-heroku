@@ -12,7 +12,9 @@ Discord用のBot。discord.pyのBot Commands Frameworkを使用して実装。�
 
 1. [リアクションチャンネラーカテゴリ(reactionchannelercog.pyで実装)](#リアクションチャンネラーカテゴリreactionchannelercogpyで実装)
 
-1. [ゲームカテゴリ(gamecog.pyで実装)](#ゲームカテゴリgamecog.pyで実装)
+1. [ゲームカテゴリ(gamecog.pyで実装)](#ゲームカテゴリgamecogpyで実装)
+
+1. [メッセージイベント用(onmessagecog.pyで実装)](#メッセージイベント用onmessagecogpyで実装)
 
 1. [カテゴリ未設定](#カテゴリ未設定)
 
@@ -20,7 +22,7 @@ Discord用のBot。discord.pyのBot Commands Frameworkを使用して実装。�
 
 1. [ローカルでの動かし方](#ローカルでの動かし方)
 
-1. [Dockerでの動かし方](#Dockerでの動かし方)
+1. [Dockerでの動かし方](#dockerでの動かし方)
 
 ## 機能
 
@@ -101,6 +103,15 @@ Discord用のBot。discord.pyのBot Commands Frameworkを使用して実装。�
 - BotからくるDMの様子  
 ![image(wordWolf-2)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/wordWolf-2.png?raw=True)
 
+### メッセージイベント用(onmessagecog.pyで実装)
+
+- コマンドを使って実行する訳ではない機能
+  - メッセージ投稿時に発動する、ScrapboxのURL展開機能([環境変数の説明](#環境変数の説明)SCRAPBOX_SID_AND_PROJECTNAMEで指定した対象のみ)
+  ![image(help)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/on_message-scrapbox_url_expander.png?raw=true)  
+
+  - メッセージ編集時(discordによるURLの展開時）に発動する、画像保存機能([環境変数の説明](#環境変数の説明)のSAVE_FILE_MESSAGEで指定した対象のみ)
+![image(help)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/on_message_edit-save_image.png?raw=true)  
+
 ### カテゴリ未設定
 
 `/help` ヘルプを表示(`/help channel`のように指定すると説明が返答される)  。コマンドが分からない、使い方が分からない、エイリアスが分からない時に使用
@@ -131,6 +142,12 @@ Discord用のBot。discord.pyのBot Commands Frameworkを使用して実装。�
   - 保存したい画像ファイルをもつURLの一部を指定。正規表現対応。複数ある場合はパイプ(|)などを駆使すること
 - FIRST_REACTION_CHECK = True
   - すでにリアクションが付けられた物について、**リアクションチャンネラーを発動しないかどうか**の設定。基本的にはTrueがオススメ。寂しいときはFalseでもOK（何回だってチャンネルに転記されちゃいますが！）
+- SCRAPBOX_SID_AND_PROJECTNAME = "all:scrapbox_sid@projectname1,projectname2;guild1:scrapbox_sid@projectname3"
+  - Scrapboxの展開をする際に使用する、sidとプロジェクト名についての設定
+    - sidについては、[ScrapboxのprivateプロジェクトのAPIを叩く](https://scrapbox.io/nishio/Scrapbox%E3%81%AEprivate%E3%83%97%E3%83%AD%E3%82%B8%E3%82%A7%E3%82%AF%E3%83%88%E3%81%AEAPI%E3%82%92%E5%8F%A9%E3%81%8F)を参照し、注意点を把握した上対応すること
+  - 設定が**複数存在する場合、「;」を挟む必要**がある
+  - 左端のallの部分（対象ギルド）をギルドIDにすると、指定のギルドでしか展開しない。allの場合、すべてのギルドで発動
+  - sidを適用したいプロジェクトが複数ある場合、「,」(コンマ)を挟む必要がある
 
 ## ローカルでの動かし方
 
