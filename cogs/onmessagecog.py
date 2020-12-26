@@ -1,7 +1,10 @@
 import discord
+from discord import embeds
+from discord import message
 from discord.ext import commands # Bot Commands Frameworkのインポート
 from .modules.savefile import SaveFile
 from .modules import settings
+from .modules.scrapboxsidandpnames import ScrapboxSidAndPnames
 import os
 import re
 
@@ -13,6 +16,7 @@ class OnMessageCog(commands.Cog, name="メッセージイベント用"):
     def __init__(self, bot):
         self.bot = bot
         self.savefile = SaveFile()
+        self.scrapboxSidAndPnames = ScrapboxSidAndPnames()
 
     # メッセージ変更時に実行されるイベントハンドラを定義
     @commands.Cog.listener()
@@ -75,6 +79,28 @@ class OnMessageCog(commands.Cog, name="メッセージイベント用"):
             await targetMessage.channel.send('file upload', files=files)
         elif (len(files) == 1):
             await targetMessage.channel.send('file upload', file=files.pop())
+        else:
+            return
+
+    # メッセージ送信時に実行されるイベントハンドラを定義
+    @commands.Cog.listener()
+    async def on_message(self, message: discord.Message):
+        botUser = self.bot.user
+        save_file_message_target = ''
+
+        if message.author == botUser:# 自分は無視する
+            return
+
+        if self.scrapboxSidAndPnames.setup(message.guild) and self.scrapboxSidAndPnames.SCRAPBOX_URL_PATTERN in message.clean_content:
+            await self.scrapbox_url_expand(message)
+        else:
+            return
+
+    # ScrapboxのURLを展開
+    async def scrapbox_url_expand(self, targetMessage: discord.Message):
+        if (self.scrapboxSidAndPnames.check(targetMessage)):
+            embed = await self.scrapboxSidAndPnames.expand(targetMessage)
+            await targetMessage.channel.send(embed=embed)
         else:
             return
 
