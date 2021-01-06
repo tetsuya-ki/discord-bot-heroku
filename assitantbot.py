@@ -138,6 +138,8 @@ class Help(commands.HelpCommand):
 if __name__ == '__main__':
     intents = discord.Intents.default()
     intents.members = True
+    intents.typing = False
+    intents.presences = False
 
     bot = AssistantBot(
             command_prefix = '/'
