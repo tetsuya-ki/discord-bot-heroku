@@ -4,12 +4,16 @@ from dotenv import load_dotenv
 from logging import DEBUG, INFO, WARN, ERROR
 
 def if_env(str):
-    if str.upper() == 'TRUE':
+    if str is None:
+        return False
+    elif str.upper() == 'TRUE':
         return True
     else:
         return False
 
 def get_log_level(str):
+    if str is None:
+        return WARN
     upper_str = str.upper()
     if upper_str == 'DEBUG':
         return DEBUG
