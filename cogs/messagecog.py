@@ -1,6 +1,10 @@
-import discord
-from discord.ext import commands # Bot Commands Frameworkのインポート
+from discord.ext import commands  # Bot Commands Frameworkのインポート
 from .modules.grouping import MakeTeam
+from logging import getLogger
+
+import discord
+
+logger = getLogger(__name__)
 
 POLL_CHAR = ['🇦','🇧','🇨','🇩','🇪','🇫','🇬','🇭','🇮','🇯','🇰','🇱','🇲','🇳','🇴','🇵','🇶','🇷','🇸','🇹']
 
@@ -79,13 +83,13 @@ class MessageCog(commands.Cog, name='通常用'):
     @team.error
     async def team_error(self, ctx, error):
         if isinstance(error, commands.CommandError):
-            print(error)
+            logger.error(error)
             await ctx.send(error)
 
     @group.error
     async def group_error(self, ctx, error):
         if isinstance(error, commands.CommandError):
-            print(error)
+            logger.error(error)
             await ctx.send(error)
 
 def setup(bot):

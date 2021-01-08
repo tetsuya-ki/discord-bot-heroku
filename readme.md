@@ -132,8 +132,8 @@ Discord用のBot。discord.pyのBot Commands Frameworkを使用して実装。�
 
 - DISCORD_TOKEN = 'discord_bot_token'
   - ここにDiscord Botのトークンを貼り付ける(とても重要。これをしないと動かない)
-- IS_DEBUG = True
-  - デバッグ用のログを出力したい場合のみTrueとする。これがFalseや存在しない場合はデバッグ用のログが出力されない
+- LOG_LEVEL = INFO
+  - ログレベルを設定したい場合、設定する。デフォルトはWARN。DEBUG, INFO, WARN, ERRORが設定可能
 - AUDIT_LOG_SEND_CHANNEL = "guild1.audit_log_send_channel_id1;guild1.audit_log_send_channel_id1"
   - 管理用のチャンネルを記載する。ギルドID.管理用のチャンネルIDの形式で記載する。**複数ある場合は、「;」を挟む**必要がある
 - IS_HEROKU = True

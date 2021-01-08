@@ -1,9 +1,12 @@
-import asyncio
-import random
-import discord
-from discord.ext import commands # Bot Commands Frameworkのインポート
+from discord.ext import commands  # Bot Commands Frameworkのインポート
 from .modules.grouping import MakeTeam
 from .modules.readjson import ReadJson
+from logging import getLogger
+
+import asyncio
+import random
+
+logger = getLogger(__name__)
 
 # コグとして用いるクラスを定義。
 class GameCog(commands.Cog, name='ゲーム用'):
@@ -86,7 +89,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
     @wordWolf.error
     async def wordWolf_error(self, ctx, error):
         if isinstance(error, commands.CommandError):
-            print(error)
+            logger.error(error)
             await ctx.send(error)
 
 def setup(bot):

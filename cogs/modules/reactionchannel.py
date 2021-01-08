@@ -1,13 +1,17 @@
-import pickle
-import discord
 from discord.message import Attachment
 from discord.utils import get
-import os
 from os.path import join, dirname
+from . import settings
+from logging import getLogger
+
+import pickle
+import discord
+import os
 import base64
 import json
-from . import settings
 import datetime
+
+logger = getLogger(__name__)
 
 class ReactionChannel:
     FILE = 'reaction-channel.json'
@@ -26,31 +30,28 @@ class ReactionChannel:
     async def get_discord_attachment_file(self):
         # Herokuの時のみ実施
         if settings.IS_HEROKU:
-            if settings.IS_DEBUG:
-                print('Heroku mode.start get_discord_attachment_file.')
+            logger.debug('Heroku mode.start get_discord_attachment_file.')
             # # ファイルをチェックし、存在しなければ最初と見做す
             file_path_first_time = join(dirname(__file__), 'first_time')
             if not os.path.exists(file_path_first_time):
                 with open(file_path_first_time, 'w') as f:
                     now = datetime.datetime.now()
                     f.write(now.astimezone(datetime.timezone(datetime.timedelta(hours=9))).strftime('%Y/%m/%d(%a) %H:%M:%S'))
-                    print(f'{file_path_first_time}が存在しないので、作成を試みます')
+                    logger.debug(f'{file_path_first_time}が存在しないので、作成を試みます')
                 Attachment_file_date = None
 
                 # BotがログインしているGuildごとに繰り返す
                 for guild in self.guilds:
                     # チャンネルのチェック
-                    if settings.IS_DEBUG:
-                        print(f'{guild}: チャンネル読み込み')
+                    logger.debug(f'{guild}: チャンネル読み込み')
                     get_control_channel = discord.utils.get(guild.text_channels, name=self.REACTION_CHANNEL)
                     if get_control_channel is not None:
                         last_message = await get_control_channel.history(limit=1).flatten()
-                        if settings.IS_DEBUG:
-                            print(f'＋＋＋＋{last_message}＋＋＋＋')
-                            if len(last_message) != 0: 
-                                print(f'len: {len(last_message)}, con: {last_message[0].content}, attchSize:{len(last_message[0].attachments)}')
-                                if Attachment_file_date is not None:
-                                    print(f'date: {Attachment_file_date} <<<<<<< {last_message[0].created_at}, {Attachment_file_date < last_message[0].created_at}')
+                        logger.debug(f'＋＋＋＋{last_message}＋＋＋＋')
+                        if len(last_message) != 0: 
+                            logger.debug(f'len: {len(last_message)}, con: {last_message[0].content}, attchSize:{len(last_message[0].attachments)}')
+                            if Attachment_file_date is not None:
+                                logger.debug(f'date: {Attachment_file_date} <<<<<<< {last_message[0].created_at}, {Attachment_file_date < last_message[0].created_at}')
                         # last_messageがない場合以外で、reaction-channel.jsonが本文である場合、ファイルを取得する
                         if len(last_message) != 0 and last_message[0].content == self.FILE:
                             if len(last_message[0].attachments) > 0:
@@ -59,24 +60,22 @@ class ReactionChannel:
                                     Attachment_file_date = last_message[0].created_at
                                     file_path = join(dirname(__file__), 'files' + os.sep + self.FILE)
                                     await last_message[0].attachments[0].save(file_path)
-                                    print(f'channel_file_save:{guild.name}')
+                                    logger.debug(f'channel_file_save:{guild.name}')
                     else:
-                        print(f'{guild}: に所定のチャンネルがありません')
+                        logger.warn(f'{guild}: に所定のチャンネルがありません')
             else:
-                if settings.IS_DEBUG:
-                    print(f'{file_path_first_time}が存在します')
-            if settings.IS_DEBUG:
-                if not os.path.exists(file_path_first_time):
-                    print(f'{file_path_first_time}は作成できませんでした')
-                else:
-                    print(f'{file_path_first_time}は作成できています')
-                print('get_discord_attachment_file is over!')
+                logger.debug(f'{file_path_first_time}が存在します')
+
+            if not os.path.exists(file_path_first_time):
+                logger.error(f'{file_path_first_time}は作成できませんでした')
+            else:
+                logger.debug(f'{file_path_first_time}は作成できています')
+            logger.debug('get_discord_attachment_file is over!')
 
     async def set_discord_attachment_file(self, guild:discord.Guild):
         # Herokuの時のみ実施
         if settings.IS_HEROKU:
-            if settings.IS_DEBUG:
-                print('Heroku mode.start set_discord_attachment_file.')
+            logger.debug('Heroku mode.start set_discord_attachment_file.')
 
             # チャンネルをチェック(チャンネルが存在しない場合は勝手に作成する)
             get_control_channel = discord.utils.get(guild.text_channels, name=self.REACTION_CHANNEL)
@@ -92,10 +91,10 @@ class ReactionChannel:
                 overwrites = dict(zip(target, permissions))
 
                 try:
-                    print((f'＊＊＊{self.REACTION_CHANNEL}を作成しました！＊＊＊'))
+                    logger.debug(f'＊＊＊{self.REACTION_CHANNEL}を作成しました！＊＊＊')
                     get_control_channel = await guild.create_text_channel(name=self.REACTION_CHANNEL, overwrites=overwrites)
                 except discord.errors.Forbidden:
-                    print((f'＊＊＊{self.REACTION_CHANNEL}の作成に失敗しました！＊＊＊'))
+                    logger.error(f'＊＊＊{self.REACTION_CHANNEL}の作成に失敗しました！＊＊＊')
 
             # チャンネルの最後のメッセージを確認し、所定のメッセージなら削除する
             last_message = await get_control_channel.history(limit=1).flatten()
@@ -106,10 +105,9 @@ class ReactionChannel:
             # チャンネルにファイルを添付する
             file_path = join(dirname(__file__), 'files' + os.sep + self.FILE)
             await get_control_channel.send(self.FILE, file=discord.File(file_path))
-            print((f'＊＊＊{get_control_channel.name}へファイルを添付しました！＊＊＊'))
+            logger.debug(f'＊＊＊{get_control_channel.name}へファイルを添付しました！＊＊＊')
 
-            if settings.IS_DEBUG:
-                print('set_discord_attachment_file is over!')
+            logger.debug('set_discord_attachment_file is over!')
 
     # 初期設定
     async def set_rc(self, guild:discord.Guild):
@@ -123,7 +121,7 @@ class ReactionChannel:
 
         # 既に読み込まれている場合は、読み込みしない
         if self.rc_len != 0:
-            print('__読み込み不要__')
+            logger.debug('__読み込み不要__')
             return
 
         # 読み込み
@@ -131,7 +129,7 @@ class ReactionChannel:
             # Herokuの時のみ、チャンネルからファイルを取得する
             await self.get_discord_attachment_file()
 
-            print(f'＊＊読み込み＊＊')
+            logger.debug(f'＊＊読み込み＊＊')
             file_path = join(dirname(__file__), 'files' + os.sep + self.FILE)
             dict = {}
             with open(file_path, mode='r') as f:
@@ -146,17 +144,17 @@ class ReactionChannel:
             self.rc_len = len(self.guild_reaction_channels)
         except FileNotFoundError:
             # 読み込みに失敗したらなにもしない
-            print
+            pass
         except json.JSONDecodeError:
             # JSON変換失敗したらなにもしない
-            print
+            pass
         except EOFError:
             # 読み込みに失敗したらなにもしない
-            print
+            pass
 
     # リアクションチャンネルを保管する
     async def save(self, guild:discord.Guild):
-        print('＊＊書き込み＊＊')
+        logger.debug('＊＊書き込み＊＊')
         file_path = join(dirname(__file__), 'files' + os.sep + self.FILE)
         serialized = base64.b64encode(pickle.dumps(self.reaction_channels)).decode("utf-8")
         dict = {"pickle": serialized}
@@ -177,7 +175,7 @@ class ReactionChannel:
             reaction_id = reaction.split(':')[1]
         guild = ctx.guild
         additem = f'{reaction}+{channel}'
-        print(f'＊＊追加のチェック＊＊, reaction: {reaction}, channel: {channel}')
+        logger.debug(f'＊＊追加のチェック＊＊, reaction: {reaction}, channel: {channel}')
         # 絵文字が不正な場合(guildに登録された絵文字なら'yes'のような文字が入っているし、そうでない場合は1文字のはず -> 🐈‍⬛,がありえるので緩和)
         emoji = discord.utils.get(guild.emojis, name=reaction_id)
         if emoji is None and len(reaction) > 4:
@@ -209,14 +207,14 @@ class ReactionChannel:
 
     # リアクションチャンネルを追加
     async def add(self, ctx, reaction:str, channel:str):
-        print(f'＊＊追加＊＊, reaction: {reaction}, channel: {channel}')
+        logger.debug(f'＊＊追加＊＊, reaction: {reaction}, channel: {channel}')
         guild = ctx.guild
         await self.set_rc(guild)
 
         # チャンネルがID指定の場合はギルドからチャンネル名を取得
         if channel.count('#') == 1:
             channel_id = channel.split('#')[1].split('>')[0]
-            print(f'check channel:{channel_id}')
+            logger.debug(f'check channel:{channel_id}')
             channel_info = None
             if channel_id.isdecimal():
                 channel_info = guild.get_channel(int(channel_id))
@@ -248,7 +246,7 @@ class ReactionChannel:
     async def list(self, ctx):
         guild = ctx.guild
         await self.set_rc(guild)
-        print(f'＊＊リスト＊＊, {self.guild_reaction_channels}')
+        logger.debug(f'＊＊リスト＊＊, {self.guild_reaction_channels}')
         text = ''
         for list in self.guild_reaction_channels:
             text = f'{text}  リアクション：{list[0]} → <#{list[2]}>\n'
@@ -260,21 +258,19 @@ class ReactionChannel:
 
     # 全削除
     async def purge(self, ctx):
-        print('＊＊リアクションチャンネラーを全部削除＊＊')
+        logger.debug('＊＊リアクションチャンネラーを全部削除＊＊')
         guild = ctx.guild
         await self.set_rc(guild)
-        if settings.IS_DEBUG:
-            for test in map(str, self.reaction_channels):
-                print(test)
-            print('this guild is '+str(guild.id))
+        for test in map(str, self.reaction_channels):
+            logger.debug(test)
+        logger.debug('this guild is '+str(guild.id))
         self.reaction_channels = [rc for rc in self.reaction_channels if str(guild.id) not in map(str, rc)]
         self.guild_reaction_channels = []
         self.guild_rc_txt_lists = []
         self.rc_len = 0
-        if settings.IS_DEBUG:
-            print('**********************************')
-            for test in map(str, self.reaction_channels):
-                print(test)
+        logger.debug('**********************************')
+        for test in map(str, self.reaction_channels):
+            logger.debug(test)
         # 保管
         if await self.save(guild) is False:
             return self.rc_err
@@ -283,14 +279,14 @@ class ReactionChannel:
 
     # 削除
     async def delete(self, ctx, reaction:str, channel:str):
-        print(f'＊＊削除＊＊, reaction: {reaction}, channel: {channel}')
+        logger.debug(f'＊＊削除＊＊, reaction: {reaction}, channel: {channel}')
         guild = ctx.guild
         await self.set_rc(guild)
 
         # チャンネルがID指定の場合はギルドからチャンネル名を取得
         if channel.count('#') == 1:
             channel_id = channel.split('#')[1].split('>')[0]
-            print(f'check channel:{channel_id}')
+            logger.debug(f'check channel:{channel_id}')
             channel_info = None
             if channel_id.isdecimal():
                 channel_info = guild.get_channel(int(channel_id))

@@ -1,10 +1,14 @@
-import discord
-from discord.ext import commands # Bot Commands Frameworkのインポート
-import datetime
+from discord.ext import commands  # Bot Commands Frameworkのインポート
 from .modules.reactionchannel import ReactionChannel
 from .modules import settings
 from .onmessagecog import OnMessageCog
+from logging import getLogger
+
+import discord
+import datetime
 import asyncio
+
+logger = getLogger(__name__)
 
 # コグとして用いるクラスを定義。
 class ReactionChannelerCog(commands.Cog, name="リアクションチャンネラー"):
@@ -22,7 +26,7 @@ class ReactionChannelerCog(commands.Cog, name="リアクションチャンネラ
     # cogが準備できたら読み込みする
     @commands.Cog.listener()
     async def on_ready(self):
-        print(f"load reaction-channeler's guilds{self.bot.guilds}")
+        logger.info(f"load reaction-channeler's guilds{self.bot.guilds}")
         self.reaction_channel = ReactionChannel(self.bot.guilds, self.bot)
         self.onmessagecog = OnMessageCog(self.bot)
 
@@ -166,28 +170,24 @@ class ReactionChannelerCog(commands.Cog, name="リアクションチャンネラ
         # 入力された絵文字でフィルターされたリストを生成する
         filtered_list = [rc for rc in self.reaction_channel.guild_reaction_channels if emoji in rc]
 
-        if settings.IS_DEBUG:
-            print(f'*****emoji***** {emoji}')
+        logger.debug(f'*****emoji***** {emoji}')
 
         # フィルターされたリストがある分だけ、チャンネルへ投稿する
         for reaction in filtered_list:
             from_channel = guild.get_channel(payload.channel_id)
             message = await from_channel.fetch_message(payload.message_id)
 
-            if settings.IS_DEBUG:
-                print('guild:'+ str(guild))
-                print('from_channel: '+ str(from_channel))
-                print('message: ' + str(message))
+            logger.debug('guild:'+ str(guild))
+            logger.debug('from_channel: '+ str(from_channel))
+            logger.debug('message: ' + str(message))
 
             # 設定によって、すでに登録されたリアクションは無視する
             if settings.FIRST_REACTION_CHECK:
-                if settings.IS_DEBUG:
-                    print('reactions:'+ str(message.reactions))
-                    print('reactions_type_count:'+ str(len(message.reactions)))
+                logger.debug('reactions:'+ str(message.reactions))
+                logger.debug('reactions_type_count:'+ str(len(message.reactions)))
                 for message_reaction in message.reactions:
                     if emoji == str(message_reaction) and message_reaction.count > 1:
-                        if settings.IS_DEBUG:
-                            print('Already reaction added. emoji_count:'+ str(message_reaction.count))
+                        logger.debug('Already reaction added. emoji_count:'+ str(message_reaction.count))
                         return
 
             contents = [message.clean_content[i: i+200] for i in range(0, len(message.clean_content), 200)]
@@ -207,9 +207,8 @@ class ReactionChannelerCog(commands.Cog, name="リアクションチャンネラ
                     embed.add_field(name='addText', value=addText + ' ＊長いので分割しました＊', inline=False)
 
             to_channel = guild.get_channel(int(reaction[2]))
-            if settings.IS_DEBUG:
-                print('setting:'+str(reaction[2]))
-                print('to_channel: '+str(to_channel))
+            logger.debug('setting:'+str(reaction[2]))
+            logger.debug('to_channel: '+str(to_channel))
 
             await to_channel.send(reaction[1] + ': ' + message.jump_url, embed=embed)
 

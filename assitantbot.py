@@ -1,8 +1,12 @@
-import discord
-from discord.ext import commands # Bot Commands Frameworkをインポート
+from discord.ext import commands  # Bot Commands Frameworkをインポート
 from cogs.modules import settings
+from logging import basicConfig, getLogger
+
+import discord
 import textwrap
-import traceback # エラー表示のためインポート
+
+basicConfig(level=settings.LOG_LEVEL)
+logger = getLogger(__name__)
 
 # 読み込むCogの名前を格納
 INITIAL_EXTENSIONS = [
@@ -29,11 +33,11 @@ class AssistantBot(commands.Bot):
             try:
                 self.load_extension(cog)
             except Exception:
-                traceback.print_exc()
+                logger.warn("traceback:", stack_info=True)
 
     # Botの準備完了時に呼び出されるイベント
     async def on_ready(self):
-        print('We have logged in as {0}'.format(self.user))
+        logger.info('We have logged in as {0}'.format(self.user))
 
 # クラス定義。HelpCommandクラスを継承。
 class Help(commands.HelpCommand):

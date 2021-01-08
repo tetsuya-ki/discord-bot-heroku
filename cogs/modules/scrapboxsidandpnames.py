@@ -1,9 +1,12 @@
+from . import settings
+from logging import getLogger
+
 import re
 import discord
 import aiohttp
-import json
 import datetime
-from . import settings
+
+logger = getLogger(__name__)
 
 class ScrapboxSidAndPname:
     def __init__(self, scrapbox_sid, scrapbox_pnames):
@@ -40,12 +43,11 @@ class ScrapboxSidAndPnames:
                             scrapboxSidAndPname = ScrapboxSidAndPname(scrapbox_sid, scrapbox_pnames)
                             self.targets.append(scrapboxSidAndPname)
 
-            # if settings.IS_DEBUG:
-                # print(f'guild_id: {guild.id}\n********')
-                # for scrapboxSidAndPname in self.targets:
-                #     print(f'sid: {scrapboxSidAndPname.scrapbox_sid}')
-                #     for project_name in scrapboxSidAndPname.scrapbox_pnames:
-                #         print(f'project_name: {project_name}')
+            logger.debug(f'guild_id: {guild.id}\n********')
+            for scrapboxSidAndPname in self.targets:
+                logger.debug(f'sid: {scrapboxSidAndPname.scrapbox_sid}')
+                for project_name in scrapboxSidAndPname.scrapbox_pnames:
+                    logger.debug(f'project_name: {project_name}')
 
             if len(self.targets) > 0:
                 return True
