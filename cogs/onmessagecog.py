@@ -91,8 +91,9 @@ class OnMessageCog(commands.Cog, name="メッセージイベント用"):
         if message.author == botUser:# 自分は無視する
             return
 
-        if self.scrapboxSidAndPnames.setup(message.guild) and self.scrapboxSidAndPnames.SCRAPBOX_URL_PATTERN in message.clean_content:
-            await self.scrapbox_url_expand(message)
+        if self.scrapboxSidAndPnames.SCRAPBOX_URL_PATTERN in message.clean_content:
+            if self.scrapboxSidAndPnames.setup(message.guild):
+                await self.scrapbox_url_expand(message)
         else:
             return
 
