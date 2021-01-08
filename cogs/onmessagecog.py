@@ -1,12 +1,16 @@
-import discord
 from discord import embeds
 from discord import message
-from discord.ext import commands # Bot Commands Frameworkのインポート
+from discord.ext import commands  # Bot Commands Frameworkのインポート
 from .modules.savefile import SaveFile
 from .modules import settings
 from .modules.scrapboxsidandpnames import ScrapboxSidAndPnames
+from logging import getLogger
+
+import discord
 import os
 import re
+
+logger = getLogger(__name__)
 
 # コグとして用いるクラスを定義。
 class OnMessageCog(commands.Cog, name="メッセージイベント用"):
@@ -31,10 +35,9 @@ class OnMessageCog(commands.Cog, name="メッセージイベント用"):
 
         rePattern = re.compile(save_file_message_target)
 
-        if settings.IS_DEBUG:
-            print(afterMessage)
-            # print(afterMessage.clean_content)
-            # print("save_target:" + save_file_message_target)
+        logger.debug(afterMessage)
+        # logger.debug(afterMessage.clean_content)
+        # logger.debug("save_target:" + save_file_message_target)
         if not rePattern.search(afterMessage.clean_content):# 対象のメッセージでない場合、処理を中断
             return
         else:
@@ -59,19 +62,16 @@ class OnMessageCog(commands.Cog, name="メッセージイベント用"):
             if 'thumbnail' in dicted_data and 'url' in dicted_data['thumbnail']:
                 img_url = dicted_data['thumbnail']['url']
 
-            if settings.IS_DEBUG:
-                # print(embed.image)
-                # print('filepath:' + saved_path)
-                print(dicted_data)
+            # logger.debug(embed.image)
+            # logger.debug('filepath:' + saved_path)
+            logger.info(dicted_data)
             if img_url:
                 path = await self.savefile.download_file_to_dir(img_url, saved_path)
                 if path is not None:
                     files.append(discord.File(path))
-                    if settings.IS_DEBUG:
-                        print('save file: ' + path)
+                    logger.debug('save file: ' + path)
             else:
-                if settings.IS_DEBUG:
-                    print('url is empty.')
+                logger.debug('url is empty.')
                 return
 
         # チャンネルにファイルを添付する(複数ある場合、filesで添付)
@@ -91,8 +91,9 @@ class OnMessageCog(commands.Cog, name="メッセージイベント用"):
         if message.author == botUser:# 自分は無視する
             return
 
-        if self.scrapboxSidAndPnames.setup(message.guild) and self.scrapboxSidAndPnames.SCRAPBOX_URL_PATTERN in message.clean_content:
-            await self.scrapbox_url_expand(message)
+        if self.scrapboxSidAndPnames.SCRAPBOX_URL_PATTERN in message.clean_content:
+            if self.scrapboxSidAndPnames.setup(message.guild):
+                await self.scrapbox_url_expand(message)
         else:
             return
 

@@ -3,7 +3,7 @@ import aiohttp
 
 class SaveFile:
     def __init__(self):
-        print
+        pass
 
     async def download_file(self, url, dst_path):
         async with aiohttp.ClientSession() as session:

@@ -1,11 +1,15 @@
 from datetime import date
-import discord
 from discord import channel
-from discord.ext import commands # Bot Commands Frameworkのインポート
-import datetime
+from discord.ext import commands  # Bot Commands Frameworkのインポート
 from .modules import settings
 from .modules.auditlogchannel import AuditLogChannel
+from logging import DEBUG, getLogger
+
+import discord
+import datetime
 import asyncio
+
+logger = getLogger(__name__)
 
 # コグとして用いるクラスを定義。
 class AdminCog(commands.Cog, name='管理用'):
@@ -39,23 +43,23 @@ class AdminCog(commands.Cog, name='管理用'):
             oldest_first_flag = False
 
         if await self.audit_log_channel.get_ch(ctx.guild) is False:
-            print(self.audit_log_channel.alc_err)
+            logger.debug(self.audit_log_channel.alc_err)
             return
         else:
             to_channel = self.audit_log_channel.channel
 
         start = f'start getAuditLog ({audit_log}回で開始)'
 
-        if (settings.IS_DEBUG):
-            print(f'oldest_first_flag:{oldest_first_flag}')
-            print(f'limit_num:{limit_num}')
+        logger.debug(f'oldest_first_flag:{oldest_first_flag}')
+        logger.debug(f'limit_num:{limit_num}')
+        if (settings.LOG_LEVEL == DEBUG):
             await to_channel.send(start)
 
-        print(start)
+        logger.debug(start)
         first_entry_list = await ctx.guild.audit_logs(limit=1, oldest_first=oldest_first_flag).flatten()
         first_entry = first_entry_list[0]
-        if (settings.IS_DEBUG):
-            print(f'{audit_log}: (fet:{first_entry_times}) {first_entry}')
+
+        logger.debug(f'{audit_log}: (fet:{first_entry_times}) {first_entry}')
 
         async for entry in ctx.guild.audit_logs(limit=limit_num, oldest_first=oldest_first_flag):
             if first_entry.id == entry.id:
@@ -64,16 +68,15 @@ class AdminCog(commands.Cog, name='管理用'):
             audit_log = audit_log + 1
             await self.sendAuditLogEntry(ctx, to_channel, entry, audit_log)
 
-            if (settings.IS_DEBUG):
-                print(f'{audit_log}: (fet:{first_entry_times}) {entry}')
+            logger.debug(f'{audit_log}: (fet:{first_entry_times}) {entry}')
 
             if first_entry_times > 1:
                 break
 
         end = f'end getAuditLog ({audit_log}回で終了)'
-        if (settings.IS_DEBUG):
+        if (settings.LOG_LEVEL == DEBUG):
             await to_channel.send(end)
-        print(end)
+        logger.debug(end)
 
     # 監査ログをチャンネルに送信
     async def sendAuditLogEntry(self, ctx, to_channel, entry, audit_log_times):
@@ -94,15 +97,14 @@ class AdminCog(commands.Cog, name='管理用'):
                 embed.add_field(name='before.roles', value=entry.changes.before.roles)
             if hasattr(entry.changes.after, 'roles'):
                 embed.add_field(name='after.roles', value=entry.changes.after.roles)
-                print(entry.changes.after.roles)
+                logger.debug(entry.changes.after.roles)
             if hasattr(entry.changes.before, 'channel'):
                 embed.add_field(name='before.channel', value=entry.changes.before.channel)
             if hasattr(entry.changes.after, 'channel'):
                 embed.add_field(name='after.channel', value=entry.changes.after.channel)
 
-        if (settings.IS_DEBUG):
-            print(msg)
-            print(entry.changes)
+        logger.debug(msg)
+        logger.debug(entry.changes)
 
         await to_channel.send(msg, embed=embed)
 
@@ -145,7 +147,7 @@ class AdminCog(commands.Cog, name='管理用'):
     @getAuditLog.error
     async def getAuditLog_error(self, ctx, error):
         if isinstance(error, commands.CommandError):
-            print(error)
+            logger.error(error)
             await ctx.send(error)
 
     # チャンネル管理コマンド群
@@ -255,15 +257,14 @@ class AdminCog(commands.Cog, name='管理用'):
                 permissions.append(discord.PermissionOverwrite(read_messages=True))
         overwrites = dict(zip(ctx.guild.roles, permissions))
 
-        if settings.IS_DEBUG:
-            print('-----author\'s role-----------------------------------------------------------')
-            for author_role in ctx.author.roles:
-                print(f'id:{author_role.id}, name:{author_role.name}, position:{author_role.position}')
-            print('-----------------------------------------------------------------')
-            print('-----Guild\'s role-----------------------------------------------------------')
-            for guild_role in ctx.guild.roles:
-                print(f'id:{guild_role.id}, name:{guild_role.name}, position:{guild_role.position}')
-            print('-----------------------------------------------------------------')
+        logger.debug('-----author\'s role-----------------------------------------------------------')
+        for author_role in ctx.author.roles:
+            logger.debug(f'id:{author_role.id}, name:{author_role.name}, position:{author_role.position}')
+        logger.debug('-----------------------------------------------------------------')
+        logger.debug('-----Guild\'s role-----------------------------------------------------------')
+        for guild_role in ctx.guild.roles:
+            logger.debug(f'id:{guild_role.id}, name:{guild_role.name}, position:{guild_role.position}')
+        logger.debug('-----------------------------------------------------------------')
 
         # 念の為、確認する
         confirm_text = f'{category_text}プライベートなチャンネル **{channelName}** を作成してよろしいですか()？ 問題ない場合、10秒以内に👌(ok_hand)のリアクションをつけてください。\nあなたのコマンド：`{ctx.message.clean_content}`'
@@ -388,7 +389,7 @@ class AdminCog(commands.Cog, name='管理用'):
         else:
             bot_role = botMember.top_role
             bot_overwrites_pair = ctx.channel.overwrites_for(bot_role).pair()
-            print(bot_overwrites_pair)
+            logger.debug(bot_overwrites_pair)
             # 権限が初期設定なら
             if (bot_overwrites_pair[0].value == 0) and (bot_overwrites_pair[1].value == 0):
                 bot_overwrite = discord.PermissionOverwrite(read_messages=True,read_message_history=True)
@@ -448,8 +449,7 @@ class AdminCog(commands.Cog, name='管理用'):
             category = guild.get_channel(channel.category_id)
             if category is not None:
                 str += '\nCategory: {0}'.format(category.name)
-        if (settings.IS_DEBUG):
-            print(f'***{str}***')
+        logger.debug(f'***{str}***')
         await self.sendGuildChannel(guild, str, channel.created_at)
 
     # メンバーGuild参加時に実行されるイベントハンドラを定義
@@ -471,15 +471,14 @@ class AdminCog(commands.Cog, name='管理用'):
         guild = member.guild
         str = 'member: {0}が{1}しました'.format(member, event_text)
 
-        if (settings.IS_DEBUG):
-            print(f'***{str}***')
+        logger.debug(f'***{str}***')
 
         await self.sendGuildChannel(guild, str, dt)
 
     # 監査ログをチャンネルに送信
     async def sendGuildChannel(self, guild: discord.Guild, str: str, dt: datetime):
         if await self.audit_log_channel.get_ch(guild) is False:
-            print(self.audit_log_channel.alc_err)
+            logger.debug(self.audit_log_channel.alc_err)
             return
         else:
             to_channel = self.audit_log_channel.channel
