@@ -1,5 +1,4 @@
 import random
-import discord
 
 # 改造元：https://github.com/Rabbit-from-hat/make-team/
 class MakeTeam:

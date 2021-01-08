@@ -21,10 +21,10 @@ class ReadJson:
 
         except FileNotFoundError:
             # 読み込みに失敗したらなにもしない
-            print
+            pass
         except json.JSONDecodeError:
             # JSON変換失敗したらなにもしない
-            print
+            pass
         except EOFError:
             # 読み込みに失敗したらなにもしない
-            print
+            pass
