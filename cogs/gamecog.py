@@ -5,6 +5,7 @@ from logging import getLogger
 
 import asyncio
 import random
+import re
 
 logger = getLogger(__name__)
 
@@ -86,8 +87,74 @@ class GameCog(commands.Cog, name='ゲーム用'):
         await asyncio.sleep(answer_minutes * 60)
         await ctx.send(netabare_msg)
 
+    # NGワードゲーム機能
+    @commands.command(aliases=['ngword','ngw','ngwg', 'ngg'], description='NGワードゲーム機能(禁止された言葉を喋ってはいけないゲーム)')
+    async def ngWordGame(self, ctx, answer_minutes=None):
+        """
+        コマンド実行者が参加しているボイスチャンネルでNGワードゲームを始めます（BOTからDMが来ますがびっくりしないでください）
+        引数(answer_minutes)として終了までの時間（3などの正数。単位は「分」）を与えることができます。デフォルトは2分です。
+        """
+        make_team = MakeTeam()
+        make_team.my_connected_vc_only_flg = True
+        await make_team.get_members(ctx)
+
+        if make_team.mem_len < 2:
+            msg = f'NGワードゲームを楽しむには2人以上のメンバーが必要です(現在、{make_team.mem_len}人しかいません)'
+            await ctx.send(msg)
+            return
+
+        if answer_minutes is None:
+            answer_minutes = self.DEFAULT_TIME
+        elif answer_minutes.isdecimal():
+            answer_minutes = int(answer_minutes)
+        else:
+            answer_minutes = self.DEFAULT_TIME
+
+        if answer_minutes > self.MAX_TIME:
+            msg = f'NGワードゲームはそんなに長い時間するものではないです(現在、{answer_minutes}分を指定しています。{self.MAX_TIME}分以内にして下さい)'
+            await ctx.send(msg)
+            return
+
+        # ファイルを読み込み、NGワードゲーム用のデータを作成(ワードウルフの語彙を流用)
+        read_json = ReadJson()
+        read_json.readJson()
+
+        msg =   f'NGワードゲームを始めます！　DMでそれぞれのNGワードを配りました！(**自分のNGワードのみ分かりません**)\n'\
+                f'これから**雑談し、誰かがNGワードを口走ったら、「ドーン！！！」と指摘**してください。すぐさまNGワードが妥当か話し合いください(カッコがある場合は、どちらもNGワードです)。\n'\
+                f'妥当な場合、NGワード発言者はお休みです。残った人で続けます。**最後のひとりになったら勝利**です！！\n'\
+                f'まず、DMに送られたNGワードを確認し、相手が「NGワードを喋ってしまう」ようにトークしてください！**{answer_minutes}分で終了**です！　今から開始します！！'
+        await ctx.send(msg)
+
+        netabare_msg = ''
+        # それぞれに役割をDMで送信
+        for player in make_team.vc_members:
+            #　お題の選定
+            choiced_item = random.choice(read_json.list)
+            odai = read_json.dict[choiced_item]
+            ngword = random.choice(odai)
+            netabare_msg += f'{player.display_name}さん:||{ngword}||, '
+
+        for player in make_team.vc_members:
+            dm = await player.create_dm()
+            rpl_msg_del = f'{player.display_name}さん:(\|\|.+?\|\|, )'
+            dm_msg = re.sub(rpl_msg_del, '', netabare_msg)
+            dm_msg_open = dm_msg.replace('|', '').replace(', ', '\n')
+            await dm.send(f'{player.mention}さん 他の人のNGワードはこちらです！\n{dm_msg_open}')
+
+        netabare_msg = re.sub(', $', '', netabare_msg)
+
+        # NGワードゲームのネタバレメッセージを作成し、チャンネルに貼り付け
+        await asyncio.sleep(answer_minutes * 60)
+        await ctx.send('NGワードゲームのネタバレです！\nそれぞれ、' + netabare_msg + 'でした！')
+
     @wordWolf.error
     async def wordWolf_error(self, ctx, error):
+        if isinstance(error, commands.CommandError):
+            logger.error(error)
+            await ctx.send(error)
+
+    @ngWordGame.error
+    async def ngWordGame_error(self, ctx, error):
         if isinstance(error, commands.CommandError):
             logger.error(error)
             await ctx.send(error)

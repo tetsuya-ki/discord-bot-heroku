@@ -103,6 +103,14 @@ Discord用のBot。discord.pyのBot Commands Frameworkを使用して実装。�
 - BotからくるDMの様子  
 ![image(wordWolf-2)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/wordWolf-2.png?raw=True)
 
+`/ngWordGame` NGワードゲームを行うコマンド。お題を修正したい場合[jsonファイル](https://github.com/tetsuya-ki/discord-bot-heroku/blob/master/cogs/modules/files/wordwolf.json)を変更すること(ワードウルフ機能と共用)
+
+- NGワードゲーム開始(これは時間が経過し、ネタバレ投稿された画像)  
+![image(ngWordGame-1)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/ngwordgame-1.png?raw=True)
+
+- BotからくるDMの様子  
+![image(ngWordGame-2)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/ngwordgame-2.png?raw=True)
+
 ### メッセージイベント用(onmessagecog.pyで実装)
 
 - コマンドを使って実行する訳ではない機能
