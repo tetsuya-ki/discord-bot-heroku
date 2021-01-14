@@ -16,6 +16,8 @@ class AdminCog(commands.Cog, name='管理用'):
     """
     管理用の機能です。
     """
+    TIMEOUT_TIME = 30.0
+
     # AdminCogクラスのコンストラクタ。Botを受取り、インスタンス変数として保持。
     def __init__(self, bot):
         self.bot = bot
@@ -123,20 +125,20 @@ class AdminCog(commands.Cog, name='管理用'):
 
         # 指定がない、または、不正な場合は、コマンドを削除。そうではない場合、コマンドを削除し、指定の数だけ削除する
         if limit_num is None:
-            await ctx.channel.purge(limit=1, check=is_me)
+            await ctx.message.delete()
             await ctx.channel.send('オプションとして、1以上の数値を指定してください。\nあなたのコマンド：`{0}`'.format(ctx.message.clean_content))
             return
         if limit_num.isdecimal():
             limit_num = int(limit_num) + 1
         else:
-            await ctx.channel.purge(limit=1, check=is_me)
+            await ctx.message.delete()
             await ctx.channel.send('有効な数字ではないようです。オプションは1以上の数値を指定してください。\nあなたのコマンド：`{0}`'.format(ctx.message.clean_content))
             return
 
         if limit_num > 1000:
             limit_num = 1000
         elif limit_num < 2:
-            await ctx.channel.purge(limit=1, check=is_me)
+            await ctx.message.delete()
             await ctx.channel.send('オプションは1以上の数値を指定してください。\nあなたのコマンド：`{0}`'.format(ctx.message.clean_content))
             return
 
@@ -170,12 +172,12 @@ class AdminCog(commands.Cog, name='管理用'):
     async def make(self, ctx, channelName=None):
         """
         引数に渡したチャンネル名でテキストチャンネルを作成します（コマンドを打ったチャンネルの所属するカテゴリに作成されます）。
-        10秒以内に👌(ok_hand)のリアクションをつけないと実行されませんので、素早く対応ください。
+        30秒以内に👌(ok_hand)のリアクションをつけないと実行されませんので、素早く対応ください。
         """
         self.command_author = ctx.author
         # チャンネル名がない場合は実施不可
         if channelName is None:
-            await ctx.channel.purge(limit=1)
+            await ctx.message.delete()
             await ctx.channel.send('チャンネル名を指定してください。\nあなたのコマンド：`{0}`'.format(ctx.message.clean_content))
             return
 
@@ -190,8 +192,8 @@ class AdminCog(commands.Cog, name='管理用'):
             category_text = f'カテゴリー「**{category.name}**」に、\n';
 
         # 念の為、確認する
-        confirm_text = f'{category_text}パブリックなチャンネル **{channelName}** を作成してよろしいですか？ 問題ない場合、10秒以内に👌(ok_hand)のリアクションをつけてください。\nあなたのコマンド：`{ctx.message.clean_content}`'
-        await ctx.channel.purge(limit=1)
+        confirm_text = f'{category_text}パブリックなチャンネル **{channelName}** を作成してよろしいですか？ 問題ない場合、30秒以内に👌(ok_hand)のリアクションをつけてください。\nあなたのコマンド：`{ctx.message.clean_content}`'
+        await ctx.message.delete()
         await ctx.channel.send(confirm_text)
 
         def check(reaction, user):
@@ -199,9 +201,9 @@ class AdminCog(commands.Cog, name='管理用'):
 
         # リアクション待ち
         try:
-            reaction, user = await self.bot.wait_for('reaction_add', timeout=10.0, check=check)
+            reaction, user = await self.bot.wait_for('reaction_add', timeout=self.TIMEOUT_TIME, check=check)
         except asyncio.TimeoutError:
-            await ctx.channel.send('→リアクションがなかったのでキャンセルしました！')
+            await ctx.channel.send('→リアクションがなかったのでチャンネル作成をキャンセルしました！')
         else:
             try:
                 # カテゴリが存在しない場合と存在する場合で処理を分ける
@@ -211,7 +213,7 @@ class AdminCog(commands.Cog, name='管理用'):
                     # メッセージの所属するカテゴリにテキストチャンネルを作成する
                     new_channel = await category.create_text_channel(name=channelName)
             except discord.errors.Forbidden:
-                await ctx.channel.send('→権限がないため、実行できませんでした！')
+                await ctx.channel.send('→権限がないため、チャンネル作成できませんでした！')
             else:
                 await ctx.channel.send(f'<#{new_channel.id}>を作成しました！')
 
@@ -221,19 +223,19 @@ class AdminCog(commands.Cog, name='管理用'):
     async def privateMake(self, ctx, channelName=None):
         """
         引数に渡したチャンネル名でプライベートなテキストチャンネルを作成します（コマンドを打ったチャンネルの所属するカテゴリに作成されます）。
-        10秒以内に👌(ok_hand)のリアクションをつけないと実行されませんので、素早く対応ください。
+        30秒以内に👌(ok_hand)のリアクションをつけないと実行されませんので、素早く対応ください。
         """
         self.command_author = ctx.author
 
         # チャンネル名がない場合は実施不可
         if channelName is None:
-            await ctx.channel.purge(limit=1)
+            await ctx.message.delete()
             await ctx.channel.send('チャンネル名を指定してください。\nあなたのコマンド：`{0}`'.format(ctx.message.clean_content))
             return
 
         # トップロールが@everyoneの場合は実施不可
         if ctx.author.top_role.position == 0:
-            await ctx.channel.purge(limit=1)
+            await ctx.message.delete()
             await ctx.channel.send('everyone権限しか保持していない場合、このコマンドは使用できません。\nあなたのコマンド：`{0}`'.format(ctx.message.clean_content))
             return
 
@@ -267,18 +269,18 @@ class AdminCog(commands.Cog, name='管理用'):
         logger.debug('-----------------------------------------------------------------')
 
         # 念の為、確認する
-        confirm_text = f'{category_text}プライベートなチャンネル **{channelName}** を作成してよろしいですか()？ 問題ない場合、10秒以内に👌(ok_hand)のリアクションをつけてください。\nあなたのコマンド：`{ctx.message.clean_content}`'
-        await ctx.channel.purge(limit=1)
-        await ctx.channel.send(confirm_text)
+        confirm_text = f'{category_text}プライベートなチャンネル **{channelName}** を作成してよろしいですか()？ 問題ない場合、30秒以内に👌(ok_hand)のリアクションをつけてください。\nあなたのコマンド：`{ctx.message.clean_content}`'
+        await ctx.message.delete()
+        confirm_message = await ctx.channel.send(confirm_text)
 
         def check(reaction, user):
             return user == self.command_author and str(reaction.emoji) == '👌'
 
         # リアクション待ち
         try:
-            reaction, user = await self.bot.wait_for('reaction_add', timeout=10.0, check=check)
+            reaction, user = await self.bot.wait_for('reaction_add', timeout=self.TIMEOUT_TIME, check=check)
         except asyncio.TimeoutError:
-            await ctx.channel.purge(limit=1)
+            await confirm_message.delete()
             await ctx.channel.send('＊リアクションがなかったのでキャンセルしました！(プライベートなチャンネルを立てようとしていました。)')
         else:
             try:
@@ -289,10 +291,10 @@ class AdminCog(commands.Cog, name='管理用'):
                     # メッセージの所属するカテゴリにテキストチャンネルを作成する
                     new_channel = await category.create_text_channel(name=channelName, overwrites=overwrites)
             except discord.errors.Forbidden:
-                await ctx.channel.purge(limit=1)
+                await confirm_message.delete()
                 await ctx.channel.send('＊権限がないため、実行できませんでした！(プライベートなチャンネルを立てようとしていました。)')
             else:
-                await ctx.channel.purge(limit=1)
+                await confirm_message.delete()
                 await ctx.channel.send(f'`/channel privateMake`コマンドでプライベートなチャンネルを作成しました！')
 
     # channelコマンドのサブコマンドtopic
@@ -301,12 +303,12 @@ class AdminCog(commands.Cog, name='管理用'):
     async def topic(self, ctx, *, topicWord=None):
         """
         引数に渡した文字列でテキストチャンネルのトピックを設定します。
-        10秒以内に👌(ok_hand)のリアクションをつけないと実行されませんので、素早く対応ください。
+        30秒以内に👌(ok_hand)のリアクションをつけないと実行されませんので、素早く対応ください。
         """
         self.command_author = ctx.author
         # トピックがない場合は実施不可
         if topicWord is None:
-            await ctx.channel.purge(limit=1)
+            await ctx.message.delete()
             await ctx.channel.send('トピックを指定してください。\nあなたのコマンド：`{0}`'.format(ctx.message.clean_content))
             return
 
@@ -314,8 +316,8 @@ class AdminCog(commands.Cog, name='管理用'):
         original_topic = ''
         if ctx.channel.topic is not None:
             original_topic = f'このチャンネルには、トピックとして既に**「{ctx.channel.topic}」**が設定されています。\nそれでも、'
-        confirm_text = f'{original_topic}このチャンネルのトピックに**「{topicWord}」** を設定しますか？ 問題ない場合、10秒以内に👌(ok_hand)のリアクションをつけてください。\nあなたのコマンド：`{ctx.message.clean_content}`'
-        await ctx.channel.purge(limit=1)
+        confirm_text = f'{original_topic}このチャンネルのトピックに**「{topicWord}」** を設定しますか？ 問題ない場合、30秒以内に👌(ok_hand)のリアクションをつけてください。\nあなたのコマンド：`{ctx.message.clean_content}`'
+        await ctx.message.delete()
         await ctx.channel.send(confirm_text)
 
         def check(reaction, user):
@@ -323,15 +325,15 @@ class AdminCog(commands.Cog, name='管理用'):
 
         # リアクション待ち
         try:
-            reaction, user = await self.bot.wait_for('reaction_add', timeout=10.0, check=check)
+            reaction, user = await self.bot.wait_for('reaction_add', timeout=self.TIMEOUT_TIME, check=check)
         except asyncio.TimeoutError:
-            await ctx.channel.send('→リアクションがなかったのでキャンセルしました！')
+            await ctx.channel.send('→リアクションがなかったので、トピックの設定をキャンセルしました！')
         else:
             # チャンネルにトピックを設定する
             try:
                 await ctx.channel.edit(topic=topicWord)
             except discord.errors.Forbidden:
-                await ctx.channel.send('→権限がないため、実行できませんでした！')
+                await ctx.channel.send('→権限がないため、トピックを設定できませんでした！')
             else:
                 await ctx.channel.send(f'チャンネル「{ctx.channel.name}」のトピックに**「{topicWord}」**を設定しました！')
 
@@ -341,17 +343,17 @@ class AdminCog(commands.Cog, name='管理用'):
     async def roleDelete(self, ctx, targetRole=None):
         """
         指定したロールがテキストチャンネルを見れないように設定します（自分とおなじ権限まで指定可能（ただしチャンネルに閲覧できるロールがない場合、表示されなくなります！））。
-        10秒以内に👌(ok_hand)のリアクションをつけないと実行されませんので、素早く対応ください。
+        30秒以内に👌(ok_hand)のリアクションをつけないと実行されませんので、素早く対応ください。
         """
         self.command_author = ctx.author
         # 対象のロールがない場合は実施不可
         if targetRole is None:
-            await ctx.channel.purge(limit=1)
+            await ctx.message.delete()
             await ctx.channel.send('チャンネルから削除するロールを指定してください。\nあなたのコマンド：`{0}`'.format(ctx.message.clean_content))
             return
         # トップロールが@everyoneの場合は実施不可
         if ctx.author.top_role.position == 0:
-            await ctx.channel.purge(limit=1)
+            await ctx.message.delete()
             await ctx.channel.send('everyone権限しか保持していない場合、このコマンドは使用できません。\nあなたのコマンド：`{0}`'.format(ctx.message.clean_content))
             return
 
@@ -365,11 +367,11 @@ class AdminCog(commands.Cog, name='管理用'):
 
         # 削除対象としたロールが、実行者のトップロールより大きい場合は実施不可(ロールが存在しない場合も実施不可)
         if role is None:
-            await ctx.channel.purge(limit=1)
+            await ctx.message.delete()
             await ctx.channel.send('存在しないロールのため、実行できませんでした(大文字小文字を正確に入力ください)。\n＊削除するロールとして{0}が指定できます。\nあなたのコマンド：`{1}`'.format(underRolesWithComma,ctx.message.clean_content))
             return
         elif role > ctx.author.top_role:
-            await ctx.channel.purge(limit=1)
+            await ctx.message.delete()
             await ctx.channel.send('削除対象のロールの方が権限が高いため、実行できませんでした。\n＊削除するロールとして{0}が指定できます。\nあなたのコマンド：`{1}`'.format(underRolesWithComma,ctx.message.clean_content))
             return
 
@@ -398,8 +400,8 @@ class AdminCog(commands.Cog, name='管理用'):
                 attention_text = f'＊＊これを実行するとBOTが書き込めなくなるため、**権限削除に成功した場合でもチャンネルに結果が表示されません**。\n'
 
         # 念の為、確認する
-        confirm_text = f'{attention_text}このチャンネルから、ロール**「{targetRole}」** を削除しますか？\n（{targetRole}はチャンネルを見ることができなくなります。）\n 問題ない場合、10秒以内に👌(ok_hand)のリアクションをつけてください。\nあなたのコマンド：`{ctx.message.clean_content}`'
-        await ctx.channel.purge(limit=1)
+        confirm_text = f'{attention_text}このチャンネルから、ロール**「{targetRole}」** を削除しますか？\n（{targetRole}はチャンネルを見ることができなくなります。）\n 問題ない場合、30秒以内に👌(ok_hand)のリアクションをつけてください。\nあなたのコマンド：`{ctx.message.clean_content}`'
+        await ctx.message.delete()
         await ctx.channel.send(confirm_text)
 
         def check(reaction, user):
@@ -407,9 +409,9 @@ class AdminCog(commands.Cog, name='管理用'):
 
         # リアクション待ち
         try:
-            reaction, user = await self.bot.wait_for('reaction_add', timeout=10.0, check=check)
+            reaction, user = await self.bot.wait_for('reaction_add', timeout=self.TIMEOUT_TIME, check=check)
         except asyncio.TimeoutError:
-            await ctx.channel.send('→リアクションがなかったのでキャンセルしました！')
+            await ctx.channel.send('→リアクションがなかったのでチャンネルのロール削除をキャンセルしました！')
         else:
             # チャンネルに権限を上書きする
             try:
@@ -417,7 +419,7 @@ class AdminCog(commands.Cog, name='管理用'):
                     await ctx.channel.set_permissions(bot_role, overwrite=bot_overwrite)
                 await ctx.channel.set_permissions(role, overwrite=overwrite)
             except discord.errors.Forbidden:
-                await ctx.channel.send('→権限がないため、実行できませんでした！')
+                await ctx.channel.send('→権限がないため、チャンネルのロールを削除できませんでした！')
             else:
                 await ctx.channel.send(f'チャンネル「{ctx.channel.name}」からロール**「{targetRole}」**の閲覧権限を削除しました！')
 

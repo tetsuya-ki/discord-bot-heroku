@@ -16,6 +16,7 @@ class ReactionChannelerCog(commands.Cog, name="リアクションチャンネラ
     リアクションチャンネラー機能のカテゴリ(リアクションをもとに実行するアクション含む)。
     """
     SPLIT_SIZE = 1900
+    TIMEOUT_TIME = 30.0
 
     # ReactionChannelerCogクラスのコンストラクタ。Botを受取り、インスタンス変数として保持。
     def __init__(self, bot):
@@ -53,7 +54,7 @@ class ReactionChannelerCog(commands.Cog, name="リアクションチャンネラ
         """
         # リアクション、チャンネルがない場合は実施不可
         if reaction is None or channel is None:
-            await ctx.channel.purge(limit=1)
+            await ctx.message.delete()
             await ctx.channel.send('リアクションとチャンネルを指定してください。\nあなたのコマンド：`{0}`'.format(ctx.message.clean_content))
             return
         msg = await self.reaction_channel.add(ctx, reaction, channel)
@@ -74,13 +75,13 @@ class ReactionChannelerCog(commands.Cog, name="リアクションチャンネラ
     async def purge(self, ctx):
         """
         リアクションチャンネラー（＊）で反応する絵文字を全て削除します。
-        10秒以内に👌(ok_hand)のリアクションをつけないと実行されませんので、素早く対応ください。
+        30秒以内に👌(ok_hand)のリアクションをつけないと実行されませんので、素早く対応ください。
         ＊指定した絵文字でリアクションされた時、チャンネルに通知する機能のこと
         """
         command_author = ctx.author
         # 念の為、確認する
-        confirm_text = f'全てのリアクションチャンネラーを削除しますか？\n 問題ない場合、10秒以内に👌(ok_hand)のリアクションをつけてください。\nあなたのコマンド：`{ctx.message.clean_content}`'
-        await ctx.channel.purge(limit=1)
+        confirm_text = f'全てのリアクションチャンネラーを削除しますか？\n 問題ない場合、30秒以内に👌(ok_hand)のリアクションをつけてください。\nあなたのコマンド：`{ctx.message.clean_content}`'
+        await ctx.message.delete()
         await ctx.channel.send(confirm_text)
 
         def check(reaction, user):
@@ -88,9 +89,9 @@ class ReactionChannelerCog(commands.Cog, name="リアクションチャンネラ
 
         # リアクション待ち
         try:
-            reaction, user = await self.bot.wait_for('reaction_add', timeout=10.0, check=check)
+            reaction, user = await self.bot.wait_for('reaction_add', timeout=self.TIMEOUT_TIME, check=check)
         except asyncio.TimeoutError:
-            await ctx.channel.send('→リアクションがなかったのでキャンセルしました！')
+            await ctx.channel.send('→リアクションがなかったので、リアクションチャンネラーの全削除をキャンセルしました！')
         else:
             msg = await self.reaction_channel.purge(ctx)
             await ctx.channel.send(msg)
@@ -105,7 +106,7 @@ class ReactionChannelerCog(commands.Cog, name="リアクションチャンネラ
         """
         # リアクション、チャンネルがない場合は実施不可
         if reaction is None or channel is None:
-            await ctx.channel.purge(limit=1)
+            await ctx.message.delete()
             await ctx.channel.send('リアクションとチャンネルを指定してください。\nあなたのコマンド：`{0}`'.format(ctx.message.clean_content))
             return
         msg = await self.reaction_channel.delete(ctx, reaction, channel)
