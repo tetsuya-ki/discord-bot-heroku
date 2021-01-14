@@ -91,9 +91,8 @@ class OnMessageCog(commands.Cog, name="メッセージイベント用"):
         if message.author == botUser:# 自分は無視する
             return
 
-        if self.scrapboxSidAndPnames.SCRAPBOX_URL_PATTERN in message.clean_content:
-            if self.scrapboxSidAndPnames.setup(message.guild):
-                await self.scrapbox_url_expand(message)
+        if self.scrapboxSidAndPnames.SCRAPBOX_URL_PATTERN in message.clean_content and self.scrapboxSidAndPnames.setup(message.guild):
+            await self.scrapbox_url_expand(message)
         else:
             return
 
@@ -101,7 +100,8 @@ class OnMessageCog(commands.Cog, name="メッセージイベント用"):
     async def scrapbox_url_expand(self, targetMessage: discord.Message):
         if (self.scrapboxSidAndPnames.check(targetMessage)):
             embed = await self.scrapboxSidAndPnames.expand(targetMessage)
-            await targetMessage.channel.send(embed=embed)
+            if embed is not None:
+                await targetMessage.channel.send(embed=embed)
         else:
             return
 
