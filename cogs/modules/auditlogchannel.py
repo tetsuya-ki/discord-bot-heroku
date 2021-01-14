@@ -25,5 +25,7 @@ class AuditLogChannel:
                     logger.debug(self.channel)
                     if self.channel is not None:
                         return True
+
         self.alc_err = '管理用のチャンネルが登録されていません。'
+        logger.error(self.alc_err)
         return False

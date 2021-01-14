@@ -451,7 +451,7 @@ class AdminCog(commands.Cog, name='管理用'):
             category = guild.get_channel(channel.category_id)
             if category is not None:
                 str += '\nCategory: {0}'.format(category.name)
-        logger.debug(f'***{str}***')
+        logger.info(f'***{str}***')
         await self.sendGuildChannel(guild, str, channel.created_at)
 
     # メンバーGuild参加時に実行されるイベントハンドラを定義
@@ -473,7 +473,7 @@ class AdminCog(commands.Cog, name='管理用'):
         guild = member.guild
         str = 'member: {0}が{1}しました'.format(member, event_text)
 
-        logger.debug(f'***{str}***')
+        logger.info(f'***{str}***')
 
         await self.sendGuildChannel(guild, str, dt)
 
