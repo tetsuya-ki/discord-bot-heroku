@@ -52,7 +52,8 @@ class ScrapboxSidAndPnames:
             if len(self.targets) > 0:
                 return True
 
-        self.sbsu_err = '展開対象のSCRAPBOXのSID、プロジェクトが登録されていません。'
+        self.sbsu_err = '展開対象のScrapboxのSID、プロジェクトが登録されていません。'
+        logger.error(self.sbsu_err)
         return False
 
     def check(self, message:discord.Message):
@@ -76,24 +77,25 @@ class ScrapboxSidAndPnames:
 
         json = None
         target_url = ''
-        if mo is not None:
-            if mo.group(1): 
-                target_url = 'https://scrapbox.io/api/pages/'+ self.target_project + '/' + mo.group(1)
+        if mo is not None and mo.group(1):
+            target_url = 'https://scrapbox.io/api/pages/'+ self.target_project + '/' + mo.group(1)
 
-                async with aiohttp.ClientSession(cookies=cookies) as session:
-                    async with session.get(target_url) as r:
-                        if r.status == 200:
-                            json = await r.json()
+            async with aiohttp.ClientSession(cookies=cookies) as session:
+                async with session.get(target_url) as r:
+                    if r.status == 200:
+                        json = await r.json()
 
-                if json is not None:
-                    embed = discord.Embed(title = json['title'], description = " ".join(json['descriptions']), url=mo.group(0), type='rich')
-                    embed.set_author(name=json['user']['displayName'], icon_url=json['user']['photo'])
+            if json is not None:
+                embed = discord.Embed(title = json['title'], description = " ".join(json['descriptions']), url=mo.group(0), type='rich')
+                embed.set_author(name=json['user']['displayName'], icon_url=json['user']['photo'])
 
-                    if json['image']:
-                        embed.set_thumbnail(url=json['image'])
+                if json['image']:
+                    embed.set_thumbnail(url=json['image'])
 
-                    updated = datetime.datetime.fromtimestamp(json['updated'])
-                    embed.add_field(name='Updated', value=updated.strftime('%Y/%m/%d(%a) %H:%M:%S'))
+                updated = datetime.datetime.fromtimestamp(json['updated'])
+                embed.add_field(name='Updated', value=updated.strftime('%Y/%m/%d(%a) %H:%M:%S'))
 
-                    return embed
-
+                return embed
+        else:
+            logger.debug('展開対象外のため、対応しない')
+            return

@@ -45,6 +45,9 @@ Discord用のBot。discord.pyのBot Commands Frameworkを使用して実装。�
 `/vcmembers` ボイスチャンネルに接続しているメンバーリストを取得  
 ![image(vcmembers)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/vcmembers.png?raw=true)
 
+`/radikoSearch` ラジコの番組表を検索する機能  
+![image(radikoSearch)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/radiko_search.png?raw=true)
+
 ### 管理用カテゴリ(admincog.pyで実装)
 
 `/channel` チャンネルを操作するコマンド（サブコマンド必須）。チャンネルの操作権限を渡すと、削除も可能だから嫌だなと思って作ったコマンド。  

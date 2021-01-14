@@ -1,5 +1,6 @@
 from discord.ext import commands  # Bot Commands Frameworkのインポート
 from .modules.grouping import MakeTeam
+from .modules.radiko import Radiko
 from logging import getLogger
 
 import discord
@@ -80,6 +81,30 @@ class MessageCog(commands.Cog, name='通常用'):
             for  emoji, arg in zip(POLL_CHAR, args):
                 await message.add_reaction(emoji)
 
+    @commands.command(aliases=['rs','radiko','radikoKensaku','rk'], description='Radikoの番組表を検索する機能です')
+    async def radikoSearch(self, ctx, *args):
+        """
+        このコマンドを実行すると、Radikoの番組表を検索することができます。
+        1番目の引数(キーワード): 検索する対象。**半角スペースがある場合、"(二重引用符)で囲って**ください。
+        2番目の引数(検索対象): 過去(past)、未来(future)を検索対象とします。未指定か不明な場合、allが採用されます
+        3番目の引数(地域): XX県かJP01(数字は県番号)と指定すると、その地域の番組表を検索します。未指定か不明の場合はデフォルトの地域が採用されます。
+        ＊あんまり検索結果が多いと困るので、一旦5件に制限しています。
+        """
+        usage = '/radikoSearchの使い方\n 例:`/radikoSearch 福山雅治 東京都`\nRadikoの番組表を検索した結果（件数や番組の時間など）をチャンネルへ投稿します。詳しい使い方は`/help radikoSearch`で調べてください'
+
+        # 引数の数をチェック
+        if len(args) == 0:
+            await ctx.channel.send(usage)
+        elif len(args) > 3:
+            await ctx.channel.send(f'引数は３件までです！\n{usage}')
+        else:
+            radiko = Radiko()
+            embed = await radiko.radiko_search(*args)
+            if not radiko.r_err:
+                await ctx.channel.send(content=radiko.content, embed=embed)
+            else:
+                await ctx.channel.send(radiko.r_err)
+
     @team.error
     async def team_error(self, ctx, error):
         if isinstance(error, commands.CommandError):
@@ -88,6 +113,12 @@ class MessageCog(commands.Cog, name='通常用'):
 
     @group.error
     async def group_error(self, ctx, error):
+        if isinstance(error, commands.CommandError):
+            logger.error(error)
+            await ctx.send(error)
+
+    @radikoSearch.error
+    async def radikoSearch_error(self, ctx, error):
         if isinstance(error, commands.CommandError):
             logger.error(error)
             await ctx.send(error)

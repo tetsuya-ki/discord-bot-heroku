@@ -60,7 +60,7 @@ class ReactionChannel:
                                     Attachment_file_date = last_message[0].created_at
                                     file_path = join(dirname(__file__), 'files' + os.sep + self.FILE)
                                     await last_message[0].attachments[0].save(file_path)
-                                    logger.debug(f'channel_file_save:{guild.name}')
+                                    logger.info(f'channel_file_save:{guild.name}')
                     else:
                         logger.warn(f'{guild}: に所定のチャンネルがありません')
             else:
@@ -91,7 +91,7 @@ class ReactionChannel:
                 overwrites = dict(zip(target, permissions))
 
                 try:
-                    logger.debug(f'＊＊＊{self.REACTION_CHANNEL}を作成しました！＊＊＊')
+                    logger.info(f'＊＊＊{self.REACTION_CHANNEL}を作成しました！＊＊＊')
                     get_control_channel = await guild.create_text_channel(name=self.REACTION_CHANNEL, overwrites=overwrites)
                 except discord.errors.Forbidden:
                     logger.error(f'＊＊＊{self.REACTION_CHANNEL}の作成に失敗しました！＊＊＊')
@@ -105,7 +105,7 @@ class ReactionChannel:
             # チャンネルにファイルを添付する
             file_path = join(dirname(__file__), 'files' + os.sep + self.FILE)
             await get_control_channel.send(self.FILE, file=discord.File(file_path))
-            logger.debug(f'＊＊＊{get_control_channel.name}へファイルを添付しました！＊＊＊')
+            logger.info(f'＊＊＊{get_control_channel.name}へファイルを添付しました！＊＊＊')
 
             logger.debug('set_discord_attachment_file is over!')
 
@@ -167,6 +167,7 @@ class ReactionChannel:
         except pickle.PickleError:
             # 書き込みに失敗したらなにもしない
             self.rc_err = '保管に失敗しました。'
+            logger.error(self.rc_err)
 
     # 追加するリアクションチャネルが問題ないかチェック
     def check(self, ctx, reaction:str, channel:str):
@@ -241,7 +242,9 @@ class ReactionChannel:
         if await self.save(guild) is False:
             return self.rc_err
 
-        return f'リアクションチャンネルの登録に成功しました！\n{reaction} → <#{get_channel.id}>'
+        msg = f'リアクションチャンネルの登録に成功しました！\n{reaction} → <#{get_channel.id}>'
+        logger.info(msg)
+        return msg
 
     async def list(self, ctx):
         guild = ctx.guild
