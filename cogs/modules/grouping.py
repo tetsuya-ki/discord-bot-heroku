@@ -40,6 +40,9 @@ class MakeTeam:
                     continue
             self.vc_list += '🔈' + v_channel.name + '\n'
             for vc_member in v_channel.members:
+                # botはメンバーとして計上しない
+                if vc_member.bot:
+                    continue
                 self.vc_members.append(vc_member) # VCメンバリスト取得
                 self.vc_list += '> ' + vc_member.name + '\n'
 
