@@ -45,8 +45,23 @@ Discord用のBot。discord.pyのBot Commands Frameworkを使用して実装。�
 `/vcmembers` ボイスチャンネルに接続しているメンバーリストを取得  
 ![image(vcmembers)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/vcmembers.png?raw=true)
 
-`/radikoSearch` ラジコの番組表を検索する機能  
-![image(radikoSearch)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/radiko_search.png?raw=true)
+`/radikoSearch` ラジコの番組表を検索する機能(**サブコマンド必須**)  
+
+- サブコマンドなし(`/radikoSearch`)  
+![image(radikoSearch)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/radikoSearch-1.png?raw=true)
+
+- 通常の検索(`/radikoSearch normal`)  
+  - もっとも単純なキーワードのみ指定  
+![image(radikoSearch)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/radikoSearch_normal-1.png?raw=true)
+  - キーワード、検索対象(過去、未来)、地域を指定  
+![image(radikoSearch)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/radikoSearch_normal-2.png?raw=true)
+
+- 日付を指定して検索(`/radikoSearch withDate`)  
+  - sを付与し開始日付、eを付与し終了日付を設定できる
+  - todayを設定すると当日として扱われる
+![image(radikoSearch)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/radikoSearch_withDate-1.png?raw=true)
+  - 日付の桁数で扱いが変わる(1桁はx日後として扱われ、2桁は当月の日付と扱われ、4桁は今年の月日として扱われる)
+![image(radikoSearch)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/radikoSearch_withDate-3.png?raw=true)
 
 ### 管理用カテゴリ(admincog.pyで実装)
 
@@ -146,7 +161,7 @@ Discord用のBot。discord.pyのBot Commands Frameworkを使用して実装。�
 - LOG_LEVEL = INFO
   - ログレベルを設定したい場合、設定する。デフォルトはWARN。DEBUG, INFO, WARN, ERRORが設定可能
 - AUDIT_LOG_SEND_CHANNEL = "guild1.audit_log_send_channel_id1;guild1.audit_log_send_channel_id1"
-  - 管理用のチャンネルを記載する。ギルドID.管理用のチャンネルIDの形式で記載する。**複数ある場合は、「;」を挟む**必要がある
+  - 管理用のチャンネルを記載する。`ギルドID.管理用のチャンネルID`の形式で記載する。**複数ある場合は、「;」を挟む**必要がある
 - IS_HEROKU = True
   - Herokuで動かす場合、Trueとする（discordのチャンネルを使用し、リアクションチャネラーのデータが消えないように試みる（`reaction_channel_control`を作成し、そこにjsonデータを添付することでデータを保持する））
 - SAVE_FILE_MESSAGE = "twitter"
@@ -186,7 +201,7 @@ Botは[こちら](https://discord.com/developers/applications)で作成し、ト
 1. Docker imageを作成（または、Docker HubからPull）
 
 1-1. Make Docker Image(Build by yourself)  
-    `docker build --pull --rm -f Dockerfile -t discordbotheroku:latest .`
+    `docker build . -t discordbotheroku:latest .`
 
 1-2. Pull from Docker Hub
     `docker pull tk2812/discord-bot-heroku:latest`
