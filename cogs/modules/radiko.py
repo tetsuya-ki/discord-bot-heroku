@@ -19,11 +19,11 @@ class Radiko:
         self.content = ''
         self.r_err = ''
 
-    async def radiko_search(self, keyword='', filter='', areaName=''):
+    async def radiko_search(self, keyword='', filter='', areaName='', startDay='', endDay=''):
         # どっちも空文字になるなら、入れ替えて検索する
         if self.convert_filter(filter) == self.convert_prefCd(areaName) == '':
             filter,areaName = areaName,filter
-        response = await self.search_radiko_result(keyword, self.convert_filter(filter), self.convert_prefCd(areaName))
+        response = await self.search_radiko_result(keyword, self.convert_filter(filter), self.convert_prefCd(areaName), self.convert_day(startDay), self.convert_day(endDay))
 
         if response is None:
             return
@@ -103,14 +103,34 @@ class Radiko:
         else:
             return ''
 
-    async def search_radiko_result(self, keyword='', filter='', area_id=DEFAULT_AREA):
+    def convert_day(self, day):
+        now = datetime.datetime.now()
+        now_yyyymmdd_string = now.strftime('%Y-%m-%d')
+        now_yyyymm_string = now.strftime('%Y-%m-')
+        now_yyyy_string = now.strftime('%Y-')
+
+        # 文字列はtoday, tのみ許す
+        if day == 'today' or day == 't':
+            return now_yyyymmdd_string
+        elif not day.isdecimal():
+            return ''
+
+        if len(day) == 1: # 数日後として解釈
+            conv_day = now + datetime.timedelta(days=int(day))
+            return conv_day.strftime('%Y-%m-%d')
+        if len(day) == 2: # 今月の日付部として解釈
+            return now_yyyymm_string + day
+        elif len(day) == 4: # 今年の月日として解釈
+            return now_yyyy_string + day[0:2] + '-' + day[2:]
+
+    async def search_radiko_result(self, keyword='', filter='', area_id=DEFAULT_AREA, startDay='', endDay=''):
         # ref. https://turtlechan.hatenablog.com/entry/2019/06/25/195451
         area_id_with_defalut_area = self.DEFAULT_AREA if area_id == '' else area_id
         params = {
             'key': keyword,
             'filter': filter,
-            'start_day': '',
-            'end_day': '',
+            'start_day': startDay,
+            'end_day': endDay,
             'area_id': area_id_with_defalut_area,
             'region_id': '',
             'cul_area_id': area_id_with_defalut_area,
@@ -130,4 +150,5 @@ class Radiko:
                 else:
                     self.r_err = 'Radikoの番組表検索に失敗しました。'
                     logger.warn(self.r_err)
+                    logger.warn(r)
                     return

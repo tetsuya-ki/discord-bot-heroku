@@ -81,8 +81,18 @@ class MessageCog(commands.Cog, name='通常用'):
             for  emoji, arg in zip(POLL_CHAR, args):
                 await message.add_reaction(emoji)
 
-    @commands.command(aliases=['rs','radiko','radikoKensaku','rk'], description='Radikoの番組表を検索する機能です')
-    async def radikoSearch(self, ctx, *args):
+    @commands.group(aliases=['rs','radiko','radikoKensaku','rk'], description='Radikoの番組表を検索する機能(サブコマンド必須)です')
+    async def radikoSearch(self, ctx):
+        """
+        ラジコの番組表を検索するコマンド群です。このコマンドだけでは検索しません。半角スペースの後、続けて以下のサブコマンドを入力ください。
+        - 普通に検索したい場合は、`normal`(または`n`)を入力し、キーワード等を指定してください。
+        - 日付を指定して検索したい場合は、`withDate`(または`w`)を入力し、キーワード等を指定(開始日付は**s**を付与し、終了日付は**e**を付与(片方のみ指定可))してください。
+        """
+        if ctx.invoked_subcommand is None:
+            await ctx.send('このコマンドにはサブコマンドが必要です(普通に検索したい場合は`n`をつけて、日付指定は`w`をつけてください)')
+
+    @radikoSearch.command(aliases=['norm', 'n'], description='Radikoの番組表を検索する機能です')
+    async def normal(self, ctx, *args):
         """
         このコマンドを実行すると、Radikoの番組表を検索することができます。
         1番目の引数(キーワード): 検索する対象。**半角スペースがある場合、"(二重引用符)で囲って**ください。
@@ -90,7 +100,7 @@ class MessageCog(commands.Cog, name='通常用'):
         3番目の引数(地域): XX県かJP01(数字は県番号)と指定すると、その地域の番組表を検索します。未指定か不明の場合はデフォルトの地域が採用されます。
         ＊あんまり検索結果が多いと困るので、一旦5件に制限しています。
         """
-        usage = '/radikoSearchの使い方\n 例:`/radikoSearch 福山雅治 東京都`\nRadikoの番組表を検索した結果（件数や番組の時間など）をチャンネルへ投稿します。詳しい使い方は`/help radikoSearch`で調べてください'
+        usage = '/radikoSearch normalの使い方\n 例:`/radikoSearch normal 福山雅治 東京都`\nRadikoの番組表を検索した結果（件数や番組の時間など）をチャンネルへ投稿します。詳しい使い方は`/help radikoSearch normal`で調べてください'
 
         # 引数の数をチェック
         if len(args) == 0:
@@ -104,6 +114,55 @@ class MessageCog(commands.Cog, name='通常用'):
                 await ctx.channel.send(content=radiko.content, embed=embed)
             else:
                 await ctx.channel.send(radiko.r_err)
+
+    @radikoSearch.command(aliases=['with','date','w','wd'], description='Radikoの番組表を日付指定で検索する機能です')
+    async def withDate(self, ctx, *args):
+        """
+        このコマンドを実行すると、日付を指定してRadikoの番組表を検索することができます。
+        1番目の引数(キーワード)、2番目の引数(検索対象)、3番目の引数(地域)は`radikoSearch normal`と同じ
+        4番目の引数(開始日時): sに続けて、today、1桁の数字(日後と解釈)、2桁の数字(日付と解釈)、4桁の数字(月日と解釈)と指定すると、開始日時を設定します。
+        5番目の引数(終了日時: eに続けて、today、1桁の数字(日後と解釈)、2桁の数字(日付と解釈)、4桁の数字(月日と解釈)と指定すると、終了日時を設定します。
+        ＊あんまり検索結果が多いと困るので、一旦5件に制限しています。
+        """
+        usage = '/radikoSearch withDateの使い方\n 例:`/radikoSearch withDate 福山雅治 東京都 stoday etoday`\n**日付を指定して**Radikoの番組表を検索した結果（件数や番組の時間など）をチャンネルへ投稿します。詳しい使い方は`/help radikoSearch withDate`で調べてください'
+
+        # 引数の数をチェック
+        if len(args) == 0:
+            await ctx.channel.send(usage)
+        elif len(args) > 5:
+            await ctx.channel.send(f'引数は５件までです！\n{usage}')
+        else:
+            radiko = Radiko()
+            start_day = ''
+            end_day = ''
+
+            # 引数の準備(開始日時、終了日時)
+            arg_list = []
+            for tmp in args:
+                tmp = tmp.lower()
+                if tmp.startswith('s'):
+                    start_day = tmp.split('s')[1]
+                elif tmp.startswith('e'):
+                    end_day = tmp.split('e')[1]
+                else:
+                    arg_list.append(tmp)
+
+            if len(arg_list) == 0:
+                await ctx.channel.send(f'開始日付、終了日付以外の引数がありません\n{usage}')
+            elif len(arg_list) > 3:
+                await ctx.channel.send(f'開始日付、終了日付以外の引数が３件を超えています\n{usage}')
+            else:
+                # 引数の設定(開始日時、終了日時を含めたもの)
+                while len(arg_list) < 3:
+                    arg_list.append('')
+                arg_list.append(start_day)
+                arg_list.append(end_day)
+
+                embed = await radiko.radiko_search(*arg_list)
+                if not radiko.r_err:
+                    await ctx.channel.send(content=radiko.content, embed=embed)
+                else:
+                    await ctx.channel.send(radiko.r_err)
 
     @team.error
     async def team_error(self, ctx, error):
