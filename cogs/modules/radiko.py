@@ -50,7 +50,13 @@ class Radiko:
             data += '\nperformer:' + key['performer'] if key['performer'] != '' else '\nperformer:(なし)'
             data += '\nurl:' + key['program_url'] + ' / RadikoURL: ' +\
                     '/'.join([self.RADIKO_TS_URL, key['station_id'],str(key['start_time']).replace('-','').replace(':','').replace(' ','')])
-            info_data = re.sub(r'<br *?/>', '@@', key['info']) # 改行変換
+
+            # descripton側しか入っていないデータを発見したため、対処
+            info_data = key['info']
+            if len(key['description']) > len(info_data):
+                info_data = key['description']
+
+            info_data = re.sub(r'<br *?/>', '@@', info_data) # 改行変換
             info_data = re.sub(r'<[^>]*?>', '', info_data) # タグ削除
             info_data = re.sub(r'\t|\n|(&[lg]t; *)', '', info_data) # タグ削除
             info_data = re.sub(r'@+ +?@+', '', info_data) # 意味のないスペース削除
