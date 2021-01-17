@@ -60,7 +60,7 @@ Discord用のBot。discord.pyのBot Commands Frameworkを使用して実装。�
   - sを付与し開始日付、eを付与し終了日付を設定できる
   - todayを設定すると当日として扱われる
 ![image(radikoSearch)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/radikoSearch_withDate-1.png?raw=true)
-  - 日付の桁数で扱いが変わる(1桁はx日後として扱われ、2桁は当月の日付と扱われ、4桁は今年の月日として扱われる)
+  - 日付の桁数で扱いが変わる(1桁はx日後として扱われ、2桁は当月の日付と扱われ、4桁は今年の月日として扱われる)  
 ![image(radikoSearch)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/radikoSearch_withDate-3.png?raw=true)
 
 ### 管理用カテゴリ(admincog.pyで実装)
