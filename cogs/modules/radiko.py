@@ -94,8 +94,12 @@ class Radiko:
         return hashlib.md5(str(rnd + ms).encode('utf-8')).hexdigest()
 
     def convert_prefCd(self, prefName):
-        if ('都' in prefName or '道' in prefName or '府' in prefName or '県' in prefName) and self.PREF_CD[prefName].isdecimal():
-            return 'JP' + self.PREF_CD[prefName]
+        if ('都' in prefName or '道' in prefName or '府' in prefName or '県' in prefName):
+            try:
+                if self.PREF_CD[prefName].isdecimal():
+                    return 'JP' + self.PREF_CD[prefName]
+            except KeyError:
+                return ''
         elif 'JP' in prefName:
             return prefName
         else:
