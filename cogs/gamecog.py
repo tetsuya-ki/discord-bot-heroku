@@ -62,6 +62,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
         # ワードウルフの数設定
         wolf_numbers = make_team.mem_len // 3
         msg =   f'ワードウルフを始めます！　この中に、**{wolf_numbers}人のワードウルフ**が紛れ込んでいます(本人も知りません！)。\n'\
+                f'DMでお題が配られますが、**ワードウルフだけは別のお題**が配られます(お題は2種類あります)。会話の中で不審な言動を察知し、みごとに'\
                 f'投票でワードウルフを当てることができたら、市民の勝ち。**間違えて「市民をワードウルフ」だと示してしまった場合、ワードウルフの勝ち**です！！\n'\
                 f'DMに送られたお題を確認し、**{answer_minutes}分話し合いののち、投票を実施**してください！！　今から開始します！'
         await ctx.send(msg)
@@ -83,9 +84,18 @@ class GameCog(commands.Cog, name='ゲーム用'):
 
         netabare_msg += 'でした！　お疲れ様でした！'
 
+        voting_msg = '投票の時間が近づいてきました。下記のメッセージで投票をお願いします。\n'\
+                    '`/poll 誰がワードウルフ？'
+        for player in make_team.vc_members:
+            voting_msg += f' {player.display_name}'
+        voting_msg += '`'
+
+        # 投票のお願いメッセージを作成し、チャンネルに貼り付け
+        voting_time = answer_minutes * 50
+        await self.delayedMessage(ctx, voting_msg, voting_time)
+
         # ワードウルフのネタバレメッセージを作成し、チャンネルに貼り付け
-        await asyncio.sleep(answer_minutes * 60)
-        await ctx.send(netabare_msg)
+        await self.delayedMessage(ctx, netabare_msg, (answer_minutes * 60) - voting_time)
 
     # NGワードゲーム機能
     @commands.command(aliases=['ngword','ngw','ngwg', 'ngg'], description='NGワードゲーム機能(禁止された言葉を喋ってはいけないゲーム)')
@@ -144,8 +154,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
         netabare_msg = re.sub(', $', '', netabare_msg)
 
         # NGワードゲームのネタバレメッセージを作成し、チャンネルに貼り付け
-        await asyncio.sleep(answer_minutes * 60)
-        await ctx.send('NGワードゲームのネタバレです！\nそれぞれ、' + netabare_msg + 'でした！')
+        await self.delayedMessage(ctx, 'NGワードゲームのネタバレです！\nそれぞれ、' + netabare_msg + 'でした！', answer_minutes * 60)
 
     @wordWolf.error
     async def wordWolf_error(self, ctx, error):
@@ -158,6 +167,10 @@ class GameCog(commands.Cog, name='ゲーム用'):
         if isinstance(error, commands.CommandError):
             logger.error(error)
             await ctx.send(error)
+
+    async def delayedMessage(self, ctx, messsage, delayed_seconds=None):
+        await asyncio.sleep(delayed_seconds)
+        await ctx.send(messsage)
 
 def setup(bot):
     bot.add_cog(GameCog(bot)) # GameCogにBotを渡してインスタンス化し、Botにコグとして登録する
