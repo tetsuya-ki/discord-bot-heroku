@@ -78,6 +78,10 @@ class ScrapboxSidAndPnames:
         json = None
         target_url = ''
         if mo is not None and mo.group(1):
+            # streamで不正なURLが投稿される問題を修正(対症療法的な...)
+            if mo.group(1) == ')':
+                return
+
             target_url = 'https://scrapbox.io/api/pages/'+ self.target_project + '/' + mo.group(1)
 
             async with aiohttp.ClientSession(cookies=cookies) as session:
