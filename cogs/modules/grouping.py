@@ -15,7 +15,7 @@ class MakeTeam:
     def set_mem(self, ctx):
         guild = ctx.guild
 
-        if self.my_connected_vc_only_flg:
+        if self.my_connected_vc_only_flg and ctx.author.voice is not None:
             self.v_channels = [ctx.author.voice.channel]
         else:
             self.v_channels = guild.voice_channels
@@ -44,7 +44,7 @@ class MakeTeam:
                 if vc_member.bot:
                     continue
                 self.vc_members.append(vc_member) # VCメンバリスト取得
-                self.vc_list += '> ' + vc_member.name + '\n'
+                self.vc_list += '> ' + vc_member.display_name + '\n'
 
         if len(self.vc_members) < 1:
             self.vc_state_err = 'ボイスチャンネルに接続しているメンバーがいません。ボイスチャンネル接続後、再度実行してください。'
@@ -85,7 +85,7 @@ class MakeTeam:
             remainder_num = self.mem_len % party_num
             if remainder_num != 0:
                 for r in range(remainder_num):
-                    remainder.append(self.vc_members.pop().name)
+                    remainder.append(self.vc_members.pop().display_name)
                 team_string.append('=====余り=====')
                 team_string.extend(remainder)
 
@@ -94,7 +94,7 @@ class MakeTeam:
             # 表示
             team_string.append('=====チーム'+str(i+1)+'=====')
             team_members = self.vc_members[i:self.mem_len:party_num]
-            team_string.extend([j.name for j in team_members])
+            team_string.extend([j.display_name for j in team_members])
             # 振り分け
             for member in team_members:
                 await member.move_to(self.v_channels[i])
@@ -125,7 +125,7 @@ class MakeTeam:
         remainder_num = self.mem_len % party_num
         if remainder_num != 0:
             for r in range(remainder_num):
-                remainder.append(self.vc_members.pop().name)
+                remainder.append(self.vc_members.pop().display_name)
             team_string.append('=====余り=====')
             team_string.extend(remainder)
 
@@ -133,7 +133,7 @@ class MakeTeam:
         for i in range(party_num):
             team_string.append('=====チーム'+str(i+1)+'=====')
             team_members = self.vc_members[i:self.mem_len:party_num]
-            team_string.extend([j.name for j in team_members])
+            team_string.extend([j.display_name for j in team_members])
 
             # 振り分け
             for member in team_members:
