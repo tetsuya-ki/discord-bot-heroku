@@ -1,4 +1,3 @@
-from cogs.modules.coyote import Coyote
 from discord.ext import commands  # Bot Commands Frameworkのインポート
 from .modules.grouping import MakeTeam
 from .modules.readjson import ReadJson
