@@ -129,6 +129,26 @@ Discord用のBot。discord.pyのBot Commands Frameworkを使用して実装。�
 - BotからくるDMの様子  
 ![image(ngWordGame-2)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/ngwordgame-2.png?raw=True)
 
+`/coyoteGame` コヨーテを行うコマンド
+
+- コヨーテ開始（説明が長いですがやれば分かります！）
+![image(coyoteGame_start)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/coyoteGame_start.png?raw=True)
+
+- コヨーテ開始やディール時のDMの様子
+![image(coyoteGame_DM)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/coyoteGame_DM.png?raw=True)
+
+- コヨーテのディール（カードを配る）
+![image(coyoteGame_deal)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/coyoteGame_deal.png?raw=True)
+
+- コヨーテ開始(自分でデッキを設定)
+![image(coyoteGame_setDeckAndStart)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/coyoteGame_setDeckAndStart.png?raw=True)
+
+- コヨーテの状況説明
+![image(coyoteGame_description)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/coyoteGame_description.png?raw=True)
+
+- コヨーテの状況説明(ネタバレ有)
+![image(coyoteGame_descriptionAll)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/coyoteGame_descriptionAll.png?raw=True)
+
 ### メッセージイベント用(onmessagecog.pyで実装)
 
 - コマンドを使って実行する訳ではない機能
