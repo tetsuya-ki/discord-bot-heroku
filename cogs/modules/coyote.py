@@ -26,7 +26,7 @@ class Coyote:
     def __init__(self):
         self.members = {}
         self.body = []
-        self.deck = self.DEFAULT_DECK
+        self.deck = self.DEFAULT_DECK.copy()
         self.hands = []
         self.discards = []
         self.turn = 0
@@ -35,7 +35,7 @@ class Coyote:
     def set(self, members):
         self.members = {}
         self.body = []
-        self.deck = self.DEFAULT_DECK
+        self.deck = self.DEFAULT_DECK.copy()
         self.hands = []
         self.discards = []
         self.turn = 0
@@ -52,6 +52,8 @@ class Coyote:
         for card in card_list:
             if self.is_num(card):
                 self.deck.append(int(card))
+            elif card == '':
+                continue
             else:
                 self.deck.append(str(card))
 
@@ -116,6 +118,7 @@ class Coyote:
             self.description += '現在の状況:'
             for member in self.members:
                 self.description += f'{member.display_name}さん(HP:{self.members[member].HP}) '
+            self.description += '\n`/coyoteGame deal`で次のターンを開始します。'
 
     def calc(self):
         # [変数名 for 変数名 in 元のリスト if 条件式]
@@ -252,3 +255,28 @@ class Coyote:
             return False
         else:
             return True
+
+    def create_description(self, all_flg=False):
+        msg = f'ターン数：{self.turn}\n'
+        msg += f'生き残っている人の数：{len(self.members)}\n'
+        for member in self.members:
+            msg += f'`{member.display_name}さん → HP:{self.members[member].HP}`\n'
+        if all_flg:
+            msg += f'山札の数：{len(self.deck)}枚 → '
+            deck_list = map(str, self.deck)
+            deck = ','.join(deck_list)
+            msg += deck + '\n'
+        else:
+            msg += f'山札の数：{len(self.deck)}枚, '
+        msg += f'捨て札：{len(self.discards)}枚 → '
+        discards_list = map(str, self.discards)
+        discards = ','.join(discards_list)
+        msg += discards
+
+        if all_flg:
+            msg += f'\n場のカード：{len(self.hands)}枚 → '
+            hands_list = map(str, self.hands)
+            hands = ','.join(hands_list)
+            msg += f'||{hands}||'
+
+        return msg

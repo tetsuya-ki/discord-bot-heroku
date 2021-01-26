@@ -101,7 +101,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
         await self.delayedMessage(ctx, netabare_msg, (answer_minutes * 60) - voting_time)
 
     # NGワードゲーム機能
-    @commands.command(aliases=['ngword','ngw','ngwg', 'ngg'], description='NGワードゲーム機能(禁止された言葉を喋ってはいけないゲーム)')
+    @commands.command(aliases=['ngword','ngw','ngwg','ngg'], description='NGワードゲーム機能(禁止された言葉を喋ってはいけないゲーム)')
     async def ngWordGame(self, ctx, answer_minutes=None):
         """
         コマンド実行者が参加しているボイスチャンネルでNGワードゲームを始めます（BOTからDMが来ますがびっくりしないでください）
@@ -163,32 +163,31 @@ class GameCog(commands.Cog, name='ゲーム用'):
     @commands.group(aliases=['co','cog','cy','cg'], description='コヨーテするコマンド（サブコマンド必須）')
     async def coyoteGame(self, ctx):
         """
-        コヨーテするコマンド群です。このコマンドだけでは実行できません。半角スペースの後、続けて以下のサブコマンドを入力ください。
-        - コヨーテを始めたい場合は、`start`または`startAndAllMessage`を入力してください(startは説明が短く、startAndAllMessageは全てを説明します)。
-        - コヨーテ中に、「コヨーテ！」をしたい場合は、`coyote`を入力してください。
-        - コヨーテ中に、次の回を始めたい場合は、`deal`を入力してください。
-        - コヨーテ中に、現在の状況を確認したい場合は、`description`を入力してください。
+        コヨーテするコマンド群です。このコマンドだけでは実行できません。**半角スペースの後、続けて以下のサブコマンドを入力**ください。
+        - コヨーテを始めたい場合は、`/cy start`または`/cy startAndAllMessage`を入力してください(startは説明が短く、startAndAllMessageは全てを説明します)。
+        - コヨーテ中に、「コヨーテ！」をしたい場合は、`/cy coyote`を入力してください。
+        - コヨーテ中に、次の回を始めたい場合は、`/cy deal`を入力してください。
+        - コヨーテ中に、現在の状況を確認したい場合は、`/cy description`を入力してください。
         上級者向け機能
-        - 説明を省略して、コヨーテを始める場合は、`startAndNoMessage`を入力してください。
-        - コヨーテ中に、ネタバレありで現在の状況を確認したい場合は、`descriptionAll`を入力してください。
-        - `setDeckAndStart`で自分でデッキを作成できます。詳しくは`/help coyoteGame setDeckAndStart`を入力してください。
+        - 説明を省略して、コヨーテを始める場合は、`/cy startAndNoMessage`を入力してください。
+        - コヨーテ中に、ネタバレありで現在の状況を確認したい場合は、`/cy descriptionAll`を入力してください。
+        - `/cy setDeckAndStart`で自分でデッキを作成できます。詳しくは`/help coyoteGame setDeckAndStart`でヘルプを確認ください。
         """
         # サブコマンドが指定されていない場合、メッセージを送信する。
         if ctx.invoked_subcommand is None:
             await ctx.send('このコマンドにはサブコマンドが必要です。')
 
-
-    @coyoteGame.command(aliases=['s', 'st', 'ini', 'init'], description='コヨーテを始めるコマンド')
+    @coyoteGame.command(aliases=['s','st','ini','init'], description='コヨーテを始めるコマンド')
     async def start(self, ctx):
         """
         コヨーテを始めるコマンド（説明が程よいバージョン）
         - コヨーテのルールが分かる程度に省略しています。
         """
         await self.startCoyote(ctx)
-        await self.littleMessage(ctx)
-        await self.dealAndMessage()
+        await self.coyoteLittleMessage(ctx)
+        await self.dealAndMessage(ctx)
 
-    @coyoteGame.command(aliases=['sa', 'ina', 'inia'], description='コヨーテを始めるコマンド(全説明)')
+    @coyoteGame.command(aliases=['sa','ina','inia'], description='コヨーテを始めるコマンド(全説明)')
     async def startAndAllMessage(self, ctx):
         """
         コヨーテを始めるコマンド（説明が多いバージョン）
@@ -196,19 +195,19 @@ class GameCog(commands.Cog, name='ゲーム用'):
         - コヨーテのルールが分かるように書いてありますが、一旦説明を見ながらゲームしてみると良いと思います。
         """
         await self.startCoyote(ctx)
-        await self.allMessage(ctx)
-        await self.dealAndMessage()
+        await self.coyoteAllMessage(ctx)
+        await self.dealAndMessage(ctx)
 
-    @coyoteGame.command(aliases=['sn', 'no', 'inn'], description='コヨーテを始めるコマンド(説明なし)')
+    @coyoteGame.command(aliases=['sn','no','inn'], description='コヨーテを始めるコマンド(説明なし)')
     async def startAndNoMessage(self, ctx):
         """
         コヨーテを始めるコマンド（説明なし）
         - 上級者向けの機能です。ルールを説明されずとも把握している場合にのみ推奨します。
         """
         await self.startCoyote(ctx)
-        await self.dealAndMessage()
+        await self.dealAndMessage(ctx)
 
-    @coyoteGame.command(aliases=['sds','ss', 'set'], description='デッキを指定して、コヨーテを始めるコマンド(説明なし)')
+    @coyoteGame.command(aliases=['sds','ss','set'], description='デッキを指定して、コヨーテを始めるコマンド(説明なし)')
     async def setDeckAndStart(self, ctx, *, deck=None):
         """
         デッキを指定してコヨーテを始めるコマンド（説明なし）
@@ -231,9 +230,9 @@ class GameCog(commands.Cog, name='ゲーム用'):
         self.coyoteGames.set(make_team.vc_members)
         self.coyoteGames.setDeck(deck)
         self.coyoteGames.shuffle()
-        await self.dealAndMessage()
+        await self.dealAndMessage(ctx)
 
-    @coyoteGame.command(aliases=['c', 'cy', 'done'], description='コヨーテ！(前プレイヤーの数字がコヨーテの合計数を超えたと思った場合のコマンド)')
+    @coyoteGame.command(aliases=['c','co','cy','done'], description='コヨーテ！(前プレイヤーの数字がコヨーテの合計数を超えたと思った場合のコマンド)')
     async def coyote(self, ctx, you_id=None, number=0):
         """
         コヨーテ中に実行できる行動。「コヨーテ！」を行う
@@ -251,11 +250,8 @@ class GameCog(commands.Cog, name='ゲーム用'):
             msg = '「コヨーテを言われた人の数字」は「1以上の整数」(0もダメです)を指定してください。例：`/coyoteGame coyote @you 99`'
             await ctx.send(msg)
             return
-        if self.coyoteGames is None or len(self.coyoteGames.members) <= 1:
-            msg = 'コヨーテを始めてから実行できます。コヨーテを始めたい場合は、`/coyoteGame start`または`/coyoteGame startAndAllMessage`を入力してください。'
-            await ctx.send(msg)
+        if await self.coyoteStartCheckNG(ctx):
             return
-
         # コヨーテ！した相手のメンバー情報を取得。取得できない場合はエラーを返す
         you_id = re.sub(r'[<@!>]', '', you_id)
         if you_id.isdecimal():
@@ -273,38 +269,25 @@ class GameCog(commands.Cog, name='ゲーム用'):
         self.coyoteGames.coyote(ctx.author, you, number)
         await ctx.send(self.coyoteGames.description)
 
-
-    @coyoteGame.command(aliases=['d', 'de', 'next'], description='ディール（次のターンを始める）')
+    @coyoteGame.command(aliases=['d','de','next'], description='ディール（次のターンを始める）')
     async def deal(self, ctx):
         """
         コヨーテ中に実行できる行動。カードを引いて、プレイヤーに配ります
         """
-        if self.coyoteGame is None or len(self.coyoteGames.members) <= 1:
-            msg = 'コヨーテを始めてから実行できます。コヨーテを始めたい場合は、`/coyoteGame start`または`/coyoteGame startAndAllMessage`を入力してください。'
-            await ctx.send(msg)
+        if await self.coyoteStartCheckNG(ctx):
             return
-        await self.dealAndMessage()
+        await self.dealAndMessage(ctx)
 
-    @coyoteGame.command(aliases=['desc'], description='状況説明(ターン数,HP,山札の数,捨て札の数,捨て札)')
+    @coyoteGame.command(aliases=['desc','setsumei'], description='状況説明(ターン数,HP,山札の数,捨て札の数,捨て札)')
     async def description(self, ctx):
         """
         状況を説明します。
         - ターン数、生き残っている人の数、それぞれのHP
         - 山札の数、捨て札の数、捨て札の中身
         """
-        if self.coyoteGame is None or len(self.coyoteGames.members) <= 1:
-            msg = 'コヨーテを始めてから実行できます。コヨーテを始めたい場合は、`/coyoteGame start`または`/coyoteGame startAndAllMessage`を入力してください。'
-            await ctx.send(msg)
+        if await self.coyoteStartCheckNG(ctx, True):
             return
-        msg = f'ターン数：{self.coyoteGames.turn}\n'
-        msg += f'生き残っている人の数：{len(self.coyoteGames.members)}\n'
-        for member in self.coyoteGames.members:
-            msg += f'`{member.display_name}さん: (HP:{self.coyoteGames.members[member].HP})` '
-        msg += f'山札の数：{len(self.coyoteGames.deck)}枚, '
-        msg += f'捨て札：{len(self.coyoteGames.discards)}枚→'
-        discards_list = map(str, self.coyoteGames.discards)
-        discards = ','.join(discards_list)
-        msg += discards
+        msg = self.coyoteGames.create_description()
         await ctx.send(msg)
 
     @coyoteGame.command(aliases=['da','desca'], description='状況説明(全て/場のカードも分かる)')
@@ -314,26 +297,9 @@ class GameCog(commands.Cog, name='ゲーム用'):
         - ターン数、生き残っている人の数、それぞれのHP
         - 山札の数、山札の中身、捨て札の数、捨て札の中身、場のカード
         """
-        if self.coyoteGame is None or len(self.coyoteGames.members) <= 1:
-            msg = 'コヨーテを始めたい場合は、`/coyoteGame start`または`/coyoteGame startAndAllMessage`を入力してください。'
-            await ctx.send(msg)
+        if await self.coyoteStartCheckNG(ctx, True):
             return
-        msg = f'ターン数：{self.coyoteGames.turn}\n'
-        msg += f'生き残っている人の数：{len(self.coyoteGames.members)}\n'
-        for member in self.coyoteGames.members:
-            msg += f'`{member.display_name}さん: (HP:{self.coyoteGames.members[member].HP})` '
-        msg += f'山札の数：{len(self.coyoteGames.deck)}枚, '
-        deck_list = map(str, self.coyoteGames.deck)
-        deck = ','.join(deck_list)
-        msg += deck + '\n'
-        msg += f'捨て札：{len(self.coyoteGames.discards)}枚→'
-        discards_list = map(str, self.coyoteGames.discards)
-        discards = ','.join(discards_list)
-        msg += discards
-        msg += f'場のカード：{len(self.coyoteGames.hands)}枚→'
-        hands_list = map(str, self.coyoteGames.hands)
-        hands = ','.join(hands_list)
-        msg += f'||{hands}||'
+        msg = self.coyoteGames.create_description(True)
         await ctx.send(msg)
 
     async def startCoyote(self, ctx):
@@ -348,18 +314,22 @@ class GameCog(commands.Cog, name='ゲーム用'):
         self.coyoteGames.set(make_team.vc_members)
         self.coyoteGames.shuffle()
 
-    async def dealAndMessage(self):
+    async def dealAndMessage(self, ctx):
         self.coyoteGames.deal()
         dm_msg_all = ''
+        # 全員分のメッセージを作成
         for player in self.coyoteGames.members:
             dm_msg_all += f'{player.display_name}さん: {self.coyoteGames.members[player].card}\n'
+        # DM用メッセージを作成(送付する相手の名前が記載された行を削除)
         for player in self.coyoteGames.members:
             dm = await player.create_dm()
             rpl_msg_del = f'{player.display_name}さん:.+\n'
             dm_msg = re.sub(rpl_msg_del, '', dm_msg_all)
             await dm.send(f'{player.mention}さん 他の人のコヨーテカードはこちらです！\n{dm_msg}')
+        await ctx.send(f'カードを配りました。DMをご確認ください。{self.coyoteGames.description}')
+        self.coyoteGames.description = ''
 
-    async def allMessage(self, ctx):
+    async def coyoteAllMessage(self, ctx):
         msg1 = 'コヨーテ：ゲーム目的\n**自分以外のプレイヤーのカード(DMに送られる)を見て、少なくとも何匹のコヨーテがこの場にいるかを推理します。**\n'\
             'もしも宣言した数だけ居なかったら......コヨーテに命を奪われてしまいます！ インディアン、嘘つかない。コヨーテだって、嘘が大キライなのです。\n'\
             'ライフは一人3ポイントあります。3回殺されたらゲームから退場します。\n'\
@@ -367,7 +337,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
         await ctx.send(msg1)
 
         msg2 = '最初のプレイヤーはDMに送られる他の人のカードを見て、この場に「少なくとも」何匹のコヨーテがいるか推理し、コヨーテの数を宣言します。\n'\
-            '★宣言する数に上限はありませんが、1以上の整数である必要があります（つまり、0や負数はダメです）\n'\
+            '★宣言する数に上限はありませんが、**1以上の整数である必要**があります（つまり、0や負数はダメです）\n'\
             'ゲームは時計回りに進行(ボイスチャンネルを下に進むこと)します。\n'\
             '次のプレイヤーは次のふたつのうち、「どちらか」の行動をとってください。\n'\
             '1: 数字を上げる → 前プレイヤーの宣言した数が実際にこの場にいるコヨーテの数**以下（オーバー）していない**と思う場合、**前プレイヤーより大きな数**を宣言します。\n'\
@@ -379,8 +349,8 @@ class GameCog(commands.Cog, name='ゲーム用'):
         msg3 = '「コヨーテ！」と宣言された場合、直前のプレイヤーが宣言した数が当たっていたかどうか判定します。\n'\
             '★前述の通り、Botが計算します（例：`/coyoteGame coyote @you 99`のように書き込んでくださいね）\n'\
             'まず基本カードを集計したあと、特殊カード分を計算します。\n'\
-            '「コヨーテ！」を宣言された数がコヨーテの合計数をオーバーしていた場合、「コヨーテ！」を宣言した人の勝ち（数値を宣言した人の負け）\n'\
-            '「コヨーテ！」を宣言された数がコヨーテの合計数以下の場合、数値を宣言した人の勝ち（「コヨーテ！」を宣言した人の負け）\n'\
+            '「コヨーテ！」を**宣言された数がコヨーテの合計数をオーバー**していた場合、**「コヨーテ！」を宣言した人**の勝ち（数値を宣言した人の負け）\n'\
+            '「コヨーテ！」を**宣言された数がコヨーテの合計数以下**の場合、**数値を宣言**した人の勝ち（「コヨーテ！」を宣言した人の負け）\n'\
             '負けたプレイヤーはダメージを受けます（ライフが減ります）。\n'\
             '使ったカードを捨て札にして、次の回を始めます（**今回負けた人から開始**します）。\n'\
             '次の回を始めるには、`/coyoteGame deal`をDiscordに書き込んでください。\n'\
@@ -390,24 +360,34 @@ class GameCog(commands.Cog, name='ゲーム用'):
             'サイト: <http://www.newgamesorder.jp/games/coyote>'
         await ctx.send(msg3)
 
-
-    async def littleMessage(self, ctx):
+    async def coyoteLittleMessage(self, ctx):
         msg = 'コヨーテ：ゲーム目的\n**自分以外のプレイヤーのカード(DMに送られる)を見て、少なくとも何匹のコヨーテがこの場にいるかを推理します。**\n'\
             'もしも宣言した数だけ居なかったら......コヨーテに命を奪われてしまいます！ インディアン、嘘つかない。コヨーテだって、嘘が大キライなのです。\n'\
             'ライフは一人3ポイントあります。3回殺されたらゲームから退場します。\n'\
-            '最初のプレイヤー:「少なくとも」何匹のコヨーテがいるか推理し、コヨーテの数を宣言(1以上の整数)します。\n'\
+            '最初のプレイヤー:「少なくとも」何匹のコヨーテがいるか推理し、コヨーテの数を宣言(**1以上の整数**)します。\n'\
             'ゲームは時計回りに進行(ボイスチャンネルを下に進むこと)\n'\
             '次のプレイヤー：は次のふたつのうち、「どちらか」の行動をとってください。\n'\
             '1: 数字を上げる → 前プレイヤーの宣言した数が実際にこの場にいるコヨーテの数**以下（オーバー）していない**と思う場合、**前プレイヤーより大きな数**を宣言します。\n'\
             '2: 「コヨーテ！」→ 前プレイヤーの宣言を疑います。つまり、前プレイヤーの宣言した数が実際にこの場にいるコヨーテの数よりも**大きい（オーバーした）**と思う場合、**「コヨーテ！」**と宣言します\n'\
             '2の場合、例：`/coyoteGame coyote @you 99`のように**Discordに書き込んで**ください！（Botが結果を判定します！）\n'\
-            '**誰かが「コヨーテ！」と宣言するまで**、時計回りで順々に交代しながら宣言する数字を上げていきます\n'\
+            '**誰かが「コヨーテ！」と宣言するまで**、時計回り(ボイスチャンネルを下に進む)で順々に交代しながら宣言する**数字を上げて**いきます\n'\
             '次の回を始めるには、`/coyoteGame deal`をDiscordに書き込んでください（**今回負けた人から開始**します）。\n'\
             '負けたプレイヤーがその回を最後に**ゲームから脱落した場合、その回の勝者から**次の回を始めます。\n'\
             'ライフが0になったプレイヤーはゲームから脱落します。最後まで生き残ったプレイヤーが勝利です。\n'\
             'なお、コヨーテは絶賛販売中です(1,800円くらい)。気に入った方はぜひ買って遊んでみてください（このBotは許可を得て作成したものではありません）。販売:合同会社ニューゲームズオーダー, 作者:Spartaco Albertarelli, 画:TANSANFABRIK\n'\
             'サイト: <http://www.newgamesorder.jp/games/coyote>'
         await ctx.send(msg)
+
+    async def coyoteStartCheckNG(self, ctx, desc=False):
+        if self.coyoteGames is None or (len(self.coyoteGames.members) <= 1 and not desc):
+            msg = 'コヨーテを始めてから実行できます。コヨーテを始めたい場合は、`/coyoteGame start`または`/coyoteGame startAndAllMessage`を入力してください。'
+            await ctx.send(msg)
+            return True
+        # 終わった後に説明が見たい場合は許す
+        elif len(self.coyoteGames.members) == 1 and desc:
+            return False
+        else:
+            return False
 
     @wordWolf.error
     async def wordWolf_error(self, ctx, error):
@@ -417,6 +397,12 @@ class GameCog(commands.Cog, name='ゲーム用'):
 
     @ngWordGame.error
     async def ngWordGame_error(self, ctx, error):
+        if isinstance(error, commands.CommandError):
+            logger.error(error)
+            await ctx.send(error)
+
+    @coyoteGame.error
+    async def coyoteGame_error(self, ctx, error):
         if isinstance(error, commands.CommandError):
             logger.error(error)
             await ctx.send(error)
