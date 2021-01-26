@@ -33,7 +33,7 @@ class AssistantBot(commands.Bot):
             try:
                 self.load_extension(cog)
             except Exception:
-                logger.warn("traceback:", stack_info=True)
+                logger.warning("traceback:", stack_info=True)
 
     # Botの準備完了時に呼び出されるイベント
     async def on_ready(self):
