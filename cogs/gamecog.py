@@ -319,6 +319,54 @@ class GameCog(commands.Cog, name='ゲーム用'):
         msg = self.coyoteGames.create_description_card()
         await ctx.send(msg)
 
+    @commands.command(aliases=['dice','dices','r'], description='ダイスを振る(さいころを転がす)')
+    async def roll(self, ctx, diceAndNum=''):
+        """
+        ダイスを振る(さいころを転がす)コマンド
+        - `/roll 1d6`のように、左側にダイスの数、右側にダイスの種類(最大値)を指定してください
+        """
+        default_error_msg = '`/roll 1d6`のように指定してください。'
+        if diceAndNum is None:
+            await ctx.send(default_error_msg)
+            return
+        diceAndNum = str(diceAndNum).lower()
+        if 'd' not in diceAndNum:
+            msg = 'dが必ず必要です。'
+            await ctx.send(msg + default_error_msg)
+            return
+        list = str(diceAndNum).split('d')
+        if len(list) != 2:
+            await ctx.send(default_error_msg)
+            return
+        elif len(list) == 2:
+            msg = ''
+            sum = 0
+            # ダイスの数、ダイスの最大値についてのチェックと数値化
+            if self.coyoteGames.is_num(list[0]):
+                dice_num = int(list[0])
+            else:
+                msg = 'dの左側が数字ではありません。'
+                await ctx.send(msg + default_error_msg)
+                return
+            if self.coyoteGames.is_num(list[1]):
+                max_num = int(list[1])
+            else:
+                msg = 'dの右側が数字ではありません。'
+                await ctx.send(msg + default_error_msg)
+                return
+            if max_num < 1 or dice_num < 1:
+                msg = 'dの左右は1以上である必要があります。'
+                await ctx.send(msg + default_error_msg)
+                return
+            for i in range(dice_num):
+                value = random.randint(1, max_num)
+                msg += f' {value}'
+                sum += value
+            else:
+                if dice_num > 1:
+                    msg += f' → {sum}'
+                await ctx.send(msg)
+
     async def startCoyote(self, ctx):
         make_team = MakeTeam()
         make_team.my_connected_vc_only_flg = True
