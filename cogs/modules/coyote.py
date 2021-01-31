@@ -1,6 +1,7 @@
 import random
 import discord
 import re
+import string
 from logging import getLogger
 
 logger = getLogger(__name__)
@@ -11,6 +12,7 @@ class CoyoteMember:
         self.HP = self.DEFAULT_HP
         self.card = ''
         self.isDead = False
+        self.id = ''
 
     def setCard(self, card: str):
         self.card = card
@@ -20,8 +22,12 @@ class CoyoteMember:
         if self.HP == 0:
             self.isDead = True
 
+    def setId(self, id: str):
+        self.id = id
+
 class Coyote:
     DEFAULT_DECK = [20, 15, 15, 10, 10, 10, 5, 5, 5, 5, 4, 4, 4, 4, 3, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1, 0, 0, 0, '0(Night)', -5, -5, -10, '*2(Chief)', 'Max->0(Fox)', '?(Cave)']
+    ID_LIST = list(string.ascii_uppercase)
 
     def __init__(self):
         self.members = {}
@@ -40,8 +46,9 @@ class Coyote:
         self.discards = []
         self.turn = 0
         self.description = ''
-        for member in members:
+        for id, member in zip(self.ID_LIST ,members):
             coyoteMember = CoyoteMember()
+            coyoteMember.setId(id)
             self.members[member] = coyoteMember
 
     def setDeck(self, deck:str):
@@ -88,25 +95,29 @@ class Coyote:
         if number > coyotes:
             self.members[you].damage(1)
             message = f'{number} > {coyotes} → 「コヨーテ！」の勝ち({me.display_name}が正しい！)\n'\
-                    f'{you.display_name}に1点ダメージ。'
+                    f'{you.display_name}に1点ダメージ。次の手番は{you.display_name}(敗者)からです。\n'
             self.description += message
             logger.info(message)
             if self.members[you].isDead:
+                self.body.append(self.members.pop(you))
                 message = f'{you.display_name}は死にました。\n'
+                if len(self.members) > 1:
+                    message += f'**次は{me.display_name}(勝者)から手番を開始**してください。\n'
                 self.description += message
                 logger.info(message)
-                self.body.append(self.members.pop(you))
         else:
             self.members[me].damage(1)
             message = f'{number} <= {coyotes} → 「コヨーテ！」の負け({you.display_name}が正しい！)\n'\
-                    f'{me.display_name}に1点ダメージ。'
+                    f'{me.display_name}に1点ダメージ。次の手番は{me.display_name}(敗者)からです。\n'
             self.description += message
             logger.info(message)
             if self.members[me].isDead:
+                self.body.append(self.members.pop(me))
                 message = f'{me.display_name}は死にました。\n'
+                if len(self.members) > 1:
+                    message += f'**次は{you.display_name}(勝者)から手番を開始**してください。\n'
                 self.description += message
                 logger.info(message)
-                self.body.append(self.members.pop(me))
 
         # 一人になったら、勝利
         if len(self.members) == 1:
@@ -117,14 +128,12 @@ class Coyote:
         else:
             self.description += '現在の状況:'
             for member in self.members:
-                self.description += f'{member.display_name}さん(HP:{self.members[member].HP}) '
+                self.description += f'{member.display_name}さん(ID:{self.members[member].id}, HP:{self.members[member].HP}) '
             self.description += '\n`/coyoteGame deal`で次のターンを開始します。'
 
     def calc(self):
-        # [変数名 for 変数名 in 元のリスト if 条件式]
         normal_hands = [i for i in self.hands if self.is_num(i)]
         special_hands = [i for i in self.hands if not self.is_num(i)]
-        additional_hands = []
         shuffle_flg = False
 
         # Caveカードの効果
@@ -207,13 +216,13 @@ class Coyote:
             # Foxカードの効果
             if 'FOX' in card.upper():
                 self.discards.append(card)
-                num_hands = [i for i in normal_hands if self.is_num(i)]
+                num_hands = [i for i in normal_hands if self.is_num(i) and i > 0]
                 if len(num_hands) == 0:
                     max_num = 0
                 else:
                     max_num = max(num_hands)
                 fox_hands.append(-max_num)
-                message = f'{card}の効果で、この場で最大の値である{max_num}を0にした。\n'
+                message = f'{card}の効果で、コヨーテカードの最大値である{max_num}を0にした。\n'
                 self.description += message
                 logger.info(message)
 
@@ -260,23 +269,40 @@ class Coyote:
         msg = f'ターン数：{self.turn}\n'
         msg += f'生き残っている人の数：{len(self.members)}\n'
         for member in self.members:
-            msg += f'`{member.display_name}さん → HP:{self.members[member].HP}`\n'
+            msg += f'`{member.display_name}さん(id:{self.members[member].id}) → HP:{self.members[member].HP}`\n'
         if all_flg:
-            msg += f'山札の数：{len(self.deck)}枚 → '
-            deck_list = map(str, self.deck)
+            msg += f'山札の数：{len(self.deck)}枚 → `'
+            deck_list = sorted(map(str, self.deck))
             deck = ','.join(deck_list)
-            msg += deck + '\n'
+            msg += deck + '`\n'
         else:
             msg += f'山札の数：{len(self.deck)}枚, '
-        msg += f'捨て札：{len(self.discards)}枚 → '
-        discards_list = map(str, self.discards)
-        discards = ','.join(discards_list)
-        msg += discards
+        msg += f'捨て札：{len(self.discards)}枚'
+        if len(self.discards) > 0:
+            msg += ' → `'
+            discards_list = map(str, self.discards)
+            discards = ','.join(discards_list)
+            msg += discards + '\n`'
+        else:
+            msg += '\n'
 
         if all_flg:
-            msg += f'\n場のカード：{len(self.hands)}枚 → '
-            hands_list = map(str, self.hands)
-            hands = ','.join(hands_list)
-            msg += f'||{hands}||'
+            msg += f'場のカード：{len(self.hands)}枚'
+            if len(self.hands) > 0:
+                msg += ' → '
+                hands_list = map(str, self.hands)
+                hands = ','.join(hands_list)
+                msg += f'||{hands}||'
 
+        return msg
+
+    def create_description_card(self):
+        msg = 'ナンバーカードには、「基本カード」と「特殊カード」の2種類が存在します。\n'
+        msg += '■基本カード\n'
+        msg += 'コヨーテカード: 1以上の数値を持ったカード, 兵隊カード: −1以下の数値を持ったカード(兵隊に退治されコヨーテが減ります), おばけカード: 0のカード（数に加えません）\n'
+        msg += '■特殊カード\n'       
+        msg += '\*2(Chief): 酋長カード...すべての基本カードの数値を2倍にします。\n'
+        msg += '0(Night): 夜カード...0です。計算終了後、山札・捨て札を混ぜてシャッフルします（山札がリセットされる）。\n'
+        msg += '?(Cave): ほらあなカード...計算時に山札からナンバーカードを1枚引き、その数を加えます。\n'
+        msg += 'Max->0(Fox): キツネカード...この回で出た最大のコヨーテカードの数値を「0」にします。\n'
         return msg

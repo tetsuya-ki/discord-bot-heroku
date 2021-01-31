@@ -1,9 +1,12 @@
 from discord.ext import commands  # Bot Commands Frameworkのインポート
 from .modules.grouping import MakeTeam
 from .modules.radiko import Radiko
+from .modules import settings
 from logging import getLogger
 
 import discord
+import re
+import time
 
 logger = getLogger(__name__)
 
@@ -14,6 +17,9 @@ class MessageCog(commands.Cog, name='通常用'):
     """
     コマンドを元に動作する機能のカテゴリ。
     """
+    DEFAULT_NUMBER = 4000
+    MAX_NUMBER = 10000
+    MAX_RANK = 20
 
     # MessageCogクラスのコンストラクタ。Botを受取り、インスタンス変数として保持。
     def __init__(self, bot):
@@ -163,6 +169,145 @@ class MessageCog(commands.Cog, name='通常用'):
                     await ctx.channel.send(content=radiko.content, embed=embed)
                 else:
                     await ctx.channel.send(radiko.r_err)
+
+    @commands.command(aliases=['cm','countm'], description='メッセージの件数を取得する機能です(けっこう時間かかります)')
+    async def countMessage(self, ctx, channel_name=None, numbers=None):
+        """
+        ギルドのチャンネルのメッセージを集計する機能です。それぞれのパーセンテージと件数を表示します。
+        - channel_name: 集計対象のチャンネル(allの場合全部、未指定はコマンド実行チャンネル)
+        - numbers: 集計件数を指定
+        """
+        start_time = time.time()
+        # 集計対象のチャンネルを設定
+        count_channels = self.get_target_channels(ctx, channel_name)
+
+        # 集計件数を設定
+        if numbers is None or not str(numbers).isdecimal():
+            numbers = self.DEFAULT_NUMBER
+        elif str(numbers).isdecimal():
+            numbers = int(numbers)
+            if numbers > self.MAX_NUMBER:
+                numbers = self.MAX_NUMBER
+
+        # ランキングの数を設定
+        ranking_num = settings.COUNT_RANK_SETTING
+        if settings.COUNT_RANK_SETTING > self.MAX_RANK:
+            ranking_num = self.MAX_RANK
+
+        # 集計作業
+        target = {}
+        all_num = 0
+        sep_channels = ''
+        for count_channel in count_channels:
+            try:
+                async for message in count_channel.history(limit=numbers):
+                    all_num = all_num + 1
+                    if message.author in target:
+                        target[message.author] = target[message.author] + 1
+                    else:
+                        target[message.author] = 1
+                sep_channels += count_channel.name + ','
+            except:
+                continue
+
+        target_sorted = sorted(target.items(), key=lambda x:x[1], reverse=True)
+        message = f'`{ctx.message.clean_content}`の結果です(総件数:' + '{:,}'.format(all_num) + ')。\n'
+        for rank, ranking_target in enumerate(target_sorted):
+            percent = '{:.2%}'.format(ranking_target[1] / all_num)
+            message += f'{rank+1}位: {ranking_target[0].display_name}さん {percent}(' + '{:,}'.format(ranking_target[1]) + '件)\n'
+            if rank + 1 >= ranking_num:
+                break
+
+        sep_channels = re.sub(r',$', '', sep_channels)
+        message += f'(集計チャンネル: {sep_channels})\n'
+
+        elapsed_time = time.time() - start_time
+        elapsed_time_text = '経過時間:{:.2f}'.format(elapsed_time) + '[sec]'
+        logger.info(f'{sep_channels}({numbers}件) → {elapsed_time_text}')
+        message += elapsed_time_text
+
+        await ctx.send(message)
+
+    @commands.command(aliases=['cr','countr'], description='リアクションの件数を取得する機能です')
+    async def countReaction(self, ctx, channel_name=None, numbers=None):
+        """
+        ギルドのチャンネルのリアクションを集計する機能です。それぞれのパーセンテージと件数を表示します。
+        - channel_name: 集計対象のチャンネル(allの場合全部、未指定はコマンド実行チャンネル)
+        - numbers: 集計件数を指定
+        """
+        start_time = time.time()
+        # 集計対象のチャンネルを設定
+        count_channels = self.get_target_channels(ctx, channel_name)
+
+        # 集計件数を設定
+        if numbers is None or not str(numbers).isdecimal():
+            numbers = self.DEFAULT_NUMBER
+        elif str(numbers).isdecimal():
+            numbers = int(numbers)
+            if numbers > self.MAX_NUMBER:
+                numbers = self.MAX_NUMBER
+
+        # ランキングの数を設定
+        ranking_num = settings.COUNT_RANK_SETTING
+        if settings.COUNT_RANK_SETTING > self.MAX_RANK:
+            ranking_num = self.MAX_RANK
+
+        # 集計作業
+        target = {}
+        all_num = 0
+        sep_channels = ''
+        for count_channel in count_channels:
+            try:
+                async for message in count_channel.history(limit=numbers):
+                    for reaction in message.reactions:
+                        all_num = all_num + reaction.count
+                        if reaction.emoji in target:
+                            target[reaction.emoji] = target[reaction.emoji] + reaction.count
+                        else:
+                            target[reaction.emoji] = reaction.count
+                sep_channels += count_channel.name + ','
+            except:
+                continue
+
+        target_sorted = sorted(target.items(), key=lambda x:x[1], reverse=True)
+        message = f'`{ctx.message.clean_content}`の結果です(総件数:' + '{:,}'.format(all_num) + ')。\n'
+        for rank, ranking_target in enumerate(target_sorted):
+            percent = '{:.2%}'.format(ranking_target[1] / all_num)
+            message += f'{rank+1}位: {ranking_target[0]} → {percent}(' + '{:,}'.format(ranking_target[1]) + '件)\n'
+            if rank + 1 >= ranking_num:
+                break
+
+        sep_channels = re.sub(r',$', '', sep_channels)
+        message += f'(集計チャンネル: {sep_channels})\n'
+
+        elapsed_time = time.time() - start_time
+        elapsed_time_text = '経過時間:{:.2f}'.format(elapsed_time) + '[sec]'
+        logger.info(f'{sep_channels}({numbers}件) → {elapsed_time_text}')
+        message += elapsed_time_text
+
+        await ctx.send(message)
+
+    def get_target_channels(self, ctx, channel_name):
+        if channel_name is None:
+            count_channels = [ctx.channel]
+        elif str(channel_name).lower() == 'all':
+            count_channels = ctx.guild.text_channels
+        else:
+            channel = discord.utils.get(ctx.guild.text_channels, name=channel_name)
+
+            # 名前でchannelが取得できなかった場合の処理
+            if channel is None:
+                # チャンネルID指定 <#\d+>の場合、IDからチャンネルを取得。それでも無理なら今のチャンネルを指定
+                channel_id = re.sub(r'[<#>]', '', channel_name)
+                if channel_id.isdecimal() and '#' in channel_name:
+                    channel_id = int(channel_id)
+                    count_channels = [ctx.guild.get_channel(channel_id)]
+                else:
+                    count_channels = [ctx.channel]
+            # 名前で取得できた場合の処理
+            else:
+                count_channels = [channel]
+        return count_channels
 
     @team.error
     async def team_error(self, ctx, error):
