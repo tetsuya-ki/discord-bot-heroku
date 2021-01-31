@@ -4,12 +4,10 @@ from dotenv import load_dotenv
 from logging import DEBUG, INFO, WARN, ERROR
 
 def if_env(str):
-    if str is None:
+    if str is None or str.upper() != 'TRUE':
         return False
-    elif str.upper() == 'TRUE':
-        return True
     else:
-        return False
+        return True
 
 def get_log_level(str):
     if str is None:
@@ -24,6 +22,12 @@ def get_log_level(str):
     else:
         return WARN
 
+def num_env(param):
+    if str is None or not str(param).isdecimal():
+        return 5
+    else:
+        return int(param)
+
 load_dotenv(verbose=True)
 dotenv_path = join(dirname(__file__), 'files' + os.sep + '.env')
 load_dotenv(dotenv_path)
@@ -35,3 +39,4 @@ IS_HEROKU = if_env(os.environ.get('IS_HEROKU'))
 SAVE_FILE_MESSAGE = os.environ.get('SAVE_FILE_MESSAGE')
 FIRST_REACTION_CHECK = if_env(os.environ.get('FIRST_REACTION_CHECK'))
 SCRAPBOX_SID_AND_PROJECTNAME = os.environ.get('SCRAPBOX_SID_AND_PROJECTNAME')
+COUNT_RANK_SETTING = num_env(os.environ.get('COUNT_RANK_SETTING'))
