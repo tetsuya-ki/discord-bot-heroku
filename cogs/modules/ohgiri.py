@@ -4,8 +4,10 @@ import re
 import string
 import json
 import os
-from os.path import join, dirname
+from os.path import join, dirname, exists
 from logging import getLogger
+from . import settings
+from .savefile import SaveFile
 
 logger = getLogger(__name__)
 
@@ -47,12 +49,22 @@ class Ohgiri:
         self.description = ''
         self.max_hands = None
         self.ans_dict = {}
+        self.savefile = SaveFile()
 
-
-    def init_card(self):
+    async def init_card(self):
         json_data = {}
-        try:
+
+        json_path = join(dirname(__file__), 'files' + os.sep + 'temp' + os.sep + self.FILE)
+        # 環境変数に大喜利用JSONのURLが登録されている場合はそちらを使用
+        if settings.OHGIRI_JSON_URL:
+            if not exists(json_path):
+                file_path = await self.savefile.download_file(settings.OHGIRI_JSON_URL,  json_path)
+            else:
+                file_path = json_path
+        else:
             file_path = join(dirname(__file__), 'files' + os.sep + self.FILE)
+
+        try:
             with open(file_path, mode='r') as f:
                 json_data = json.load(f)
         except (FileNotFoundError, json.JSONDecodeError, EOFError) as e:
@@ -70,12 +82,12 @@ class Ohgiri:
             self.deck_ans.append(str(answer_index))
             answer_index += 1
 
-    def setting(self, members, max_hands):
+    async def setting(self, members, max_hands):
         """
         メンバーに大喜利メンバーをセットし、ゲームできるようにセッティングする
         """
         self.__init__()
-        self.init_card()
+        await self.init_card()
         self.max_hands = max_hands
 
         for member in members:
@@ -112,6 +124,8 @@ class Ohgiri:
                 # カードが無くなった時の処理
                 if len(self.deck_ans) == 0:
                     self.retern_discards_to_deck(self.discards_odai, self.deck_odai)
+
+            self.members[member].cards = sorted(self.members[member].cards, key=int)
 
     def retern_discards_to_deck(self, target_discards, target_deck):
         message = 'お題カードがなくなったので山札と捨て札を混ぜて、'
@@ -162,11 +176,28 @@ class Ohgiri:
                 self.description += f'{self.house.display_name}のポイントが1点減りました。'
 
         else :
-            # 選ばれた人が得点
+            # 選ばれた人が得点を得て、親になる
             self.members[choosen_answer.member].point += 1
             self.description += f'親から選ばれた、{choosen_answer.member.display_name}のポイントが1点増えました。'
+            self.house = choosen_answer.member
 
         # 置換済みで回答と回答者を入れる
         win_word = f'{str(choosen_answer.answer_index)}: {str(self.odai).replace("〇〇", "**" + self.ans_dict[choosen_answer.card_id] + "**")} ({choosen_answer.member}さん)'
         self.winCardsList.append(win_word)
         self.description += win_word
+
+    def show_info(self):        
+        # 今の親
+        self.description = f'現在の親: {self.house.display_name}さん'
+        # 今のお題
+        self.description += f'現在のお題: {self.house}'
+
+        # 参加者の点数と回答済みかどうかを表示する
+        for member in self.members:
+            self.description += f'{member.display_name}さん：'
+            self.description += f'{self.members[member].point}点：'
+
+            if (len([answer for answer in self.field if answer.member == member]) == 0):
+                self.description += "未回答"
+            else:
+                self.description += "回答済み"

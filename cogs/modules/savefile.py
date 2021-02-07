@@ -1,5 +1,8 @@
 import os
 import aiohttp
+from logging import getLogger
+
+logger = getLogger(__name__)
 
 class SaveFile:
     def __init__(self):
@@ -8,6 +11,8 @@ class SaveFile:
     async def download_file(self, url, dst_path):
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as r:
+                logger.debug(url)
+                logger.debug(r.status)
                 if r.status == 200:
                     with open(dst_path, 'wb') as local_file:
                         web_file = await r.read()

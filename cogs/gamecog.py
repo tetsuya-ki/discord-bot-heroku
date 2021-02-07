@@ -23,7 +23,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
     def __init__(self, bot):
         self.bot = bot
         self.coyoteGames = Coyote()
-        self.ohgohgiriGames = Ohgiri()
+        self.ohgiriGames = Ohgiri()
 
     # ワードウルフ機能
     @commands.command(aliases=['word','ww'], description='ワードウルフ機能(少数派のワードを与えられた人を当てるゲーム)')
@@ -479,8 +479,8 @@ class GameCog(commands.Cog, name='ゲーム用'):
         if ctx.invoked_subcommand is None:
             await ctx.send('このコマンドにはサブコマンドが必要です。')
 
-    @ohgiriGame.command(aliases=['s','st','ini','init'], description='大喜利を開始するサブコマンド')
-    async def start(self, ctx):
+    @ohgiriGame.command(aliases=['s','st','ini','init','start'], description='大喜利を開始するサブコマンド')
+    async def start_ohgiriGame(self, ctx):
         """大喜利を開始"""
         await self.startOhgiri(ctx)
 
@@ -491,53 +491,90 @@ class GameCog(commands.Cog, name='ゲーム用'):
         - ans_number: 回答として設定する値(数字で指定)
         例:`/o answer 1`
         """
-        self.ohgohgiriGames.receive_card(card_id, ctx.author)
-
-        # 回答者が出そろった場合、場に出す
-        if len(self.ohgohgiriGames.members) == len(self.ohgohgiriGames.field):
-            self.ohgohgiriGames.show_answer()
-            await ctx.send(self.ohgohgiriGames.description)
+        # 始まっているかのチェック
+        if len(self.ohgiriGames.members) == 0:
+            await ctx.send('ゲームが起動していません！')
+        # コマンド実行者のチェック(親は拒否)
+        elif ctx.author == self.ohgiriGames.house:
+            await ctx.send('親は回答を提出できません！')
+        # 引数が設定されているかチェック
+        elif card_id is None:
+            await ctx.send('引数`card_id`を指定してください！')
+        # 参加者かチェック
+        elif self.ohgiriGames.members.get(ctx.author) is None:
+            await ctx.send(f'{ctx.author.display_name}は、参加者ではありません！')
+        # コマンド実行者が所持しているかチェック
+        elif card_id not in self.ohgiriGames.members[ctx.author].cards:
+            await ctx.send(f'{card_id}は{ctx.author.display_name}の所持しているカードではありません！')
         else:
-            logger.info('終わった！')
+            # カードの受領処理
+            self.ohgiriGames.receive_card(card_id, ctx.author)
+            # 回答者が出そろった場合、場に出す(親は提出できないので引く)
+            if (len(self.ohgiriGames.members) - 1)  == len(self.ohgiriGames.field):
+                self.ohgiriGames.show_answer()
+                await ctx.send(self.ohgiriGames.description)
+                logger.info('回答者が出揃ったので、場に展開！')
 
-    @ohgiriGame.command(aliase=['c','ch','sentaku','erabu'], description='')
+    @ohgiriGame.command(aliase=['c','ch','sentaku','erabu'], description='親が気に入ったカードを選択する')
     async def choice(self, ctx, ans_index=None):
         """
         親が気に入ったカードを選択する
         """
+        # 始まっているかのチェック
+        if len(self.ohgiriGames.members) == 0:
+            await ctx.send('ゲームが起動していません！')
         # コマンド実行者のチェック(親以外は拒否)
-        # 提出された数のチェック
-        # 結果を表示
-        self.ohgohgiriGames.choose_answer(ans_index)
-        await ctx.send(self.ohgohgiriGames.description)
+        elif ctx.author != self.ohgiriGames.house:
+            await ctx.send('親以外が秀逸な回答を選択することはできません！')
+        elif ans_index is None or not str(ans_index).isdecimal():
+            await ctx.send('`ans_index`が選択されていません！')
+        else:
+            # 場にある数かどうかのチェック
+            ans_index = str(ans_index)
+            if int(ans_index) > len(self.ohgiriGames.members) - 1:
+                await ctx.send(f'{ans_index}は場に出ている最大の選択数({len(self.ohgiriGames.members) - 1})を超えています！')
+                return
+
+            # 結果を表示
+            self.ohgiriGames.choose_answer(ans_index)
+            await ctx.send(self.ohgiriGames.description)
+
+    @ohgiriGame.command(aliase=['desc','description','setsumei'], description='状況を説明します')
+    async def description_ohgiriGame(self, ctx):
+        # 始まっているかのチェック
+        if len(self.ohgiriGames.members) == 0:
+            await ctx.send('ゲームが起動していません！')
+            return
+        """現在の状況を説明します"""
+        self.ohgiriGames.show_info()
 
     async def startOhgiri(self, ctx):
         make_team = MakeTeam()
         make_team.my_connected_vc_only_flg = True
         await make_team.get_members(ctx)
 
-        # テスト中はチェックしない
-        # if make_team.mem_len < 2:
-        #     msg = f'大喜利を楽しむには2人以上のメンバーが必要です(現在、{make_team.mem_len}人しかいません)'
-        #     await ctx.send(msg)
-        #     return
+        if make_team.mem_len < 2:
+            msg = f'大喜利を楽しむには2人以上のメンバーが必要です(現在、{make_team.mem_len}人しかいません)'
+            await ctx.send(msg)
+            return
 
-        self.ohgohgiriGames.setting(make_team.vc_members, 12)
-        self.ohgohgiriGames.shuffle()
-        self.ohgohgiriGames.deal()
+        await self.ohgiriGames.setting(make_team.vc_members, 12)
+        self.ohgiriGames.shuffle()
+        self.ohgiriGames.deal()
 
         # お題を表示
-        await ctx.send(f'お題：{self.ohgohgiriGames.odai}')
+        odai_msg = await ctx.send(f'お題：{self.ohgiriGames.odai}')
 
         # DMで回答カードを示す
-        for player in self.ohgohgiriGames.members:
+        for player in self.ohgiriGames.members:
             dm_msg  = ''
             dm = await player.create_dm()
-            for card_id in self.ohgohgiriGames.members[player].cards:
-                card_message = self.ohgohgiriGames.ans_dict[card_id]
+            for card_id in self.ohgiriGames.members[player].cards:
+                card_message = self.ohgiriGames.ans_dict[card_id]
                 dm_msg += f'{card_id}: {card_message}\n'
+            dm_msg += f'お題へのリンク:{odai_msg.jump_url}'
             await dm.send(f'{player.mention}さん あなたの手札はこちらです！\n{dm_msg}')
-        await ctx.send(f'カードを配りました。DMをご確認ください。{self.ohgohgiriGames.description}\n親は{self.ohgohgiriGames.house.display_name}です！')
+        await ctx.send(f'カードを配りました。DMをご確認ください。{self.ohgiriGames.description}\n親は{self.ohgiriGames.house.display_name}です！')
 
     @wordWolf.error
     async def wordWolf_error(self, ctx, error):
