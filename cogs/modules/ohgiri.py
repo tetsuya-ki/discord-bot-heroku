@@ -1,7 +1,4 @@
 import random
-import discord
-import re
-import string
 import json
 import os
 from os.path import join, dirname, exists
@@ -30,6 +27,7 @@ class Ohgiri:
     大喜利ゲームのクラス
     """
     FILE = 'ohgiri.json'
+    WIN_POINT = 2
     #{
     #"subject": ['今ちまたで人気のRPG、主人公が〇〇','いい年こいて親父が今ははまっているもの、〇〇','通っていた小学校の校訓、元気、本気、〇〇。今思うとおかしいよな']
     #"answer": ["入学式","修学旅行","卒業式","学校祭","体育祭","マラソン大会"],
@@ -50,6 +48,7 @@ class Ohgiri:
         self.max_hands = None
         self.ans_dict = {}
         self.savefile = SaveFile()
+        self.game_over = False
 
     async def init_card(self):
         json_data = {}
@@ -109,26 +108,27 @@ class Ohgiri:
         self.turn = self.turn + 1
         self.description = ''
         self.hands = []
+        self.field = []
 
         # 場に置かれるお題をひく
         self.odai =  self.deck_odai.pop()
 
         # お題の山札がなくなった場合の処理
         if len(self.deck_odai) == 0:
-            self.retern_discards_to_deck(self.deck_odai, self.discards_odai)
+            self.retern_discards_to_deck('お題カード', self.discards_odai, self.deck_odai)
 
         for member in self.members:
             # 手札が「手札の最大数 - メンバーのpoint」になるまでカードを配る
             while len(self.members[member].cards) < (self.max_hands - self.members[member].point):
                 self.members[member].cards.append(self.deck_ans.pop())
-                # カードが無くなった時の処理
+                # 回答が無くなった時の処理
                 if len(self.deck_ans) == 0:
-                    self.retern_discards_to_deck(self.discards_odai, self.deck_odai)
+                    self.retern_discards_to_deck('回答カード', self.discards_ans, self.deck_ans)
 
             self.members[member].cards = sorted(self.members[member].cards, key=int)
 
-    def retern_discards_to_deck(self, target_discards, target_deck):
-        message = 'お題カードがなくなったので山札と捨て札を混ぜて、'
+    def retern_discards_to_deck(self, name, target_discards, target_deck):
+        message = f'{name}がなくなったので山札と捨て札を混ぜて、'
         self.description += message
         logger.info(message)
         target_deck.extend(target_discards)
@@ -169,35 +169,46 @@ class Ohgiri:
 
         if choosen_answer.member == 'dummy':
             # ダミーを選択したら親が減点
-            self.description += 'ダミーを選択しました'
+            self.description += 'ダミーを選択しました\n'
             house_member_obj = self.members[self.house]
             if house_member_obj.point > 0:
                 house_member_obj.point += -1
-                self.description += f'{self.house.display_name}のポイントが1点減りました。'
+                self.description += f'{self.house.display_name}のポイントが1点減りました。\n'
 
         else :
             # 選ばれた人が得点を得て、親になる
             self.members[choosen_answer.member].point += 1
-            self.description += f'親から選ばれた、{choosen_answer.member.display_name}のポイントが1点増えました。'
+            self.description += f'親から選ばれた、{choosen_answer.member.display_name}のポイントが1点増えました。\n'
             self.house = choosen_answer.member
 
         # 置換済みで回答と回答者を入れる
-        win_word = f'{str(choosen_answer.answer_index)}: {str(self.odai).replace("〇〇", "**" + self.ans_dict[choosen_answer.card_id] + "**")} ({choosen_answer.member}さん)'
+        win_word = f'{str(self.odai).replace("〇〇", "**" + self.ans_dict[choosen_answer.card_id] + "**")} ({choosen_answer.member.display_name}さん)\n'
         self.winCardsList.append(win_word)
         self.description += win_word
 
-    def show_info(self):        
-        # 今の親
-        self.description = f'現在の親: {self.house.display_name}さん'
-        # 今のお題
-        self.description += f'現在のお題: {self.house}'
+        # 使用済みのカードを捨てる
+        self.discards_odai.append(self.odai)
+        self.odai = ''
+
+        for answer in self.field:
+            self.discards_ans.append(str(answer.card_id))
+
+        # 勝利判定
+        if choosen_answer.member != 'dummy' and self.members[choosen_answer.member].point >= self.WIN_POINT:
+            self.game_over = True
+            self.description += f'\n{choosen_answer.member.display_name}さん、あなたが優勝です！　\n■今回選出されたカードの一覧はコチラ！\n'
+            for i, win_word in enumerate(self.winCardsList):
+                self.description += f'{i+1}:{win_word}'
+
+    def show_info(self):
+        self.description = f'ターン: {self.turn}、現在の親: {self.house.display_name}さん、現在のお題: {self.odai}\n'
 
         # 参加者の点数と回答済みかどうかを表示する
         for member in self.members:
-            self.description += f'{member.display_name}さん：'
-            self.description += f'{self.members[member].point}点：'
+            self.description += f'{member.display_name}さん'
+            self.description += f'({self.members[member].point}点): '
 
             if (len([answer for answer in self.field if answer.member == member]) == 0):
-                self.description += "未回答"
+                self.description += '未回答\n'
             else:
-                self.description += "回答済み"
+                self.description += '回答済\n'

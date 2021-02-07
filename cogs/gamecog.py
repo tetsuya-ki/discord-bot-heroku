@@ -492,7 +492,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
         例:`/o answer 1`
         """
         # 始まっているかのチェック
-        if len(self.ohgiriGames.members) == 0:
+        if len(self.ohgiriGames.members) == 0 or self.ohgiriGames.game_over:
             await ctx.send('ゲームが起動していません！')
         # コマンド実行者のチェック(親は拒否)
         elif ctx.author == self.ohgiriGames.house:
@@ -507,6 +507,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
         elif card_id not in self.ohgiriGames.members[ctx.author].cards:
             await ctx.send(f'{card_id}は{ctx.author.display_name}の所持しているカードではありません！')
         else:
+            logger.debug('回答を受け取ったよ！')
             # カードの受領処理
             self.ohgiriGames.receive_card(card_id, ctx.author)
             # 回答者が出そろった場合、場に出す(親は提出できないので引く)
@@ -515,13 +516,13 @@ class GameCog(commands.Cog, name='ゲーム用'):
                 await ctx.send(self.ohgiriGames.description)
                 logger.info('回答者が出揃ったので、場に展開！')
 
-    @ohgiriGame.command(aliase=['c','ch','sentaku','erabu'], description='親が気に入ったカードを選択する')
+    @ohgiriGame.command(aliases=['sentaku','erabu'], description='親が気に入ったカードを選択する')
     async def choice(self, ctx, ans_index=None):
         """
         親が気に入ったカードを選択する
         """
         # 始まっているかのチェック
-        if len(self.ohgiriGames.members) == 0:
+        if len(self.ohgiriGames.members) == 0 or self.ohgiriGames.game_over:
             await ctx.send('ゲームが起動していません！')
         # コマンド実行者のチェック(親以外は拒否)
         elif ctx.author != self.ohgiriGames.house:
@@ -539,7 +540,11 @@ class GameCog(commands.Cog, name='ゲーム用'):
             self.ohgiriGames.choose_answer(ans_index)
             await ctx.send(self.ohgiriGames.description)
 
-    @ohgiriGame.command(aliase=['desc','description','setsumei'], description='状況を説明します')
+            # ゲームが終了していない場合、次のターンを開始
+            if not self.ohgiriGames.game_over:
+                await self.dealAndNextGame(ctx)
+
+    @ohgiriGame.command(aliases=['desc','setsumei','description'], description='状況を説明します')
     async def description_ohgiriGame(self, ctx):
         # 始まっているかのチェック
         if len(self.ohgiriGames.members) == 0:
@@ -547,6 +552,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
             return
         """現在の状況を説明します"""
         self.ohgiriGames.show_info()
+        await ctx.send(self.ohgiriGames.description)
 
     async def startOhgiri(self, ctx):
         make_team = MakeTeam()
@@ -558,8 +564,12 @@ class GameCog(commands.Cog, name='ゲーム用'):
             await ctx.send(msg)
             return
 
+        # 参加者と手札の数を設定
         await self.ohgiriGames.setting(make_team.vc_members, 12)
         self.ohgiriGames.shuffle()
+        await self.dealAndNextGame(ctx)
+
+    async def dealAndNextGame(self, ctx):
         self.ohgiriGames.deal()
 
         # お題を表示
@@ -568,6 +578,8 @@ class GameCog(commands.Cog, name='ゲーム用'):
         # DMで回答カードを示す
         for player in self.ohgiriGames.members:
             dm_msg  = ''
+            if self.ohgiriGames.house == player:
+                dm_msg += 'あなたは親です！　カード選択はできません。回答が出揃った後、お好みの回答を選択ください。\n'
             dm = await player.create_dm()
             for card_id in self.ohgiriGames.members[player].cards:
                 card_message = self.ohgiriGames.ans_dict[card_id]
