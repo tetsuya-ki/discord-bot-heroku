@@ -103,3 +103,4 @@ cogs/modules/files/reaction-channel.json
 
 # vscode
 .vscode/launch.json
+.vscode/settings.json
