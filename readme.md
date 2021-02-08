@@ -131,23 +131,38 @@ Discord用のBot。discord.pyのBot Commands Frameworkを使用して実装。�
 
 `/coyoteGame` コヨーテを行うコマンド
 
-- コヨーテ開始（説明が長いですがやれば分かります！）
+- コヨーテ開始(説明が長いですがやれば分かります！)  
 ![image(coyoteGame_start)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/coyoteGame_start.png?raw=True)
 
-- コヨーテ開始やディール時のDMの様子
+- コヨーテ開始やディール時のDMの様子  
 ![image(coyoteGame_DM)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/coyoteGame_DM.png?raw=True)
 
-- コヨーテのディール（カードを配る）
+- コヨーテのディール(カードを配る)  
 ![image(coyoteGame_deal)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/coyoteGame_deal.png?raw=True)
 
-- コヨーテ開始(自分でデッキを設定)
+- コヨーテ開始(自分でデッキを設定)  
 ![image(coyoteGame_setDeckAndStart)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/coyoteGame_setDeckAndStart.png?raw=True)
 
-- コヨーテの状況説明
+- コヨーテの状況説明  
 ![image(coyoteGame_description)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/coyoteGame_description.png?raw=True)
 
-- コヨーテの状況説明(ネタバレ有)
+- コヨーテの状況説明(ネタバレ有)  
 ![image(coyoteGame_descriptionAll)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/coyoteGame_descriptionAll.png?raw=True)
+
+`/ohgiriGame` 大喜利を始めるコマンド。お題を修正したい場合[jsonファイル](https://github.com/tetsuya-ki/discord-bot-heroku/blob/master/cogs/modules/files/ohgiri.json)を変更するか、[後述の環境変数](#環境変数の説明)でJSONを返すURLを設定すること
+
+- 大喜利開始(数字を渡すと、勝利点が設定される。すぐ終わらせたいなら、`/o start 1`等で実行)  
+![image(ohgiri_start)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/ohgiri_start.png?raw=True)
+- 大喜利開始後、BotからくるDMの様子(ここに表示された番号を回答として選択)  
+![image(ohgiri_dm)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/ohgiri_dm.png?raw=True)
+- 大喜利の回答を選んだところ  
+![image(ohgiri_answer)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/ohgiri_answer.png?raw=True)
+- 大喜利の状況説明(経過ターン、現在の親、お題、それぞれの得点などが表示される)  
+![image(ohgiri_description)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/ohgiri_description.png?raw=True)
+- 親が回答を選択  
+![image(ohgiri_choice)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/ohgiri_choice.png?raw=True)
+- 親が回答を選択しゲーム終了するところ(誰かが勝利点に到達したら終了)  
+![image(ohgiri_choice2_game_over)](<https://raw.githubusercontent.com/tetsuya-ki/images/main/discord-bot-heroku/ohgiri_choice2(game_over).png>)
 
 ### メッセージイベント用(onmessagecog.pyで実装)
 
@@ -196,6 +211,9 @@ Discord用のBot。discord.pyのBot Commands Frameworkを使用して実装。�
   - sidを適用したいプロジェクトが複数ある場合、「,」(コンマ)を挟む必要がある
 - PURGE_TARGET_IS_ME_AND_BOT=False
   - `/purge`コマンドで削除する対象にBotを含むかの設定(設定がない場合は、自分の投稿のみが削除対象)
+- OHGIRI_JSON_URL=ohgiri_json_url
+  - 大喜利機能で使用するJSONをURLから取得する場合に設定
+  - JSONを保存し、次回からそれを使用するため、URLで取得する先のJSONが更新され、最新の内容を使用したい場合は保存されたファイルを削除する必要アリ
 
 ## ローカルでの動かし方
 
