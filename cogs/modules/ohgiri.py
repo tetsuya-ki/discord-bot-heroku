@@ -29,17 +29,14 @@ class Ohgiri:
     大喜利ゲームのクラス
     """
     FILE = 'ohgiri.json'
-    WIN_POINT = 2
-    #{
-    #"subject": ['今ちまたで人気のRPG、主人公が〇〇','いい年こいて親父が今ははまっているもの、〇〇','通っていた小学校の校訓、元気、本気、〇〇。今思うとおかしいよな']
-    #"answer": ["入学式","修学旅行","卒業式","学校祭","体育祭","マラソン大会"],
-    #}
+    DEFAULT_WIN_POINT = 5
+    MAX_WIN_POINT = 20
 
     def __init__(self):
         self.members = {} # ゲームの参加者
         self.house = None # 今の親
-        self.deck_odai = [] # 
-        self.deck_ans = []
+        self.deck_odai = [] # デッキ（お題）
+        self.deck_ans = [] # デッキ（回答）
         self.odai = None # 場におかれているお題
         self.field = [] # 場におかれている回答
         self.discards_odai = [] # 捨て札(お題)
@@ -51,6 +48,7 @@ class Ohgiri:
         self.ans_dict = {}
         self.savefile = SaveFile()
         self.game_over = False
+        self.win_point = 5 # 勝利扱いとするポイント
 
     async def init_card(self):
         json_data = {}
@@ -83,13 +81,17 @@ class Ohgiri:
             self.deck_ans.append(str(answer_index))
             answer_index += 1
 
-    async def setting(self, members, max_hands):
+    async def setting(self, members, max_hands, win_point):
         """
         メンバーに大喜利メンバーをセットし、ゲームできるようにセッティングする
+        - members: 参加者
+        - max_hands: 手札の数
+        - win_point: 勝利ポイント
         """
         self.__init__()
         await self.init_card()
         self.max_hands = max_hands
+        self.win_point = win_point
 
         for member in members:
             ohgiriMember = OhgiriMember()
@@ -191,11 +193,12 @@ class Ohgiri:
         if choosen_answer.member == 'dummy':
             choosen_member_display_name = 'dummy'
             # ダミーを選択したら親が減点
-            self.description += 'ダミーを選択したので、'
             house_member_obj = self.members[self.house]
             if house_member_obj.point > 0:
                 house_member_obj.point += -1
-                self.description += f'{discord.utils.escape_markdown(self.house.display_name)}のポイントが1点減りました。\n'
+                self.description += f'ダミーを選択したので、{discord.utils.escape_markdown(self.house.display_name)}のポイントが1点減りました。\n'
+            else:
+                self.description += f'ダミーを選択しました！（ポイント追加もなく、親もそのままです）\n'
         else :
             choosen_member_display_name = discord.utils.escape_markdown(choosen_answer.member.display_name)
             # 選ばれた人が得点を得て、親になる
@@ -215,14 +218,14 @@ class Ohgiri:
             self.discards_ans.append(str(answer.card_id))
 
         # 勝利判定
-        if choosen_answer.member != 'dummy' and self.members[choosen_answer.member].point >= self.WIN_POINT:
+        if choosen_answer.member != 'dummy' and self.members[choosen_answer.member].point >= self.win_point:
             self.game_over = True
             self.description += f'\n{choosen_member_display_name}さん、あなたが優勝です！　\n■今回選出されたカードの一覧はコチラ！\n'
             for i, win_word in enumerate(self.winCardsList):
                 self.description += f'{i+1}: {win_word}'
 
     def show_info(self):
-        self.description = f'ターン: {self.turn}、現在の親: {discord.utils.escape_markdown(self.house.display_name)}さん、現在のお題: {self.odai}\n'
+        self.description = f'ターン: {self.turn}、現在の親: {discord.utils.escape_markdown(self.house.display_name)}さん({self.win_point}点取得した人が勝利です)\n現在のお題: {self.odai}\n'
 
         # 参加者の点数と回答済みかどうかを表示する
         for member in self.members:
@@ -231,7 +234,7 @@ class Ohgiri:
 
             if self.members[member].answered:
                 self.description += '回答済\n'
-            elif member == self.house:
+            elif member == self.house or self.game_over:
                 self.description += '親(回答不要)\n'
             else:
                 self.description += '未回答\n'

@@ -480,11 +480,14 @@ class GameCog(commands.Cog, name='ゲーム用'):
             await ctx.send('このコマンドにはサブコマンドが必要です。')
 
     @ohgiriGame.command(aliases=['s','st','ini','init','start'], description='大喜利を開始するサブコマンド')
-    async def start_ohgiriGame(self, ctx):
-        """大喜利を開始"""
-        await self.startOhgiri(ctx)
+    async def start_ohgiriGame(self, ctx, win_point=5):
+        """
+        大喜利を開始
+        - win_point: 勝利扱いとするポイント(デフォルトは5ポイント)
+        """
+        await self.startOhgiri(ctx, win_point)
 
-    @ohgiriGame.command(aliases=['sen','send','ans','kaitou'], description='回答者がお題に提出する回答を設定')
+    @ohgiriGame.command(aliases=['a','sen','send','ans','kaitou'], description='回答者がお題に提出する回答を設定')
     async def answer(self, ctx, card_id=None):
         """
         回答者が回答として提出するカードを設定
@@ -516,10 +519,11 @@ class GameCog(commands.Cog, name='ゲーム用'):
             # 回答者が出そろった場合、場に出す(親は提出できないので引く)
             if (len(self.ohgiriGames.members) - 1)  == len(self.ohgiriGames.field):
                 self.ohgiriGames.show_answer()
-                await ctx.send(self.ohgiriGames.description)
                 logger.info('回答者が出揃ったので、場に展開！')
+                msg = self.ohgiriGames.description + f'\n{self.ohgiriGames.house.mention} 回答を読み上げたのち、好きな回答を`/o choice <数字>`で選択してください！'
+                await ctx.send(msg)
 
-    @ohgiriGame.command(aliases=['sentaku','erabu'], description='親が気に入ったカードを選択する')
+    @ohgiriGame.command(aliases=['c','ch','sentaku','erabu'], description='親が気に入ったカードを選択する')
     async def choice(self, ctx, ans_index=None):
         """
         親が気に入ったカードを選択する
@@ -551,7 +555,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
             if not self.ohgiriGames.game_over:
                 await self.dealAndNextGame(ctx)
 
-    @ohgiriGame.command(aliases=['desc','setsumei','description'], description='状況を説明します')
+    @ohgiriGame.command(aliases=['d','desc','setsumei','description'], description='状況を説明します')
     async def description_ohgiriGame(self, ctx):
         # 始まっているかのチェック
         if len(self.ohgiriGames.members) == 0:
@@ -561,7 +565,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
         self.ohgiriGames.show_info()
         await ctx.send(self.ohgiriGames.description)
 
-    async def startOhgiri(self, ctx):
+    async def startOhgiri(self, ctx, win_point):
         make_team = MakeTeam()
         make_team.my_connected_vc_only_flg = True
         await make_team.get_members(ctx)
@@ -571,9 +575,17 @@ class GameCog(commands.Cog, name='ゲーム用'):
             await ctx.send(msg)
             return
 
+        # win_pointが数字でなかったり、MAX_WIN_POINTを超えたり、0以下の場合は、デフォルトの値を使用する
+        if not str(win_point).isdecimal or 1 > int(win_point) or int(win_point) > self.ohgiriGames.MAX_WIN_POINT:
+            win_point = self.ohgiriGames.DEFAULT_WIN_POINT
+
         # 参加者と手札の数を設定
-        await self.ohgiriGames.setting(make_team.vc_members, 12)
+        await self.ohgiriGames.setting(make_team.vc_members, 12, win_point)
         self.ohgiriGames.shuffle()
+        msg = f'お題が提供されるので**「親」はお題を声に出して読み上げ**てください（"○○"は「まるまる」と読む）。ほかのプレイヤーは読み上げられた**お題に相応しいと思う回答**を`/o ans <数字>`で選びます。\n'\
+            + f'全員が回答したら、**「親」はもっとも秀逸な回答**を`/o choice <番号>`で選択します。「親」から選ばれたプレイヤーは1点もらえます。ただし、山札から1枚カードが混ざっており、それを選択すると親はポイントが減算されます。\n'\
+            + f'今回のゲームの勝利点は{self.ohgiriGames.win_point}点です。'
+        await ctx.send(msg)
         await self.dealAndNextGame(ctx)
 
     async def dealAndNextGame(self, ctx):
