@@ -508,6 +508,9 @@ class GameCog(commands.Cog, name='ゲーム用'):
             await ctx.send(f'{card_id}は{ctx.author.display_name}の所持しているカードではありません！')
         else:
             logger.debug('回答を受け取ったよ！')
+            # 既に回答したメンバーから再度回答を受けた場合、入れ替えた旨お知らせする
+            if self.ohgiriGames.members[ctx.author].answered:
+                await ctx.send(f'{ctx.author.mention} 既に回答を受け取っていたため、そちらのカードと入れ替えますね！')
             # カードの受領処理
             self.ohgiriGames.receive_card(card_id, ctx.author)
             # 回答者が出そろった場合、場に出す(親は提出できないので引く)
@@ -529,6 +532,10 @@ class GameCog(commands.Cog, name='ゲーム用'):
             await ctx.send('親以外が秀逸な回答を選択することはできません！')
         elif ans_index is None or not str(ans_index).isdecimal():
             await ctx.send('`ans_index`が選択されていません！')
+        # 回答が出揃っているかチェック
+        elif (len(self.ohgiriGames.members) - 1)  > len(self.ohgiriGames.field):
+            await ctx.send(f'回答が出揃っていません。あと{len(self.ohgiriGames.members) - len(self.ohgiriGames.field) -1}人提出が必要です。')
+
         else:
             # 場にある数かどうかのチェック
             ans_index = str(ans_index)

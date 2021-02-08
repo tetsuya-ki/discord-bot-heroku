@@ -1,6 +1,7 @@
 import random
 import json
 import os
+import discord
 from os.path import join, dirname, exists
 from logging import getLogger
 from . import settings
@@ -15,6 +16,7 @@ class OhgiriMember:
     def __init__(self):
         self.point = 0 
         self.cards = [] # カードのID
+        self.answered = False
 
 class Answer:
     def __init__(self, card_id, member):
@@ -105,6 +107,9 @@ class Ohgiri:
         logger.info(message)
 
     def deal(self):
+        """
+        カードを配る
+        """
         self.turn = self.turn + 1
         self.description = ''
         self.hands = []
@@ -118,6 +123,8 @@ class Ohgiri:
             self.retern_discards_to_deck('お題カード', self.discards_odai, self.deck_odai)
 
         for member in self.members:
+            # 回答未済に設定する
+            self.members[member].answered = False
             # 手札が「手札の最大数 - メンバーのpoint」になるまでカードを配る
             while len(self.members[member].cards) < (self.max_hands - self.members[member].point):
                 self.members[member].cards.append(self.deck_ans.pop())
@@ -137,19 +144,31 @@ class Ohgiri:
 
     def receive_card(self, card_id, member):
         """
-        メンバーからカードを受信したときの処理
-        受信したカードを場に出す
-        メンバーの手持ちから受信したカードを除去
+        メンバーからカードを受け取ったときの処理
+        受け取ったカードを場に出す
+        メンバーの手持ちから受領したカードを除去
         cardNum {Int}
         member self.membersから取り出すキー
         """
+        # 回答済のメンバーからカードを受け取った場合は、場に出されたカードとそのカードを入れ替える
+        if self.members[member].answered:
+            for answer in self.field:
+                if answer.member == member:
+                    self.members[member].cards.append(answer.card_id)
+                    break
+            self.field = [answer for answer in self.field if answer.member != member] 
 
+        # 回答済に設定する
+        self.members[member].answered = True
         self.field.append(Answer(card_id, member))
 
         # 受信したカード以外のカードをユーザに返す
         self.members[member].cards = [users_card_id for users_card_id in self.members[member].cards if users_card_id != card_id]
 
     def show_answer(self):
+        """
+        山札からカードを1枚加え、ランダムに混ぜた上で、回答を表示
+        """
         # 山札からカードを引いてダミーの回答を作る
         self.field.append(Answer(self.deck_ans.pop(), 'dummy'))
 
@@ -157,58 +176,62 @@ class Ohgiri:
         random_field = random.sample(self.field, len(self.field))
         for i in range(len(random_field)):
             random_field[i].answer_index = str(i)
-        
-        self.description = ''
 
+        self.description = ''
         for sorted_answer in sorted(random_field, key=lambda answer: answer.answer_index):
             self.description += f'{str(sorted_answer.answer_index)}: {str(self.odai).replace("〇〇", "||" + self.ans_dict[sorted_answer.card_id] + "||")}\n'
 
     def choose_answer(self, answer_index):
+        """
+        回答を選択
+        """
         self.description = ''
         choosen_answer = [answer for answer in self.field if answer.answer_index == answer_index][0]
 
         if choosen_answer.member == 'dummy':
+            choosen_member_display_name = 'dummy'
             # ダミーを選択したら親が減点
-            self.description += 'ダミーを選択しました\n'
+            self.description += 'ダミーを選択したので、'
             house_member_obj = self.members[self.house]
             if house_member_obj.point > 0:
                 house_member_obj.point += -1
-                self.description += f'{self.house.display_name}のポイントが1点減りました。\n'
-
+                self.description += f'{discord.utils.escape_markdown(self.house.display_name)}のポイントが1点減りました。\n'
         else :
+            choosen_member_display_name = discord.utils.escape_markdown(choosen_answer.member.display_name)
             # 選ばれた人が得点を得て、親になる
             self.members[choosen_answer.member].point += 1
-            self.description += f'親から選ばれた、{choosen_answer.member.display_name}のポイントが1点増えました。\n'
+            self.description += f'親から選ばれた、{choosen_member_display_name}のポイントが1点増えました。\n'
             self.house = choosen_answer.member
 
-        # 置換済みで回答と回答者を入れる
-        win_word = f'{str(self.odai).replace("〇〇", "**" + self.ans_dict[choosen_answer.card_id] + "**")} ({choosen_answer.member.display_name}さん)\n'
+        # 回答と回答者を入れたメッセージをwinCardsListに入れ、説明文に追加
+        win_word = f'{str(self.odai).replace("〇〇", "**" + self.ans_dict[choosen_answer.card_id] + "**")} ({choosen_member_display_name}さん)\n'
         self.winCardsList.append(win_word)
-        self.description += win_word
+        self.description += '> ' + win_word
 
-        # 使用済みのカードを捨てる
+        # 使用済みのカードを捨てる(お題と回答どちらも)
         self.discards_odai.append(self.odai)
         self.odai = ''
-
         for answer in self.field:
             self.discards_ans.append(str(answer.card_id))
 
         # 勝利判定
         if choosen_answer.member != 'dummy' and self.members[choosen_answer.member].point >= self.WIN_POINT:
             self.game_over = True
-            self.description += f'\n{choosen_answer.member.display_name}さん、あなたが優勝です！　\n■今回選出されたカードの一覧はコチラ！\n'
+            self.description += f'\n{choosen_member_display_name}さん、あなたが優勝です！　\n■今回選出されたカードの一覧はコチラ！\n'
             for i, win_word in enumerate(self.winCardsList):
-                self.description += f'{i+1}:{win_word}'
+                self.description += f'{i+1}: {win_word}'
 
     def show_info(self):
-        self.description = f'ターン: {self.turn}、現在の親: {self.house.display_name}さん、現在のお題: {self.odai}\n'
+        self.description = f'ターン: {self.turn}、現在の親: {discord.utils.escape_markdown(self.house.display_name)}さん、現在のお題: {self.odai}\n'
 
         # 参加者の点数と回答済みかどうかを表示する
         for member in self.members:
-            self.description += f'{member.display_name}さん'
+            self.description += f'{discord.utils.escape_markdown(member.display_name)}さん'
             self.description += f'({self.members[member].point}点): '
 
-            if (len([answer for answer in self.field if answer.member == member]) == 0):
-                self.description += '未回答\n'
-            else:
+            if self.members[member].answered:
                 self.description += '回答済\n'
+            elif member == self.house:
+                self.description += '親(回答不要)\n'
+            else:
+                self.description += '未回答\n'
