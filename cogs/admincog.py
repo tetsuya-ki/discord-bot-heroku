@@ -121,7 +121,7 @@ class AdminCog(commands.Cog, name='管理用'):
         self.command_author = ctx.author
         # botかコマンドの実行主かチェック
         def is_me(m):
-            return self.command_author == m.author or m.author.bot
+            return self.command_author == m.author or (m.author.bot and settings.PURGE_TARGET_IS_ME_AND_BOT)
 
         # 指定がない、または、不正な場合は、コマンドを削除。そうではない場合、コマンドを削除し、指定の数だけ削除する
         if limit_num is None:
