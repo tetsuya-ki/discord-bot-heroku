@@ -76,9 +76,9 @@ class OnMessageCog(commands.Cog, name="メッセージイベント用"):
 
         # チャンネルにファイルを添付する(複数ある場合、filesで添付)
         if (len(files) > 1):
-            await targetMessage.channel.send('file upload', files=files)
+            await targetMessage.reply('file upload', files=files)
         elif (len(files) == 1):
-            await targetMessage.channel.send('file upload', file=files.pop())
+            await targetMessage.reply('file upload', file=files.pop())
         else:
             return
 
@@ -101,7 +101,7 @@ class OnMessageCog(commands.Cog, name="メッセージイベント用"):
         if (self.scrapboxSidAndPnames.check(targetMessage)):
             embed = await self.scrapboxSidAndPnames.expand(targetMessage)
             if embed is not None:
-                await targetMessage.channel.send(embed=embed)
+                await targetMessage.reply(embed=embed)
         else:
             return
 

@@ -82,7 +82,7 @@ class ReactionChannelerCog(commands.Cog, name="リアクションチャンネラ
         # 念の為、確認する
         confirm_text = f'全てのリアクションチャンネラーを削除しますか？\n 問題ない場合、30秒以内に👌(ok_hand)のリアクションをつけてください。\nあなたのコマンド：`{ctx.message.clean_content}`'
         await ctx.message.delete()
-        await ctx.channel.send(confirm_text)
+        confirm_msg = await ctx.channel.send(confirm_text)
 
         def check(reaction, user):
             return user == command_author and str(reaction.emoji) == '👌'
@@ -91,10 +91,10 @@ class ReactionChannelerCog(commands.Cog, name="リアクションチャンネラ
         try:
             reaction, user = await self.bot.wait_for('reaction_add', timeout=self.TIMEOUT_TIME, check=check)
         except asyncio.TimeoutError:
-            await ctx.channel.send('→リアクションがなかったので、リアクションチャンネラーの全削除をキャンセルしました！')
+            await confirm_msg.reply('→リアクションがなかったので、リアクションチャンネラーの全削除をキャンセルしました！')
         else:
             msg = await self.reaction_channel.purge(ctx)
-            await ctx.channel.send(msg)
+            await confirm_msg.reply(msg)
 
     # リアクションチャンネラー削除（１種類）
     @reactionChanneler.command(aliases=['d','del','dlt'], description='リアクションチャンネラーを削除するサブコマンド')
