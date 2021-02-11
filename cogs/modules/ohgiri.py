@@ -70,8 +70,7 @@ class Ohgiri:
             # JSON変換失敗、読み込みに失敗したらなにもしない
             logger.error(e)
 
-        # お題配列を取り出してお題カード辞書を作る
-        subject_index = 0
+        # お題配列を取り出してお題カードデッキを作る
         self.deck_odai = json_data['subject']
 
         # 回答配列を取り出して回答カード辞書を作る
