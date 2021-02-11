@@ -495,7 +495,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
         await self.startOhgiri(ctx, win_point)
 
     @ohgiriGame.command(aliases=['a','sen','send','ans','kaitou'], description='回答者がお題に提出する回答を設定')
-    async def answer(self, ctx, card_id=None):
+    async def answer(self, ctx, card_id=None, second_card_id=None):
         """
         回答者が回答として提出するカードを設定
         - ans_number: 回答として設定する値(数字で指定)
@@ -516,13 +516,19 @@ class GameCog(commands.Cog, name='ゲーム用'):
         # コマンド実行者が所持しているかチェック
         elif card_id not in self.ohgiriGames.members[ctx.author].cards:
             await ctx.send(f'{card_id}は{ctx.author.display_name}の所持しているカードではありません！')
+        elif self.ohgiriGames.required_ans_num == 1 and second_card_id is not None:
+            await ctx.send(f'お題で2つ設定するように指定がないので、回答は1つにしてください！')
+        elif self.ohgiriGames.required_ans_num == 2 and second_card_id is None:
+            await ctx.send('2つめの引数`second_card_id`が設定されていません！(もう一つ数字を設定してください)')
+        elif self.ohgiriGames.required_ans_num == 2 and second_card_id not in self.ohgiriGames.members[ctx.author].cards:
+            await ctx.send(f'{second_card_id}は{ctx.author.display_name}の所持しているカードではありません！')
         else:
             logger.debug('回答を受け取ったよ！')
             # 既に回答したメンバーから再度回答を受けた場合、入れ替えた旨お知らせする
             if self.ohgiriGames.members[ctx.author].answered:
                 await ctx.send(f'{ctx.author.mention} 既に回答を受け取っていたため、そちらのカードと入れ替えますね！')
             # カードの受領処理
-            self.ohgiriGames.receive_card(card_id, ctx.author)
+            self.ohgiriGames.receive_card(card_id, ctx.author, second_card_id)
             # 回答者が出そろった場合、場に出す(親は提出できないので引く)
             if (len(self.ohgiriGames.members) - 1)  == len(self.ohgiriGames.field):
                 self.ohgiriGames.show_answer()
@@ -604,7 +610,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
         # 参加者と手札の数を設定
         await self.ohgiriGames.setting(make_team.vc_members, 12, win_point)
         self.ohgiriGames.shuffle()
-        msg = f'お題が提供されるので**「親」はお題を声に出して読み上げ**てください（"○○"は「まるまる」と読む）。ほかのプレイヤーは読み上げられた**お題に相応しいと思う回答**を`/o ans <数字>`で選びます。\n'\
+        msg = f'お題が提供されるので**「親」はお題を声に出して読み上げ**てください（"○○"は「まるまる」、"✕✕"は「ばつばつ」と読む）。ほかのプレイヤーは読み上げられた**お題に相応しいと思う回答**を`/o ans <数字>`で選びます。\n'\
             + f'全員が回答したら、**「親」はもっとも秀逸な回答**を`/o choice <番号>`で選択します。「親」から選ばれたプレイヤーは1点もらえます。ただし、山札から1枚カードが混ざっており、それを選択すると親はポイントが減算されます。\n'\
             + f'今回のゲームの勝利点は{self.ohgiriGames.win_point}点です。'
         await ctx.send(msg)
@@ -619,7 +625,11 @@ class GameCog(commands.Cog, name='ゲーム用'):
         # DMで回答カードを示す
         for player in self.ohgiriGames.members:
             await self.send_ans_dm(ctx, player, odai_msg)
-        await ctx.send(f'カードを配りました。DMをご確認ください。{self.ohgiriGames.description}\n親は{self.ohgiriGames.house.display_name}です！')
+
+        msg = f'カードを配りました。DMをご確認ください。{self.ohgiriGames.description}\n親は{self.ohgiriGames.house.display_name}です！'
+        if self.ohgiriGames.required_ans_num == 2:
+            msg += '\n(回答は**2つ**設定するようにしてください！ 例:`/o ans 1 2`'
+        await ctx.send(msg)
 
     async def send_ans_dm(self, ctx, player: discord.member, odai_msg:discord.message=None):
         dm_msg  = ''
