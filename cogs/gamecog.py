@@ -91,7 +91,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
         voting_msg = '投票の時間が近づいてきました。下記のメッセージで投票をお願いします。\n'\
                     '`/poll 誰がワードウルフ？'
         for player in make_team.vc_members:
-            voting_msg += f' {player.display_name}'
+            voting_msg += f' "{player.display_name}"'
         voting_msg += '`'
 
         # 投票のお願いメッセージを作成し、チャンネルに貼り付け
