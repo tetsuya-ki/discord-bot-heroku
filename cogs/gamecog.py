@@ -1,3 +1,4 @@
+import discord
 from discord.ext import commands  # Bot Commands Frameworkのインポート
 from .modules.grouping import MakeTeam
 from .modules.readjson import ReadJson
@@ -24,6 +25,11 @@ class GameCog(commands.Cog, name='ゲーム用'):
         self.bot = bot
         self.coyoteGames = Coyote()
         self.ohgiriGames = Ohgiri()
+
+    # cogが準備できたら読み込みする
+    @commands.Cog.listener()
+    async def on_ready(self):
+        await self.ohgiriGames.on_ready()
 
     # ワードウルフ機能
     @commands.command(aliases=['word','ww'], description='ワードウルフ機能(少数派のワードを与えられた人を当てるゲーム)')
@@ -69,7 +75,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
                 f'DMでお題が配られますが、**ワードウルフだけは別のお題**が配られます(お題は2種類あります)。会話の中で不審な言動を察知し、みごとに'\
                 f'投票でワードウルフを当てることができたら、市民の勝ち。**間違えて「市民をワードウルフ」だと示してしまった場合、ワードウルフの勝ち**です！！\n'\
                 f'DMに送られたお題を確認し、**{answer_minutes}分話し合いののち、投票を実施**してください！！　今から開始します！'
-        await ctx.send(msg)
+        start_msg =  await ctx.send(msg)
 
         # メンバーをシャッフル
         random.shuffle(make_team.vc_members)
@@ -84,14 +90,14 @@ class GameCog(commands.Cog, name='ゲーム用'):
             else:
                 player_odai = citizen_odai
             dm = await player.create_dm()
-            await dm.send(f'{player.mention}さんのワードは**「{player_odai}」**です！')
+            await dm.send(f'{player.mention}さんのワードは**「{player_odai}」**です！\n開始メッセージへのリンク:{start_msg.jump_url}')
 
         netabare_msg += 'でした！　お疲れ様でした！'
 
         voting_msg = '投票の時間が近づいてきました。下記のメッセージで投票をお願いします。\n'\
                     '`/poll 誰がワードウルフ？'
         for player in make_team.vc_members:
-            voting_msg += f' {player.display_name}'
+            voting_msg += f' "{player.display_name}"'
         voting_msg += '`'
 
         # 投票のお願いメッセージを作成し、チャンネルに貼り付け
@@ -137,7 +143,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
                 f'これから**雑談し、誰かがNGワードを口走ったら、「ドーン！！！」と指摘**してください。すぐさまNGワードが妥当か話し合いください(カッコがある場合は、どちらもNGワードです)。\n'\
                 f'妥当な場合、NGワード発言者はお休みです。残った人で続けます。**最後のひとりになったら勝利**です！！\n'\
                 f'まず、DMに送られたNGワードを確認し、相手が「NGワードを喋ってしまう」ようにトークしてください！**{answer_minutes}分で終了**です！　今から開始します！！'
-        await ctx.send(msg)
+        start_msg = await ctx.send(msg)
 
         netabare_msg = ''
         # それぞれに役割をDMで送信
@@ -153,7 +159,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
             rpl_msg_del = f'{player.display_name}さん:(\|\|.+?\|\|, )'
             dm_msg = re.sub(rpl_msg_del, '', netabare_msg)
             dm_msg_open = dm_msg.replace('|', '').replace(', ', '\n')
-            await dm.send(f'{player.mention}さん 他の人のNGワードはこちらです！\n{dm_msg_open}')
+            await dm.send(f'{player.mention}さん 他の人のNGワードはこちらです！\n{dm_msg_open}\n開始メッセージへのリンク:{start_msg.jump_url}')
 
         netabare_msg = re.sub(', $', '', netabare_msg)
 
@@ -161,7 +167,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
         await self.delayedMessage(ctx, 'NGワードゲームのネタバレです！\nそれぞれ、' + netabare_msg + 'でした！', answer_minutes * 60)
 
     # コヨーテゲーム群
-    @commands.group(aliases=['co','cog','cy','cg'], description='コヨーテするコマンド（サブコマンド必須）')
+    @commands.group(aliases=['co','cog','cy','cg','coyote'], description='コヨーテするコマンド（サブコマンド必須）')
     async def coyoteGame(self, ctx):
         """
         コヨーテするコマンド群です。このコマンドだけでは実行できません。**半角スペースの後、続けて以下のサブコマンドを入力**ください。
@@ -383,6 +389,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
 
     async def dealAndMessage(self, ctx):
         self.coyoteGames.deal()
+        start_msg = await ctx.send(f'カードを配りました。DMをご確認ください。{self.coyoteGames.description}')
         dm_msg_all = ''
         # 全員分のメッセージを作成
         for player in self.coyoteGames.members:
@@ -392,8 +399,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
             dm = await player.create_dm()
             rpl_msg_del = f'{player.display_name}さん:.+\n'
             dm_msg = re.sub(rpl_msg_del, '', dm_msg_all)
-            await dm.send(f'{player.mention}さん 他の人のコヨーテカードはこちらです！\n{dm_msg}')
-        await ctx.send(f'カードを配りました。DMをご確認ください。{self.coyoteGames.description}')
+            await dm.send(f'{player.mention}さん 他の人のコヨーテカードはこちらです！\n{dm_msg}\n開始メッセージへのリンク:{start_msg.jump_url}')
         self.coyoteGames.description = ''
 
     async def coyoteAllMessage(self, ctx):
@@ -466,14 +472,15 @@ class GameCog(commands.Cog, name='ゲーム用'):
             return False
 
     # 大喜利ゲーム群
-    @commands.group(aliases=['o','oh','oo','oogiri'], description='大喜利するコマンド（サブコマンド必須）')
+    @commands.group(aliases=['o','oh','oo','oogiri','ohgiri'], description='大喜利するコマンド（サブコマンド必須）')
     async def ohgiriGame(self, ctx):
         """
         大喜利するコマンド群です。このコマンドだけでは実行できません。**半角スペースの後、続けて以下のサブコマンドを入力**ください。
-        - 大喜利を始めたい場合は、`/o start`を入力してください。
-        - 大喜利中に、回答者が回答する場合は、`/o answer`を入力してください。
-        - 大喜利中に、親が回答を選択したい場合は、`/o choice`を入力してください。
-        - (WIP)大喜利中に、現在の状況を確認したい場合は、`/o description`を入力してください。
+        - 大喜利を始めたい場合は、`/o start`を入力してください(`/o s <数字>`のように入力すると、勝利扱いの点数が設定できます)。
+        - 大喜利中に、回答者が回答する場合は、`/o answer <数字>`を入力してください。
+        - 大喜利中に、親が回答を選択したい場合は、`/o choice <数字>`を入力してください。
+        - 大喜利中に、現在の状況を確認したい場合は、`/o description`を入力してください。
+        - 大喜利中に、いい手札がない場合は、`/o discard`を入力してください(ポイント1点減点の代わりに手札を捨て、山札からカードを引きます)。
         """
         # サブコマンドが指定されていない場合、メッセージを送信する。
         if ctx.invoked_subcommand is None:
@@ -488,7 +495,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
         await self.startOhgiri(ctx, win_point)
 
     @ohgiriGame.command(aliases=['a','sen','send','ans','kaitou'], description='回答者がお題に提出する回答を設定')
-    async def answer(self, ctx, card_id=None):
+    async def answer(self, ctx, card_id=None, second_card_id=None):
         """
         回答者が回答として提出するカードを設定
         - ans_number: 回答として設定する値(数字で指定)
@@ -509,13 +516,19 @@ class GameCog(commands.Cog, name='ゲーム用'):
         # コマンド実行者が所持しているかチェック
         elif card_id not in self.ohgiriGames.members[ctx.author].cards:
             await ctx.send(f'{card_id}は{ctx.author.display_name}の所持しているカードではありません！')
+        elif self.ohgiriGames.required_ans_num == 1 and second_card_id is not None:
+            await ctx.send(f'お題で2つ設定するように指定がないので、回答は1つにしてください！')
+        elif self.ohgiriGames.required_ans_num == 2 and second_card_id is None:
+            await ctx.send('2つめの引数`second_card_id`が設定されていません！(もう一つ数字を設定してください)')
+        elif self.ohgiriGames.required_ans_num == 2 and second_card_id not in self.ohgiriGames.members[ctx.author].cards:
+            await ctx.send(f'{second_card_id}は{ctx.author.display_name}の所持しているカードではありません！')
         else:
             logger.debug('回答を受け取ったよ！')
             # 既に回答したメンバーから再度回答を受けた場合、入れ替えた旨お知らせする
             if self.ohgiriGames.members[ctx.author].answered:
                 await ctx.send(f'{ctx.author.mention} 既に回答を受け取っていたため、そちらのカードと入れ替えますね！')
             # カードの受領処理
-            self.ohgiriGames.receive_card(card_id, ctx.author)
+            self.ohgiriGames.receive_card(card_id, ctx.author, second_card_id)
             # 回答者が出そろった場合、場に出す(親は提出できないので引く)
             if (len(self.ohgiriGames.members) - 1)  == len(self.ohgiriGames.field):
                 self.ohgiriGames.show_answer()
@@ -527,6 +540,8 @@ class GameCog(commands.Cog, name='ゲーム用'):
     async def choice(self, ctx, ans_index=None):
         """
         親が気に入ったカードを選択する
+        - ans_index: 気に入ったカードの回答番号を設定する値(数字で指定)
+        例:`/o choice 1`
         """
         # 始まっているかのチェック
         if len(self.ohgiriGames.members) == 0 or self.ohgiriGames.game_over:
@@ -557,13 +572,26 @@ class GameCog(commands.Cog, name='ゲーム用'):
 
     @ohgiriGame.command(aliases=['d','desc','setsumei','description'], description='状況を説明します')
     async def description_ohgiriGame(self, ctx):
+        """現在の状況を説明します"""
         # 始まっているかのチェック
         if len(self.ohgiriGames.members) == 0:
             await ctx.send('ゲームが起動していません！')
             return
-        """現在の状況を説明します"""
         self.ohgiriGames.show_info()
         await ctx.send(self.ohgiriGames.description)
+
+    @ohgiriGame.command(aliases=['dis','suteru','discard','dh'], description='手札をすべて捨てる(ポイント1点原点)')
+    async def discard_hand(self, ctx):
+        """
+        ポイントを1点減点し、手札をすべて捨て、山札からカードを引く（いい回答カードがない時に使用ください）
+        """
+        # 始まっているかのチェック
+        if len(self.ohgiriGames.members) == 0 or self.ohgiriGames.game_over:
+            await ctx.send('ゲームが起動していません！')
+            return
+        self.ohgiriGames.discard_hand(ctx.author)
+        await ctx.message.reply(self.ohgiriGames.description)
+        await self.send_ans_dm(ctx, ctx.author)
 
     async def startOhgiri(self, ctx, win_point):
         make_team = MakeTeam()
@@ -582,7 +610,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
         # 参加者と手札の数を設定
         await self.ohgiriGames.setting(make_team.vc_members, 12, win_point)
         self.ohgiriGames.shuffle()
-        msg = f'お題が提供されるので**「親」はお題を声に出して読み上げ**てください（"○○"は「まるまる」と読む）。ほかのプレイヤーは読み上げられた**お題に相応しいと思う回答**を`/o ans <数字>`で選びます。\n'\
+        msg = f'お題が提供されるので**「親」はお題を声に出して読み上げ**てください（"○○"は「まるまる」、"✕✕"は「ばつばつ」と読む）。ほかのプレイヤーは読み上げられた**お題に相応しいと思う回答**を`/o ans <数字>`で選びます。\n'\
             + f'全員が回答したら、**「親」はもっとも秀逸な回答**を`/o choice <番号>`で選択します。「親」から選ばれたプレイヤーは1点もらえます。ただし、山札から1枚カードが混ざっており、それを選択すると親はポイントが減算されます。\n'\
             + f'今回のゲームの勝利点は{self.ohgiriGames.win_point}点です。'
         await ctx.send(msg)
@@ -596,16 +624,25 @@ class GameCog(commands.Cog, name='ゲーム用'):
 
         # DMで回答カードを示す
         for player in self.ohgiriGames.members:
-            dm_msg  = ''
-            if self.ohgiriGames.house == player:
-                dm_msg += 'あなたは親です！　カード選択はできません。回答が出揃った後、お好みの回答を選択ください。\n'
-            dm = await player.create_dm()
-            for card_id in self.ohgiriGames.members[player].cards:
-                card_message = self.ohgiriGames.ans_dict[card_id]
-                dm_msg += f'{card_id}: {card_message}\n'
+            await self.send_ans_dm(ctx, player, odai_msg)
+
+        msg = f'カードを配りました。DMをご確認ください。{self.ohgiriGames.description}\n親は{self.ohgiriGames.house.display_name}です！'
+        if self.ohgiriGames.required_ans_num == 2:
+            msg += '\n(回答は**2つ**設定するようにしてください！ 例:`/o ans 1 2`'
+        await ctx.send(msg)
+
+    async def send_ans_dm(self, ctx, player: discord.member, odai_msg:discord.message=None):
+        dm_msg  = ''
+        if self.ohgiriGames.house == player:
+            dm_msg = 'あなたは親です！　カード選択はできません。回答が出揃った後、お好みの回答を選択ください。\n'
+        dm = await player.create_dm()
+        for card_id in self.ohgiriGames.members[player].cards:
+            card_message = self.ohgiriGames.ans_dict[card_id]
+            dm_msg += f'{card_id}: {card_message}\n'
+        # お題のメッセージが指定されている場合、リンクを付与
+        if odai_msg is not None:
             dm_msg += f'お題へのリンク:{odai_msg.jump_url}'
-            await dm.send(f'{player.mention}さん あなたの手札はこちらです！\n{dm_msg}')
-        await ctx.send(f'カードを配りました。DMをご確認ください。{self.ohgiriGames.description}\n親は{self.ohgiriGames.house.display_name}です！')
+        await dm.send(f'{player.mention}さん あなたの手札はこちらです！\n{dm_msg}')
 
     @wordWolf.error
     async def wordWolf_error(self, ctx, error):

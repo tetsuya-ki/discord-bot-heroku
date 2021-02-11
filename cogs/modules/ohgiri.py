@@ -19,10 +19,11 @@ class OhgiriMember:
         self.answered = False
 
 class Answer:
-    def __init__(self, card_id, member):
+    def __init__(self, card_id, member, second_card_id=None):
         self.card_id = card_id # 回答カード配列の配列番号
         self.member = member # 回答者
         self.answer_index = None # 画面にある番号(画面に表示する前にまとめて採番して設定するのでinitではNone)
+        self.second_card_id = second_card_id # 2つ目の回答カード配列の配列番号
 
 class Ohgiri:
     """
@@ -38,6 +39,7 @@ class Ohgiri:
         self.deck_odai = [] # デッキ（お題）
         self.deck_ans = [] # デッキ（回答）
         self.odai = None # 場におかれているお題
+        self.required_ans_num = 1 # 必要な回答数
         self.field = [] # 場におかれている回答
         self.discards_odai = [] # 捨て札(お題)
         self.discards_ans = [] # 捨て札(回答)
@@ -50,28 +52,26 @@ class Ohgiri:
         self.game_over = False
         self.win_point = 5 # 勝利扱いとするポイント
 
-    async def init_card(self):
-        json_data = {}
-
+    async def on_ready(self):
         json_path = join(dirname(__file__), 'files' + os.sep + 'temp' + os.sep + self.FILE)
         # 環境変数に大喜利用JSONのURLが登録されている場合はそちらを使用
         if settings.OHGIRI_JSON_URL:
-            if not exists(json_path):
-                file_path = await self.savefile.download_file(settings.OHGIRI_JSON_URL,  json_path)
-            else:
-                file_path = json_path
+            self.file_path = await self.savefile.download_file(settings.OHGIRI_JSON_URL,  json_path)
+            logger.info(f'大喜利JSONのURLが登録されているため、JSONを保存しました。\n{self.file_path}')
         else:
-            file_path = join(dirname(__file__), 'files' + os.sep + self.FILE)
+            self.file_path = join(dirname(__file__), 'files' + os.sep + self.FILE)
+
+    async def init_card(self):
+        json_data = {}
 
         try:
-            with open(file_path, mode='r') as f:
+            with open(self.file_path, mode='r') as f:
                 json_data = json.load(f)
         except (FileNotFoundError, json.JSONDecodeError, EOFError) as e:
             # JSON変換失敗、読み込みに失敗したらなにもしない
             logger.error(e)
 
-        # お題配列を取り出してお題カード辞書を作る
-        subject_index = 0
+        # お題配列を取り出してお題カードデッキを作る
         self.deck_odai = json_data['subject']
 
         # 回答配列を取り出して回答カード辞書を作る
@@ -114,11 +114,16 @@ class Ohgiri:
         """
         self.turn = self.turn + 1
         self.description = ''
-        self.hands = []
         self.field = []
 
         # 場に置かれるお題をひく
         self.odai =  self.deck_odai.pop()
+
+        # お題にXXがあるかチェック
+        if '✕✕' in self.odai:
+            self.required_ans_num = 2
+        else:
+            self.required_ans_num = 1
 
         # お題の山札がなくなった場合の処理
         if len(self.deck_odai) == 0:
@@ -144,35 +149,44 @@ class Ohgiri:
         target_discards = []
         self.shuffle()
 
-    def receive_card(self, card_id, member):
+    def receive_card(self, card_id, member, second_card_id=None):
         """
         メンバーからカードを受け取ったときの処理
         受け取ったカードを場に出す
         メンバーの手持ちから受領したカードを除去
         cardNum {Int}
         member self.membersから取り出すキー
+        second_card_id {Int}
         """
         # 回答済のメンバーからカードを受け取った場合は、場に出されたカードとそのカードを入れ替える
         if self.members[member].answered:
             for answer in self.field:
                 if answer.member == member:
                     self.members[member].cards.append(answer.card_id)
+                    if answer.second_card_id is not None:
+                        self.members[member].cards.append(answer.second_card_id)
                     break
             self.field = [answer for answer in self.field if answer.member != member] 
 
         # 回答済に設定する
         self.members[member].answered = True
-        self.field.append(Answer(card_id, member))
+        if second_card_id is None:
+            self.field.append(Answer(card_id, member))
+        else:
+            self.field.append(Answer(card_id, member, second_card_id))
 
         # 受信したカード以外のカードをユーザに返す
-        self.members[member].cards = [users_card_id for users_card_id in self.members[member].cards if users_card_id != card_id]
+        self.members[member].cards = [users_card_id for users_card_id in self.members[member].cards if (users_card_id != card_id and users_card_id != second_card_id)]
 
     def show_answer(self):
         """
         山札からカードを1枚加え、ランダムに混ぜた上で、回答を表示
         """
         # 山札からカードを引いてダミーの回答を作る
-        self.field.append(Answer(self.deck_ans.pop(), 'dummy'))
+        if self.required_ans_num == 1:
+            self.field.append(Answer(self.deck_ans.pop(), 'dummy'))
+        else:
+            self.field.append(Answer(self.deck_ans.pop(), 'dummy', self.deck_ans.pop()))
 
         # 場に出た回答に画面表示用のランダムな番号を設定する。
         random_field = random.sample(self.field, len(self.field))
@@ -181,7 +195,10 @@ class Ohgiri:
 
         self.description = ''
         for sorted_answer in sorted(random_field, key=lambda answer: answer.answer_index):
-            self.description += f'{str(sorted_answer.answer_index)}: {str(self.odai).replace("〇〇", "||" + self.ans_dict[sorted_answer.card_id] + "||")}\n'
+            description_text = f'{str(sorted_answer.answer_index)}: {str(self.odai).replace("〇〇", "||" + self.ans_dict[sorted_answer.card_id] + "||")}\n'
+            if self.required_ans_num == 2:
+                description_text = description_text.replace("✕✕", "||" + self.ans_dict[sorted_answer.second_card_id] + "||")
+            self.description += description_text
 
     def choose_answer(self, answer_index):
         """
@@ -208,6 +225,8 @@ class Ohgiri:
 
         # 回答と回答者を入れたメッセージをwinCardsListに入れ、説明文に追加
         win_word = f'{str(self.odai).replace("〇〇", "**" + self.ans_dict[choosen_answer.card_id] + "**")} ({choosen_member_display_name}さん)\n'
+        if self.required_ans_num == 2:
+            win_word = win_word.replace("✕✕", "**" + self.ans_dict[choosen_answer.second_card_id] + "**")
         self.winCardsList.append(win_word)
         self.description += '> ' + win_word
 
@@ -216,6 +235,8 @@ class Ohgiri:
         self.odai = ''
         for answer in self.field:
             self.discards_ans.append(str(answer.card_id))
+            if answer.second_card_id is not None:
+                self.discards_ans.append(str(answer.second_card_id))
 
         # 勝利判定
         if choosen_answer.member != 'dummy' and self.members[choosen_answer.member].point >= self.win_point:
@@ -225,7 +246,8 @@ class Ohgiri:
                 self.description += f'{i+1}: {win_word}'
 
     def show_info(self):
-        self.description = f'ターン: {self.turn}、現在の親: {discord.utils.escape_markdown(self.house.display_name)}さん({self.win_point}点取得した人が勝利です)\n現在のお題: {self.odai}\n'
+        house = '' if self.game_over else f'、現在の親: {discord.utils.escape_markdown(self.house.display_name)}さん'
+        self.description = f'ターン: {self.turn}{house}({self.win_point}点取得した人が勝利です)\n現在のお題: {self.odai}\n'
 
         # 参加者の点数と回答済みかどうかを表示する
         for member in self.members:
@@ -238,3 +260,23 @@ class Ohgiri:
                 self.description += '親(回答不要)\n'
             else:
                 self.description += '未回答\n'
+
+    def discard_hand(self, member):
+        self.description = ''
+        # ポイントを減らす(1点以上なら)
+        if self.members[member].point > 0:
+            self.members[member].point += -1
+            self.description += 'ポイントを1点減点し、'
+
+        self.description += '手札をすべて捨てて、山札から引きました！'
+        # 手札を全て捨てる
+        self.discards_ans.extend(self.members[member].cards)
+        self.members[member].cards = []
+        # 山札から回答カードを引く(手札が「手札の最大数 - メンバーのpoint」になるまでカードを配る)
+        while len(self.members[member].cards) < (self.max_hands - self.members[member].point):
+            self.members[member].cards.append(self.deck_ans.pop())
+            # 回答が無くなった時の処理
+            if len(self.deck_ans) == 0:
+                self.retern_discards_to_deck('回答カード', self.discards_ans, self.deck_ans)
+
+        self.members[member].cards = sorted(self.members[member].cards, key=int)
