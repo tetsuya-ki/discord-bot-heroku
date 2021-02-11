@@ -225,7 +225,8 @@ class Ohgiri:
                 self.description += f'{i+1}: {win_word}'
 
     def show_info(self):
-        self.description = f'ターン: {self.turn}、現在の親: {discord.utils.escape_markdown(self.house.display_name)}さん({self.win_point}点取得した人が勝利です)\n現在のお題: {self.odai}\n'
+        house = '' if self.game_over else f'現在の親: {discord.utils.escape_markdown(self.house.display_name)}さん'
+        self.description = f'ターン: {self.turn}、{house}({self.win_point}点取得した人が勝利です)\n現在のお題: {self.odai}\n'
 
         # 参加者の点数と回答済みかどうかを表示する
         for member in self.members:
