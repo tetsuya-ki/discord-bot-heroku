@@ -26,6 +26,11 @@ class GameCog(commands.Cog, name='ゲーム用'):
         self.coyoteGames = Coyote()
         self.ohgiriGames = Ohgiri()
 
+    # cogが準備できたら読み込みする
+    @commands.Cog.listener()
+    async def on_ready(self):
+        await self.ohgiriGames.on_ready()
+
     # ワードウルフ機能
     @commands.command(aliases=['word','ww'], description='ワードウルフ機能(少数派のワードを与えられた人を当てるゲーム)')
     async def wordWolf(self, ctx, answer_minutes=None):

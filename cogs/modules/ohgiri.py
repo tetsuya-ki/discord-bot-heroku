@@ -50,21 +50,20 @@ class Ohgiri:
         self.game_over = False
         self.win_point = 5 # 勝利扱いとするポイント
 
-    async def init_card(self):
-        json_data = {}
-
+    async def on_ready(self):
         json_path = join(dirname(__file__), 'files' + os.sep + 'temp' + os.sep + self.FILE)
         # 環境変数に大喜利用JSONのURLが登録されている場合はそちらを使用
         if settings.OHGIRI_JSON_URL:
-            if not exists(json_path):
-                file_path = await self.savefile.download_file(settings.OHGIRI_JSON_URL,  json_path)
-            else:
-                file_path = json_path
+            self.file_path = await self.savefile.download_file(settings.OHGIRI_JSON_URL,  json_path)
+            logger.info(f'大喜利JSONのURLが登録されているため、JSONを保存しました。\n{self.file_path}')
         else:
-            file_path = join(dirname(__file__), 'files' + os.sep + self.FILE)
+            self.file_path = join(dirname(__file__), 'files' + os.sep + self.FILE)
+
+    async def init_card(self):
+        json_data = {}
 
         try:
-            with open(file_path, mode='r') as f:
+            with open(self.file_path, mode='r') as f:
                 json_data = json.load(f)
         except (FileNotFoundError, json.JSONDecodeError, EOFError) as e:
             # JSON変換失敗、読み込みに失敗したらなにもしない

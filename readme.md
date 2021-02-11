@@ -214,8 +214,7 @@ Discord用のBot。discord.pyのBot Commands Frameworkを使用して実装。�
 - PURGE_TARGET_IS_ME_AND_BOT=False
   - `/purge`コマンドで削除する対象にBotを含むかの設定(設定がない場合は、自分の投稿のみが削除対象)
 - OHGIRI_JSON_URL=ohgiri_json_url
-  - 大喜利機能で使用するJSONをURLから取得する場合に設定
-  - JSONを保存し、次回からそれを使用するため、URLで取得する先のJSONが更新され、最新の内容を使用したい場合は保存されたファイルを削除する必要アリ
+  - 大喜利機能で使用するJSONをURLから取得する場合に設定(Cogを読み込む際に取得されます)
 
 ## ローカルでの動かし方
 
