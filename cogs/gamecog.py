@@ -69,7 +69,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
                 f'DMでお題が配られますが、**ワードウルフだけは別のお題**が配られます(お題は2種類あります)。会話の中で不審な言動を察知し、みごとに'\
                 f'投票でワードウルフを当てることができたら、市民の勝ち。**間違えて「市民をワードウルフ」だと示してしまった場合、ワードウルフの勝ち**です！！\n'\
                 f'DMに送られたお題を確認し、**{answer_minutes}分話し合いののち、投票を実施**してください！！　今から開始します！'
-        await ctx.send(msg)
+        start_msg =  await ctx.send(msg)
 
         # メンバーをシャッフル
         random.shuffle(make_team.vc_members)
@@ -84,7 +84,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
             else:
                 player_odai = citizen_odai
             dm = await player.create_dm()
-            await dm.send(f'{player.mention}さんのワードは**「{player_odai}」**です！')
+            await dm.send(f'{player.mention}さんのワードは**「{player_odai}」**です！\n開始メッセージへのリンク:{start_msg.jump_url}')
 
         netabare_msg += 'でした！　お疲れ様でした！'
 
@@ -137,7 +137,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
                 f'これから**雑談し、誰かがNGワードを口走ったら、「ドーン！！！」と指摘**してください。すぐさまNGワードが妥当か話し合いください(カッコがある場合は、どちらもNGワードです)。\n'\
                 f'妥当な場合、NGワード発言者はお休みです。残った人で続けます。**最後のひとりになったら勝利**です！！\n'\
                 f'まず、DMに送られたNGワードを確認し、相手が「NGワードを喋ってしまう」ようにトークしてください！**{answer_minutes}分で終了**です！　今から開始します！！'
-        await ctx.send(msg)
+        start_msg = await ctx.send(msg)
 
         netabare_msg = ''
         # それぞれに役割をDMで送信
@@ -153,7 +153,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
             rpl_msg_del = f'{player.display_name}さん:(\|\|.+?\|\|, )'
             dm_msg = re.sub(rpl_msg_del, '', netabare_msg)
             dm_msg_open = dm_msg.replace('|', '').replace(', ', '\n')
-            await dm.send(f'{player.mention}さん 他の人のNGワードはこちらです！\n{dm_msg_open}')
+            await dm.send(f'{player.mention}さん 他の人のNGワードはこちらです！\n{dm_msg_open}\n開始メッセージへのリンク:{start_msg.jump_url}')
 
         netabare_msg = re.sub(', $', '', netabare_msg)
 
@@ -383,6 +383,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
 
     async def dealAndMessage(self, ctx):
         self.coyoteGames.deal()
+        start_msg = await ctx.send(f'カードを配りました。DMをご確認ください。{self.coyoteGames.description}')
         dm_msg_all = ''
         # 全員分のメッセージを作成
         for player in self.coyoteGames.members:
@@ -392,8 +393,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
             dm = await player.create_dm()
             rpl_msg_del = f'{player.display_name}さん:.+\n'
             dm_msg = re.sub(rpl_msg_del, '', dm_msg_all)
-            await dm.send(f'{player.mention}さん 他の人のコヨーテカードはこちらです！\n{dm_msg}')
-        await ctx.send(f'カードを配りました。DMをご確認ください。{self.coyoteGames.description}')
+            await dm.send(f'{player.mention}さん 他の人のコヨーテカードはこちらです！\n{dm_msg}\n開始メッセージへのリンク:{start_msg.jump_url}')
         self.coyoteGames.description = ''
 
     async def coyoteAllMessage(self, ctx):
