@@ -225,8 +225,8 @@ class Ohgiri:
                 self.description += f'{i+1}: {win_word}'
 
     def show_info(self):
-        house = '' if self.game_over else f'現在の親: {discord.utils.escape_markdown(self.house.display_name)}さん'
-        self.description = f'ターン: {self.turn}、{house}({self.win_point}点取得した人が勝利です)\n現在のお題: {self.odai}\n'
+        house = '' if self.game_over else f'、現在の親: {discord.utils.escape_markdown(self.house.display_name)}さん'
+        self.description = f'ターン: {self.turn}{house}({self.win_point}点取得した人が勝利です)\n現在のお題: {self.odai}\n'
 
         # 参加者の点数と回答済みかどうかを表示する
         for member in self.members:
@@ -239,3 +239,23 @@ class Ohgiri:
                 self.description += '親(回答不要)\n'
             else:
                 self.description += '未回答\n'
+
+    def discard_hand(self, member):
+        self.description = ''
+        # ポイントを減らす(1点以上なら)
+        if self.members[member].point > 0:
+            self.members[member].point += -1
+            self.description += 'ポイントを1点減点し、'
+
+        self.description += '手札をすべて捨てて、山札から引きました！'
+        # 手札を全て捨てる
+        self.discards_ans.extend(self.members[member].cards)
+        self.members[member].cards = []
+        # 山札から回答カードを引く(手札が「手札の最大数 - メンバーのpoint」になるまでカードを配る)
+        while len(self.members[member].cards) < (self.max_hands - self.members[member].point):
+            self.members[member].cards.append(self.deck_ans.pop())
+            # 回答が無くなった時の処理
+            if len(self.deck_ans) == 0:
+                self.retern_discards_to_deck('回答カード', self.discards_ans, self.deck_ans)
+
+        self.members[member].cards = sorted(self.members[member].cards, key=int)
