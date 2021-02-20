@@ -81,8 +81,11 @@ Discord用のBot。discord.pyのBot Commands Frameworkを使用して実装。�
 
 `/getAuditLog` 監査ログを取得。とっても重たい上に見づらい。。。いつかなんとかしたい（[AuditLogChanges](https://discordpy.readthedocs.io/ja/latest/api.html#discord.AuditLogChanges)をわかりやすく表示する方法あるのかな。。。）
 
-`/purge` メッセージを削除（Botと自分のメッセージのみ削除される）  
+`/purge` メッセージを削除（自分とBot※のメッセージのみ削除される）※Botを削除対象とするかは[環境変数](#環境変数の説明)で指定可能。デフォルトは削除しない  
 ![image(purge)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/purge.png?raw=true)
+
+`/deleteMessage` 指定したキーワードを含むメッセージを削除（自分とBot※のメッセージのみ削除される）※Botを削除対象とするかは[環境変数](#環境変数の説明)で指定可能。デフォルトは削除しない  
+![image(deleteMessage)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/deleteMessage.png?raw=true)
 
 ### リアクションチャンネラーカテゴリ(reactionchannelercog.pyで実装)
 
@@ -112,7 +115,7 @@ Discord用のBot。discord.pyのBot Commands Frameworkを使用して実装。�
 ![image(reactionChanneler-2)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/event_reaction_added.png?raw=True)
 
 - [環境変数](#環境変数の説明)で設定しておけば、別のギルドのチャンネルへリンクを投稿することもできる(v0.7.1で実装)  
-![image(reactionChanneler-2)](<https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/event_reaction_added(webhook).png?raw=True>)
+![image(reactionChanneler-3)](<https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/event_reaction_added(webhook).png?raw=True>)
 
 ### ゲームカテゴリ(gamecog.pyで実装)
 
@@ -220,7 +223,7 @@ Discord用のBot。discord.pyのBot Commands Frameworkを使用して実装。�
   - 左端のallの部分（対象ギルド）をギルドIDにすると、指定のギルドでしか展開しない。allの場合、すべてのギルドで発動
   - sidを適用したいプロジェクトが複数ある場合、「,」(コンマ)を挟む必要がある
 - PURGE_TARGET_IS_ME_AND_BOT=False
-  - `/purge`コマンドで削除する対象にBotを含むかの設定(設定がない場合は、自分の投稿のみが削除対象)
+  - `/purge`コマンド、`/deleteMessage`コマンドで削除する対象にBotを含むかの設定(設定がない場合は、**自分の投稿のみ**が削除対象)
 - OHGIRI_JSON_URL=ohgiri_json_url
   - 大喜利機能で使用するJSONをURLから取得する場合に設定(Cogを読み込む際に取得されます)
 
