@@ -3,10 +3,12 @@ from .modules.reactionchannel import ReactionChannel
 from .modules import settings
 from .onmessagecog import OnMessageCog
 from logging import getLogger
+from discord import Webhook, AsyncWebhookAdapter
 
 import discord
 import datetime
 import asyncio
+import aiohttp
 
 logger = getLogger(__name__)
 
@@ -191,10 +193,22 @@ class ReactionChannelerCog(commands.Cog, name="リアクションチャンネラ
                         logger.debug('Already reaction added. emoji_count:'+ str(message_reaction.count))
                         return
 
-            contents = [message.clean_content[i: i+200] for i in range(0, len(message.clean_content), 200)]
-            if len(contents) != 1 :
+            contents = [message.clean_content[i: i+1980] for i in range(0, len(message.clean_content), 1980)]
+            if len(contents) == 0:
+                return
+            elif len(contents) > 1:
                 contents[0] += ' ＊長いので分割しました＊'
-            embed = discord.Embed(title = contents[0], description = '<#' + str(message.channel.id) + '>', type='rich')
+
+            is_webhook = False
+            channel = ''
+            # Webhookの場合
+            if reaction[2] == '':
+                is_webhook = True
+                channel = f'{message.guild.name} / #{message.channel.name}'
+            else:
+                channel = f'<#{message.channel.id}>'
+
+            embed = discord.Embed(description = contents[0], type='rich')
             embed.set_author(name=reaction[0] + ' :reaction_channeler', url='https://github.com/tetsuya-ki/discord-bot-heroku/')
             embed.set_thumbnail(url=message.author.avatar_url)
 
@@ -202,16 +216,27 @@ class ReactionChannelerCog(commands.Cog, name="リアクションチャンネラ
             created_at_jst = created_at.astimezone(datetime.timezone(datetime.timedelta(hours=9)))
 
             embed.add_field(name='作成日時', value=created_at_jst.strftime('%Y/%m/%d(%a) %H:%M:%S'))
+            embed.add_field(name='元のチャンネル', value=channel)
 
             if len(contents) != 1 :
-                for addText in contents[1:]:
-                    embed.add_field(name='addText', value=addText + ' ＊長いので分割しました＊', inline=False)
+                embed.set_footer(text=contents[1] + ' ＊長いので分割しました(以降省略)＊')
 
-            to_channel = guild.get_channel(int(reaction[2]))
-            logger.debug('setting:'+str(reaction[2]))
-            logger.debug('to_channel: '+str(to_channel))
-
-            await to_channel.send(reaction[1] + ': ' + message.jump_url, embed=embed)
+            # リアクションチャンネラーがWebhookだった場合の処理
+            if is_webhook and '※' not in reaction[1]:
+                async with aiohttp.ClientSession() as session:
+                    webhook = Webhook.from_url(reaction[1], adapter=AsyncWebhookAdapter(session))
+                    try:
+                        await webhook.send('ReactionChanneler(Webhook): ' + message.jump_url, embed=embed, username='ReactionChanneler', avatar_url=message.author.avatar_url)
+                    except (discord.HTTPException,discord.NotFound,discord.Forbidden,discord.InvalidArgument) as e:
+                        logger.error(e)
+            elif '※' in reaction[1]:
+                logger.info('環境変数に登録されていないギルドIDをもつWebhookのため、実行されませんでした。')
+            # 通常のリアクションチャンネラー機能の実行
+            else:
+                to_channel = guild.get_channel(int(reaction[2]))
+                logger.debug('setting:'+str(reaction[2]))
+                logger.debug('to_channel: '+str(to_channel))
+                await to_channel.send(reaction[1] + ': ' + message.jump_url, embed=embed)
 
     # 画像を保存
     async def save_file(self, payload: discord.RawReactionActionEvent):
