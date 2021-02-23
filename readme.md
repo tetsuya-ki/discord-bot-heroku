@@ -81,8 +81,11 @@ Discord用のBot。discord.pyのBot Commands Frameworkを使用して実装。�
 
 `/getAuditLog` 監査ログを取得。とっても重たい上に見づらい。。。いつかなんとかしたい（[AuditLogChanges](https://discordpy.readthedocs.io/ja/latest/api.html#discord.AuditLogChanges)をわかりやすく表示する方法あるのかな。。。）
 
-`/purge` メッセージを削除（Botと自分のメッセージのみ削除される）  
+`/purge` メッセージを削除（自分とBot※のメッセージのみ削除される）※Botを削除対象とするかは[環境変数](#環境変数の説明)で指定可能。デフォルトは削除しない  
 ![image(purge)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/purge.png?raw=true)
+
+`/deleteMessage` 指定したキーワードを含むメッセージを削除（自分とBot※のメッセージのみ削除される）※Botを削除対象とするかは[環境変数](#環境変数の説明)で指定可能。デフォルトは削除しない  
+![image(deleteMessage)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/deleteMessage.png?raw=true)
 
 ### リアクションチャンネラーカテゴリ(reactionchannelercog.pyで実装)
 
@@ -110,6 +113,9 @@ Discord用のBot。discord.pyのBot Commands Frameworkを使用して実装。�
 
 - あらかじめ指定されたチャンネルへリンクが投稿される  
 ![image(reactionChanneler-2)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/event_reaction_added.png?raw=True)
+
+- [環境変数](#環境変数の説明)で設定しておけば、別のギルドのチャンネルへリンクを投稿することもできる(v0.7.1で実装)  
+![image(reactionChanneler-3)](<https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/event_reaction_added(webhook).png?raw=True>)
 
 ### ゲームカテゴリ(gamecog.pyで実装)
 
@@ -193,7 +199,7 @@ Discord用のBot。discord.pyのBot Commands Frameworkを使用して実装。�
 
 ## 環境変数の説明
 
-- DISCORD_TOKEN = 'discord_bot_token'
+- DISCORD_TOKEN = "discord_bot_token"
   - ここにDiscord Botのトークンを貼り付ける(とても重要。これをしないと動かない)
 - LOG_LEVEL = INFO
   - ログレベルを設定したい場合、設定する。デフォルトはWARN。DEBUG, INFO, WARN, ERRORが設定可能
@@ -205,6 +211,11 @@ Discord用のBot。discord.pyのBot Commands Frameworkを使用して実装。�
   - 保存したい画像ファイルをもつURLの一部を指定。正規表現対応。複数ある場合はパイプ(|)などを駆使すること
 - FIRST_REACTION_CHECK = True
   - すでにリアクションが付けられた物について、**リアクションチャンネラーを発動しないかどうか**の設定。基本的にはTrueがオススメ。寂しいときはFalseでもOK（何回だってチャンネルに転記されちゃいますが！）
+- REACTION_CHANNELER_PERMIT_WEBHOOK_ID = "webhook_id"
+  - リアクションチャンネラー機能の拡張設定。ここにWebhook IDか「all」という文字列を記載すると、リアクションチャンネラー機能でWebhookが使用できる(v0.7.1で実装)
+    - リアクションを設定するだけで、別のギルドにメッセージを転送することができるようになる
+  - この環境変数にWebhook IDがない、または、allが記載されていない場合、登録は可能だが、実際に実行はされない
+    - 勝手にリアクションチャンネラーを登録され情報が流出することを防ぐため、環境変数で指定がない限り実行されないようにする(少し面倒かもしれない)
 - SCRAPBOX_SID_AND_PROJECTNAME = "all:scrapbox_sid@projectname1,projectname2;guild1:scrapbox_sid@projectname3"
   - Scrapboxの展開をする際に使用する、sidとプロジェクト名についての設定
     - sidについては、[ScrapboxのprivateプロジェクトのAPIを叩く](https://scrapbox.io/nishio/Scrapbox%E3%81%AEprivate%E3%83%97%E3%83%AD%E3%82%B8%E3%82%A7%E3%82%AF%E3%83%88%E3%81%AEAPI%E3%82%92%E5%8F%A9%E3%81%8F)を参照し、注意点を把握した上対応すること
@@ -212,7 +223,7 @@ Discord用のBot。discord.pyのBot Commands Frameworkを使用して実装。�
   - 左端のallの部分（対象ギルド）をギルドIDにすると、指定のギルドでしか展開しない。allの場合、すべてのギルドで発動
   - sidを適用したいプロジェクトが複数ある場合、「,」(コンマ)を挟む必要がある
 - PURGE_TARGET_IS_ME_AND_BOT=False
-  - `/purge`コマンドで削除する対象にBotを含むかの設定(設定がない場合は、自分の投稿のみが削除対象)
+  - `/purge`コマンド、`/deleteMessage`コマンドで削除する対象にBotを含むかの設定(設定がない場合は、**自分の投稿のみ**が削除対象)
 - OHGIRI_JSON_URL=ohgiri_json_url
   - 大喜利機能で使用するJSONをURLから取得する場合に設定(Cogを読み込む際に取得されます)
 

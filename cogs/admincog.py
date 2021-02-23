@@ -423,6 +423,42 @@ class AdminCog(commands.Cog, name='管理用'):
             else:
                 await confirm_msg.reply(f'チャンネル「{ctx.channel.name}」からロール**「{targetRole}」**の閲覧権限を削除しました！')
 
+    # 指定した文章を含むメッセージを削除するコマンド
+    @commands.command(aliases=['dm','dem','delm'],description='指定した文章を含むメッセージを削除します')
+    async def deleteMessage(self, ctx, keyword:str, limit_num:str='1'):
+        """
+        自分かBOTの指定した文章を含むメッセージを削除します。
+        削除対象のキーワード(必須)、削除対象とするメッセージの数(任意。デフォルトは1)
+        なお、BOTにメッセージの管理権限、メッセージの履歴閲覧権限、メッセージの閲覧権限がない場合は失敗します。
+        """
+        self.command_author = ctx.author
+        # botかコマンドの実行主かチェックし、キーワードを含むメッセージのみ削除
+        def is_me_and_contain_keyword(m):
+            return (self.command_author == m.author or (m.author.bot and settings.PURGE_TARGET_IS_ME_AND_BOT)) and keyword in m.clean_content
+
+        # 指定がない、または、不正な場合は、コマンドを削除。そうではない場合、コマンドを削除し、指定数だけメッセージを走査し、キーワードを含むものだけ削除する
+        if keyword is None:
+            await ctx.message.delete()
+            await ctx.channel.send('削除対象のキーワードを指定してください(削除対象とするメッセージ数を続けて指定してください)。\nあなたのコマンド：`{0}`'.format(ctx.message.clean_content))
+            return
+        if limit_num.isdecimal():
+            limit_num = int(limit_num) + 1
+        else:
+            await ctx.message.delete()
+            await ctx.channel.send('有効な数字ではないようです。削除数は1以上の数値を指定してください。\nあなたのコマンド：`{0}`'.format(ctx.message.clean_content))
+            return
+
+        if limit_num > 1000:
+            limit_num = 1000
+        elif limit_num < 2:
+            await ctx.message.delete()
+            await ctx.channel.send('削除数は1以上の数値を指定してください。\nあなたのコマンド：`{0}`'.format(ctx.message.clean_content))
+            return
+
+        # 違和感を持たせないため、コマンドを削除した分を省いた削除数を通知する。
+        deleted = await ctx.channel.purge(limit=limit_num, check=is_me_and_contain_keyword)
+        await ctx.channel.send('{0}個のメッセージを削除しました。\nあなたのコマンド：`{1}`'.format(len(deleted) - 1, ctx.message.clean_content))
+
     # チャンネル作成時に実行されるイベントハンドラを定義
     @commands.Cog.listener()
     async def on_guild_channel_create(self, channel: discord.abc.GuildChannel):
