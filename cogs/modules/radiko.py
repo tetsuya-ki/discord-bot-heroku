@@ -107,7 +107,7 @@ class Radiko:
 
     def convert_filter(self, filter):
         if '未来' in filter or 'future' in filter:
-            return 'future' 
+            return 'future'
         elif '過去' in filter or 'past' in filter:
             return 'past'
         else:

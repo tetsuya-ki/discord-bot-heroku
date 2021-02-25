@@ -14,7 +14,7 @@ class OhgiriMember:
     大喜利参加者クラス
     """
     def __init__(self):
-        self.point = 0 
+        self.point = 0
         self.cards = [] # カードのID
         self.answered = False
 
@@ -166,7 +166,7 @@ class Ohgiri:
                     if answer.second_card_id is not None:
                         self.members[member].cards.append(answer.second_card_id)
                     break
-            self.field = [answer for answer in self.field if answer.member != member] 
+            self.field = [answer for answer in self.field if answer.member != member]
 
         # 回答済に設定する
         self.members[member].answered = True

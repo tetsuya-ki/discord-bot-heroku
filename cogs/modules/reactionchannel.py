@@ -52,7 +52,7 @@ class ReactionChannel:
                     if get_control_channel is not None:
                         last_message = await get_control_channel.history(limit=1).flatten()
                         logger.debug(f'＋＋＋＋{last_message}＋＋＋＋')
-                        if len(last_message) != 0: 
+                        if len(last_message) != 0:
                             logger.debug(f'len: {len(last_message)}, con: {last_message[0].content}, attchSize:{len(last_message[0].attachments)}')
                             if Attachment_file_date is not None:
                                 logger.debug(f'date: {Attachment_file_date} <<<<<<< {last_message[0].created_at}, {Attachment_file_date < last_message[0].created_at}')
@@ -141,8 +141,9 @@ class ReactionChannel:
                 serialize = dict["pickle"]
                 reaction_channels = pickle.loads(base64.b64decode(serialize.encode()))
 
-            # Wenhook対応
-            reaction_channeler_permit_webhook_id_list = settings.REACTION_CHANNELER_PERMIT_WEBHOOK_ID.replace(' ', '').split(';')
+            # Webhook対応
+            reaction_channeler_permit_webhook_ids = '' if settings.REACTION_CHANNELER_PERMIT_WEBHOOK_ID is None else settings.REACTION_CHANNELER_PERMIT_WEBHOOK_ID
+            reaction_channeler_permit_webhook_id_list = reaction_channeler_permit_webhook_ids.replace(' ', '').split(';')
             for rc in reaction_channels:
                 # rc[3](チャンネル名が入るところ)が空ではない場合、通常のリアクションチャンネラーのためそのまま追加。そうではない場合はWebhookのため、有効か確認する
                 if rc[3] != '':
@@ -270,7 +271,8 @@ class ReactionChannel:
         if is_webhook:
             # 環境変数に登録されているものかチェック
             ch_guild_id = str(re.search(self.WEBHOOK_URL+r'(\d+)/', channel).group(1))
-            reaction_channeler_permit_webhook_id_list = settings.REACTION_CHANNELER_PERMIT_WEBHOOK_ID.replace(' ', '').split(';')
+            reaction_channeler_permit_webhook_ids = '' if settings.REACTION_CHANNELER_PERMIT_WEBHOOK_ID is None else settings.REACTION_CHANNELER_PERMIT_WEBHOOK_ID
+            reaction_channeler_permit_webhook_id_list = reaction_channeler_permit_webhook_ids.replace(' ', '').split(';')
             l_in = [s for s in reaction_channeler_permit_webhook_id_list if (ch_guild_id or 'all') in s.lower()]
             # 環境変数に登録されていないものの場合、先頭に「※」を付与
             add_messsage = ''

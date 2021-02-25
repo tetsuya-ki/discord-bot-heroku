@@ -67,7 +67,7 @@ class ScrapboxSidAndPnames:
                     self.target_sid = scrapboxSidAndPnamesTarget.scrapbox_sid
                     return True
         return False
-    
+
     async def expand(self, message:discord.Message):
         rurl = r'https://' + self.SCRAPBOX_URL_PATTERN + self.target_project + '/([\w/:%#$&?\(\)~\.=\+-]+)'
         cookies={"connect.sid" : self.target_sid}
