@@ -230,7 +230,7 @@ class ReactionChannelerCog(commands.Cog, name="リアクションチャンネラ
                     except (discord.HTTPException,discord.NotFound,discord.Forbidden,discord.InvalidArgument) as e:
                         logger.error(e)
             elif '※' in reaction[1]:
-                logger.info('環境変数に登録されていないギルドIDをもつWebhookのため、実行されませんでした。')
+                logger.info('環境変数に登録されていないWebhookIDをもつWebhookのため、実行されませんでした。')
             # 通常のリアクションチャンネラー機能の実行
             else:
                 to_channel = guild.get_channel(int(reaction[2]))
