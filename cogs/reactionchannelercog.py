@@ -122,7 +122,7 @@ class ReactionChannelerCog(commands.Cog, name="リアクションチャンネラ
             return
         if payload.emoji.name == '👌':# ok_handは確認に使っているので無視する(と思っていたが別機能として使用)
             await self.save_file(payload)
-            return 
+            return
         await self.pin_message(payload)
         await self.reaction_channeler(payload)
 

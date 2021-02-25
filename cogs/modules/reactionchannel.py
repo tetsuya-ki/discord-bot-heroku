@@ -52,7 +52,7 @@ class ReactionChannel:
                     if get_control_channel is not None:
                         last_message = await get_control_channel.history(limit=1).flatten()
                         logger.debug(f'＋＋＋＋{last_message}＋＋＋＋')
-                        if len(last_message) != 0: 
+                        if len(last_message) != 0:
                             logger.debug(f'len: {len(last_message)}, con: {last_message[0].content}, attchSize:{len(last_message[0].attachments)}')
                             if Attachment_file_date is not None:
                                 logger.debug(f'date: {Attachment_file_date} <<<<<<< {last_message[0].created_at}, {Attachment_file_date < last_message[0].created_at}')
