@@ -121,7 +121,7 @@ class ReactionChannel:
         self.guild_rc_txt_lists = []
         for rc in self.guild_reaction_channels:
             self.guild_rc_txt_lists.append('+'.join(map(str, rc)))
-        self.rc_len = len(self.guild_reaction_channels)
+        self.rc_len = len(self.reaction_channels)
 
         # 既に読み込まれている場合は、読み込みしない
         if self.rc_len != 0:
@@ -150,8 +150,8 @@ class ReactionChannel:
                     self.reaction_channels.append(rc)
                 else:
                     # 環境変数に登録されているものかチェック
-                    ch_guild_id = str(re.search(self.WEBHOOK_URL+r'(\d+)/', rc[2]).group(1))
-                    l_in = [s for s in reaction_channeler_permit_webhook_id_list if (ch_guild_id in s or 'all' in s.lower())]
+                    ch_webhook_id = str(re.search(self.WEBHOOK_URL+r'(\d+)/', rc[2]).group(1))
+                    l_in = [s for s in reaction_channeler_permit_webhook_id_list if (ch_webhook_id in s or 'all' in s.lower())]
                     # 環境変数に登録されていないものの場合、先頭に「※」を付与
                     if len(l_in) == 0:
                         logger.info(f'{rc[0]}の{rc[1]}→{rc[2]}は有効になっていません({self.NOT_PERMIT_WEBHOOK_MESSAGE})。')
@@ -166,7 +166,7 @@ class ReactionChannel:
             self.guild_rc_txt_lists = []
             for rc in self.guild_reaction_channels:
                 self.guild_rc_txt_lists.append('+'.join(map(str, rc)))
-            self.rc_len = len(self.guild_reaction_channels)
+            self.rc_len = len(self.reaction_channels)
         except FileNotFoundError:
             # 読み込みに失敗したらなにもしない
             pass
@@ -270,10 +270,10 @@ class ReactionChannel:
         addItem.append(reaction)
         if is_webhook:
             # 環境変数に登録されているものかチェック
-            ch_guild_id = str(re.search(self.WEBHOOK_URL+r'(\d+)/', channel).group(1))
+            ch_webhook_id = str(re.search(self.WEBHOOK_URL+r'(\d+)/', channel).group(1))
             reaction_channeler_permit_webhook_ids = '' if settings.REACTION_CHANNELER_PERMIT_WEBHOOK_ID is None else settings.REACTION_CHANNELER_PERMIT_WEBHOOK_ID
             reaction_channeler_permit_webhook_id_list = reaction_channeler_permit_webhook_ids.replace(' ', '').split(';')
-            l_in = [s for s in reaction_channeler_permit_webhook_id_list if (ch_guild_id or 'all') in s.lower()]
+            l_in = [s for s in reaction_channeler_permit_webhook_id_list if (ch_webhook_id or 'all') in s.lower()]
             # 環境変数に登録されていないものの場合、先頭に「※」を付与
             add_messsage = ''
             webhook_url = channel
@@ -292,7 +292,7 @@ class ReactionChannel:
         self.reaction_channels.append(addItem)
         self.guild_reaction_channels.append(addItem[1:])
         self.guild_rc_txt_lists.append('+'.join(map(str, addItem[1:])))
-        self.rc_len = len(self.guild_reaction_channels)
+        self.rc_len = len(self.reaction_channels)
 
         # 保管
         if await self.save(guild) is False:
@@ -319,7 +319,7 @@ class ReactionChannel:
             # 有効でないWebhookがある場合、説明を付与
             if '※' in text:
                 text = text + f'\n{self.NOT_PERMIT_WEBHOOK_MESSAGE}'
-            return f'＊現在登録されているリアクションチャンネルの一覧です！({self.rc_len}種類)\n{text}'
+            return f'＊現在登録されているリアクションチャンネルの一覧です！({len(self.guild_reaction_channels)}種類)\n{text}'
 
     # 全削除
     async def purge(self, ctx):
@@ -376,14 +376,14 @@ class ReactionChannel:
         self.reaction_channels = [s for s in self.reaction_channels if s != deleteItem]
         self.guild_reaction_channels = [s for s in self.guild_reaction_channels if s != deleteItem[1:]]
         self.guild_rc_txt_lists = [s for s in self.guild_rc_txt_lists if s != '+'.join(map(str, deleteItem[1:]))]
-        self.rc_len = len(self.guild_reaction_channels)
+        self.rc_len = len(self.reaction_channels)
         # Webhookの場合、先頭に「※」をつけて再度削除する(有効でない時は※付与するため...)
         if self.WEBHOOK_URL in channel:
             deleteItem[2] = '※' + channel
             self.reaction_channels = [s for s in self.reaction_channels if s != deleteItem]
             self.guild_reaction_channels = [s for s in self.guild_reaction_channels if s != deleteItem[1:]]
             self.guild_rc_txt_lists = [s for s in self.guild_rc_txt_lists if s != '+'.join(map(str, deleteItem[1:]))]
-            self.rc_len = len(self.guild_reaction_channels)
+            self.rc_len = len(self.reaction_channels)
 
         # 保管
         if await self.save(guild) is False:
