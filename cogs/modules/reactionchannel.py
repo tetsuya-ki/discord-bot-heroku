@@ -150,8 +150,8 @@ class ReactionChannel:
                     self.reaction_channels.append(rc)
                 else:
                     # 環境変数に登録されているものかチェック
-                    ch_guild_id = str(re.search(self.WEBHOOK_URL+r'(\d+)/', rc[2]).group(1))
-                    l_in = [s for s in reaction_channeler_permit_webhook_id_list if (ch_guild_id in s or 'all' in s.lower())]
+                    ch_webhook_id = str(re.search(self.WEBHOOK_URL+r'(\d+)/', rc[2]).group(1))
+                    l_in = [s for s in reaction_channeler_permit_webhook_id_list if (ch_webhook_id in s or 'all' in s.lower())]
                     # 環境変数に登録されていないものの場合、先頭に「※」を付与
                     if len(l_in) == 0:
                         logger.info(f'{rc[0]}の{rc[1]}→{rc[2]}は有効になっていません({self.NOT_PERMIT_WEBHOOK_MESSAGE})。')
@@ -270,10 +270,10 @@ class ReactionChannel:
         addItem.append(reaction)
         if is_webhook:
             # 環境変数に登録されているものかチェック
-            ch_guild_id = str(re.search(self.WEBHOOK_URL+r'(\d+)/', channel).group(1))
+            ch_webhook_id = str(re.search(self.WEBHOOK_URL+r'(\d+)/', channel).group(1))
             reaction_channeler_permit_webhook_ids = '' if settings.REACTION_CHANNELER_PERMIT_WEBHOOK_ID is None else settings.REACTION_CHANNELER_PERMIT_WEBHOOK_ID
             reaction_channeler_permit_webhook_id_list = reaction_channeler_permit_webhook_ids.replace(' ', '').split(';')
-            l_in = [s for s in reaction_channeler_permit_webhook_id_list if (ch_guild_id or 'all') in s.lower()]
+            l_in = [s for s in reaction_channeler_permit_webhook_id_list if (ch_webhook_id or 'all') in s.lower()]
             # 環境変数に登録されていないものの場合、先頭に「※」を付与
             add_messsage = ''
             webhook_url = channel
