@@ -2,7 +2,7 @@ import random
 import json
 import os
 import discord
-from os.path import join, dirname, exists
+from os.path import join, dirname
 from logging import getLogger
 from . import settings
 from .savefile import SaveFile
