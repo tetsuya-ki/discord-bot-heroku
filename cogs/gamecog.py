@@ -5,10 +5,14 @@ from .modules.readjson import ReadJson
 from logging import getLogger
 from .modules.coyote import Coyote
 from .modules.ohgiri import Ohgiri
+from os.path import join, dirname
+from .modules import settings
+from .modules.savefile import SaveFile
 
 import asyncio
 import random
 import re
+import os
 
 logger = getLogger(__name__)
 
@@ -25,11 +29,42 @@ class GameCog(commands.Cog, name='ゲーム用'):
         self.bot = bot
         self.coyoteGames = Coyote()
         self.ohgiriGames = Ohgiri()
+        self.wordWolfJson = None
+        self.ngWordGameJson = None
+        self.savefile = SaveFile()
 
     # cogが準備できたら読み込みする
     @commands.Cog.listener()
     async def on_ready(self):
         await self.ohgiriGames.on_ready()
+        await self.wordWolf_setting()
+        await self.ngWordGame_setting()
+
+    async def wordWolf_setting(self):
+        wordWolf_filepath = None
+        if settings.WORDWOLF_JSON_URL:
+            wordWolf_filepath = await self.json_setting(settings.WORDWOLF_JSON_URL, 'wordwolf.json')
+        # ファイルを読み込み、ワードウルフ用のデータを作成
+        read_json = ReadJson()
+        read_json.readJson(wordWolf_filepath)
+        self.wordWolfJson = read_json
+
+    async def ngWordGame_setting(self):
+        ngWordGame_filepath = None
+        if settings.NGWORD_GAME_JSON_URL:
+            ngWordGame_filepath = await self.json_setting(settings.NGWORD_GAME_JSON_URL, 'ngword_game.json')
+        # ファイルを読み込み、NGワードゲーム用のデータを作成
+        read_json = ReadJson()
+        read_json.readJson(ngWordGame_filepath)
+        self.ngWordGameJson = read_json
+
+    async def json_setting(self, json_url=None, file_name='no_name.json'):
+        json_path = join(dirname(__file__), 'modules' + os.sep + 'files' + os.sep + 'temp' + os.sep + file_name)
+        # URLが設定されている場合はそちらを使用
+        if json_url:
+            file_path = await self.savefile.download_file(json_url,  json_path)
+            logger.info(f'JSONのURLが登録されているため、JSONを保存しました。\n{file_path}')
+            return file_path
 
     # ワードウルフ機能
     @commands.command(aliases=['word','ww'], description='ワードウルフ機能(少数派のワードを与えられた人を当てるゲーム)')
@@ -60,13 +95,10 @@ class GameCog(commands.Cog, name='ゲーム用'):
             await ctx.send(msg)
             return
 
-        # ファイルを読み込み、ワードウルフ用のデータを作成
-        read_json = ReadJson()
-        read_json.readJson()
 
         #　お題の選定
-        choiced_item = random.choice(read_json.list)
-        odai = read_json.dict[choiced_item]
+        choiced_item = random.choice(self.wordWolfJson.list)
+        odai = self.wordWolfJson.dict[choiced_item]
         citizen_odai, wolf_odai = random.sample(odai, 2)
 
         # ワードウルフの数設定
@@ -135,10 +167,6 @@ class GameCog(commands.Cog, name='ゲーム用'):
             await ctx.send(msg)
             return
 
-        # ファイルを読み込み、NGワードゲーム用のデータを作成(ワードウルフの語彙を流用)
-        read_json = ReadJson()
-        read_json.readJson()
-
         msg =   f'NGワードゲームを始めます！　DMでそれぞれのNGワードを配りました！(**自分のNGワードのみ分かりません**)\n'\
                 f'これから**雑談し、誰かがNGワードを口走ったら、「ドーン！！！」と指摘**してください。すぐさまNGワードが妥当か話し合いください(カッコがある場合は、どちらもNGワードです)。\n'\
                 f'妥当な場合、NGワード発言者はお休みです。残った人で続けます。**最後のひとりになったら勝利**です！！\n'\
@@ -146,11 +174,12 @@ class GameCog(commands.Cog, name='ゲーム用'):
         start_msg = await ctx.send(msg)
 
         netabare_msg = ''
+        # どの項目から選ぶかを最初に決め、その中からお題を振る
+        choiced_item = random.choice(self.ngWordGameJson.list)
         # それぞれに役割をDMで送信
         for player in make_team.vc_members:
             #　お題の選定
-            choiced_item = random.choice(read_json.list)
-            odai = read_json.dict[choiced_item]
+            odai = self.ngWordGameJson.dict[choiced_item]
             ngword = random.choice(odai)
             netabare_msg += f'{player.display_name}さん:||{ngword}||, '
 

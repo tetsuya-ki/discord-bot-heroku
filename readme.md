@@ -63,6 +63,14 @@ Discord用のBot。discord.pyのBot Commands Frameworkを使用して実装。�
   - 日付の桁数で扱いが変わる(1桁はx日後として扱われ、2桁は当月の日付と扱われ、4桁は今年の月日として扱われる)  
 ![image(radikoSearch)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/radikoSearch_withDate-3.png?raw=true)
 
+- `/countMessage`
+  - メッセージを数え、ランキングにするコマンド
+  - チャンネル名、（チャンネルごとに）数える数を指定できる。チャンネル名で`all`を指定するとすべてのチャンネルを数える
+
+- `/countReaction`
+  - リアクションを数え、ランキングにするコマンド
+  - チャンネル名、（チャンネルごとに）数える数を指定できる。チャンネル名で`all`を指定するとすべてのチャンネルを数える
+
 ### 管理用カテゴリ(admincog.pyで実装)
 
 `/channel` チャンネルを操作するコマンド（サブコマンド必須）。チャンネルの操作権限を渡すと、削除も可能だから嫌だなと思って作ったコマンド。  
@@ -226,6 +234,12 @@ Discord用のBot。discord.pyのBot Commands Frameworkを使用して実装。�
   - `/purge`コマンド、`/deleteMessage`コマンドで削除する対象にBotを含むかの設定(設定がない場合は、**自分の投稿のみ**が削除対象)
 - OHGIRI_JSON_URL=ohgiri_json_url
   - 大喜利機能で使用するJSONをURLから取得する場合に設定(Cogを読み込む際に取得されます)
+- WORDWOLF_JSON_URL=wordwolf_json_url
+  - ワードウルフ機能で使用するJSONをURLから取得する場合に設定(Cogを読み込む際に取得されます)。環境変数がない場合は、[jsonファイル](https://github.com/tetsuya-ki/discord-bot-heroku/blob/master/cogs/modules/files/wordwolf.json)を使用
+- NGWORD_GAME_JSON_URL=ngword_game_json_url
+  - NGワードゲーム機能で使用するJSONをURLから取得する場合に設定(Cogを読み込む際に取得されます)。環境変数がない場合は、[jsonファイル](https://github.com/tetsuya-ki/discord-bot-heroku/blob/master/cogs/modules/files/wordwolf.json)を使用
+- COUNT_RANK_SETTING=5
+  - `/countMessage`と`/countReaction`で使用するランキングの数を設定。未指定の場合、5として扱う。
 
 ## ローカルでの動かし方
 
