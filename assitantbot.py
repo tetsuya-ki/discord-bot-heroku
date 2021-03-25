@@ -4,6 +4,8 @@ from logging import basicConfig, getLogger
 
 import discord
 import textwrap
+# 先頭に下記を追加
+import keep_alive
 
 basicConfig(level=settings.LOG_LEVEL)
 logger = getLogger(__name__)
@@ -139,15 +141,17 @@ class Help(commands.HelpCommand):
         return f'{command.qualified_name} にサブコマンドは登録されていません。'
 
 # AssitantBotのインスタンス化および起動処理。
-if __name__ == '__main__':
-    intents = discord.Intents.default()
-    intents.members = True
-    intents.typing = False
-    intents.presences = False
 
-    bot = AssistantBot(
-            command_prefix = '/'
-            ,help_command=Help()
-            ,intents=intents
-        )# 大文字小文字は気にしない
-    bot.run(settings.DISCORD_TOKEN)
+intents = discord.Intents.default()
+intents.members = True
+intents.typing = False
+intents.presences = False
+
+# start a server
+keep_alive.keep_alive()
+bot = AssistantBot(
+        command_prefix = '/'
+        ,help_command=Help()
+        ,intents=intents
+    )# 大文字小文字は気にしない
+bot.run(settings.DISCORD_TOKEN)
