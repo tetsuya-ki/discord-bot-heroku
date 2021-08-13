@@ -74,7 +74,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
         引数(answer_minutes)として投票開始までの時間（3などの正数。単位は「分」）を与えることができます。デフォルトは2分です。
         3人増えるごとにワードウルフは増加します(3−5人→ワードウルフは1人、6−8人→ワードウルフは2人)
         """
-        make_team = MakeTeam()
+        make_team = MakeTeam(ctx.guild.me)
         make_team.my_connected_vc_only_flg = True
         await make_team.get_members(ctx)
 
@@ -146,7 +146,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
         コマンド実行者が参加しているボイスチャンネルでNGワードゲームを始めます（BOTからDMが来ますがびっくりしないでください）
         引数(answer_minutes)として終了までの時間（3などの正数。単位は「分」）を与えることができます。デフォルトは2分です。
         """
-        make_team = MakeTeam()
+        make_team = MakeTeam(ctx.guild.me)
         make_team.my_connected_vc_only_flg = True
         await make_team.get_members(ctx)
 
@@ -254,7 +254,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
         - デッキを「,」(コンマ)で区切って指定します。二重引用符などは不要です。
         例：`/coyoteGame setDeckAndStart 20, 15, 15, 1, 1, 1, 1, 0, 0, 0, 0(Night), -5, -5, -10, *2(Chief), Max->0(Fox), ?(Cave), ?(Cave)`
         """
-        make_team = MakeTeam()
+        make_team = MakeTeam(ctx.guild.me)
         make_team.my_connected_vc_only_flg = True
         await make_team.get_members(ctx)
 
@@ -405,7 +405,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
                 await ctx.send(msg)
 
     async def startCoyote(self, ctx):
-        make_team = MakeTeam()
+        make_team = MakeTeam(ctx.guild.me)
         make_team.my_connected_vc_only_flg = True
         await make_team.get_members(ctx)
 
@@ -623,7 +623,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
         await self.send_ans_dm(ctx, ctx.author)
 
     async def startOhgiri(self, ctx, win_point):
-        make_team = MakeTeam()
+        make_team = MakeTeam(ctx.guild.me)
         make_team.my_connected_vc_only_flg = True
         await make_team.get_members(ctx)
 
