@@ -3,7 +3,7 @@ import random
 # 改造元：https://github.com/Rabbit-from-hat/make-team/
 class MakeTeam:
 
-    def __init__(self):
+    def __init__(self, me):
         self.v_channels = [] # Guildにあるボイスチャンネル
         self.vc_members = [] # ボイスチャンネルに接続しているメンバー
         self.mem_len = 0
@@ -11,6 +11,7 @@ class MakeTeam:
         self.vc_state_err = ''
         self.vc_list = ''
         self.my_connected_vc_only_flg = False
+        self.me = me
 
     def set_mem(self, ctx):
         guild = ctx.guild
@@ -28,16 +29,8 @@ class MakeTeam:
 
         # Guildにあるボイスチャンネルごと、メンバリストを追加していく
         for v_channel in self.v_channels:
-            # ボイスチャンネルに権限の上書きがある場合、@everyoneがallowされていないなら、存在しないものとみなす
-            # 例）@everyoneは閲覧できず、@Managerは接続できる場合は下記のような感じ
-            # {<Role id=465376233115353098 name='@everyone'>: <discord.permissions.PermissionOverwrite object at 0x10a41d0d8>, <Role id=584261699742203925 name='Manager'>: <discord.permissions.PermissionOverwrite object at 0x10a41d528>}
-            # @everyoneは(<Permissions value=0>, <Permissions value=1048576>)
-            # @Managerは(<Permissions value=1048576>, <Permissions value=0>)
-            # https://discordpy.readthedocs.io/ja/latest/api.html#discord.PermissionOverwrite.pair
-            # > Returns the (allow, deny) pair from this overwrite.
-            if(v_channel.overwrites):
-                if(v_channel.overwrites[guild.default_role].pair()[0].value == 0):
-                    continue
+            if not v_channel.permissions_for(self.me).view_channel:
+                continue
             self.vc_list += '🔈' + v_channel.name + '\n'
             for vc_member in v_channel.members:
                 # botはメンバーとして計上しない

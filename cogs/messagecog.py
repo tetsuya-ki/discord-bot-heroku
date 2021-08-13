@@ -33,7 +33,7 @@ class MessageCog(commands.Cog, name='通常用'):
         （一瞬接続は解除されますので、動画配信などもキャンセルされます）
         引数(specified_num)としてチーム数（3などの正数）を与えることができます。デフォルトは2です。
         """
-        make_team = MakeTeam()
+        make_team = MakeTeam(ctx.guild.me)
         remainder_flag = 'true'
         msg = await make_team.make_party_num(ctx, specified_num, remainder_flag)
         await ctx.channel.send(msg)
@@ -46,7 +46,7 @@ class MessageCog(commands.Cog, name='通常用'):
         （一瞬接続は解除されますので、動画配信などもキャンセルされます）
         引数(specified_num)としてメンバー数（3などの正数）を与えることができます。デフォルトは1です。
         """
-        make_team = MakeTeam()
+        make_team = MakeTeam(ctx.guild.me)
         msg = await make_team.make_specified_len(ctx, specified_num)
         await ctx.channel.send(msg)
 
@@ -56,7 +56,7 @@ class MessageCog(commands.Cog, name='通常用'):
         """
         このコマンドを実行すると、Guildにあるボイスチャンネルの数を計測し、それぞれに接続しているメンバーのリストを作成し、チャンネルに投稿します。
         """
-        make_team = MakeTeam()
+        make_team = MakeTeam(ctx.guild.me)
         msg = await make_team.get_members(ctx)
         await ctx.channel.send(msg)
 
