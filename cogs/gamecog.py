@@ -14,7 +14,8 @@ import random
 import re
 import os
 
-logger = getLogger(__name__)
+LOG = getLogger('word_wolf')
+POLL_CHAR = ['🇦','🇧','🇨','🇩','🇪','🇫','🇬','🇭','🇮','🇯','🇰','🇱','🇲','🇳','🇴','🇵','🇶','🇷','🇸','🇹']
 
 # コグとして用いるクラスを定義。
 class GameCog(commands.Cog, name='ゲーム用'):
@@ -63,7 +64,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
         # URLが設定されている場合はそちらを使用
         if json_url:
             file_path = await self.savefile.download_file(json_url,  json_path)
-            logger.info(f'JSONのURLが登録されているため、JSONを保存しました。\n{file_path}')
+            LOG.info(f'JSONのURLが登録されているため、JSONを保存しました。\n{file_path}')
             return file_path
 
     # ワードウルフ機能
@@ -122,7 +123,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
             else:
                 player_odai = citizen_odai
             dm = await player.create_dm()
-            await dm.send(f'{player.mention}さんのワードは**「{player_odai}」**です！\n開始メッセージへのリンク:{start_msg.jump_url}')
+            await dm.send(f'{player.mention}さんのワードは**「{player_odai}」**です！\n開始メッセージへのリンク: {start_msg.jump_url}')
 
         netabare_msg += 'でした！　お疲れ様でした！'
 
@@ -188,7 +189,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
             rpl_msg_del = f'{player.display_name}さん:(\|\|.+?\|\|, )'
             dm_msg = re.sub(rpl_msg_del, '', netabare_msg)
             dm_msg_open = dm_msg.replace('|', '').replace(', ', '\n')
-            await dm.send(f'{player.mention}さん 他の人のNGワードはこちらです！\n{dm_msg_open}\n開始メッセージへのリンク:{start_msg.jump_url}')
+            await dm.send(f'{player.mention}さん 他の人のNGワードはこちらです！\n{dm_msg_open}\n開始メッセージへのリンク: {start_msg.jump_url}')
 
         netabare_msg = re.sub(', $', '', netabare_msg)
 
@@ -546,13 +547,13 @@ class GameCog(commands.Cog, name='ゲーム用'):
         elif card_id not in self.ohgiriGames.members[ctx.author].cards:
             await ctx.send(f'{card_id}は{ctx.author.display_name}の所持しているカードではありません！')
         elif self.ohgiriGames.required_ans_num == 1 and second_card_id is not None:
-            await ctx.send(f'お題で2つ設定するように指定がないので、回答は1つにしてください！')
+            await ctx.send('お題で2つ設定するように指定がないので、回答は1つにしてください！')
         elif self.ohgiriGames.required_ans_num == 2 and second_card_id is None:
             await ctx.send('2つめの引数`second_card_id`が設定されていません！(もう一つ数字を設定してください)')
         elif self.ohgiriGames.required_ans_num == 2 and second_card_id not in self.ohgiriGames.members[ctx.author].cards:
             await ctx.send(f'{second_card_id}は{ctx.author.display_name}の所持しているカードではありません！')
         else:
-            logger.debug('回答を受け取ったよ！')
+            LOG.debug('回答を受け取ったよ！')
             # 既に回答したメンバーから再度回答を受けた場合、入れ替えた旨お知らせする
             if self.ohgiriGames.members[ctx.author].answered:
                 await ctx.send(f'{ctx.author.mention} 既に回答を受け取っていたため、そちらのカードと入れ替えますね！')
@@ -561,7 +562,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
             # 回答者が出そろった場合、場に出す(親は提出できないので引く)
             if (len(self.ohgiriGames.members) - 1)  == len(self.ohgiriGames.field):
                 self.ohgiriGames.show_answer()
-                logger.info('回答者が出揃ったので、場に展開！')
+                LOG.info('回答者が出揃ったので、場に展開！')
                 msg = self.ohgiriGames.description + f'\n{self.ohgiriGames.house.mention} 回答を読み上げたのち、好きな回答を`/o choice <数字>`で選択してください！'
                 await ctx.send(msg)
 
@@ -639,8 +640,8 @@ class GameCog(commands.Cog, name='ゲーム用'):
         # 参加者と手札の数を設定
         await self.ohgiriGames.setting(make_team.vc_members, 12, win_point)
         self.ohgiriGames.shuffle()
-        msg = f'お題が提供されるので**「親」はお題を声に出して読み上げ**てください（"○○"は「まるまる」、"✕✕"は「ばつばつ」と読む）。ほかのプレイヤーは読み上げられた**お題に相応しいと思う回答**を`/o ans <数字>`で選びます。\n'\
-            + f'全員が回答したら、**「親」はもっとも秀逸な回答**を`/o choice <番号>`で選択します。「親」から選ばれたプレイヤーは1点もらえます。ただし、山札から1枚カードが混ざっており、それを選択すると親はポイントが減算されます。\n'\
+        msg = 'お題が提供されるので**「親」はお題を声に出して読み上げ**てください（"○○"は「まるまる」、"✕✕"は「ばつばつ」と読む）。ほかのプレイヤーは読み上げられた**お題に相応しいと思う回答**を`/o ans <数字>`で選びます。\n'\
+            + '全員が回答したら、**「親」はもっとも秀逸な回答**を`/o choice <番号>`で選択します。「親」から選ばれたプレイヤーは1点もらえます。ただし、山札から1枚カードが混ざっており、それを選択すると親はポイントが減算されます。\n'\
             + f'今回のゲームの勝利点は{self.ohgiriGames.win_point}点です。'
         await ctx.send(msg)
         await self.dealAndNextGame(ctx)
@@ -670,25 +671,52 @@ class GameCog(commands.Cog, name='ゲーム用'):
             dm_msg += f'{card_id}: {card_message}\n'
         # お題のメッセージが指定されている場合、リンクを付与
         if odai_msg is not None:
-            dm_msg += f'お題へのリンク:{odai_msg.jump_url}'
+            dm_msg += f'お題へのリンク: {odai_msg.jump_url}'
         await dm.send(f'{player.mention}さん あなたの手札はこちらです！\n{dm_msg}')
+
+    # poll機能
+    @commands.command(aliases=['p','pl'], description='簡易的な投票機能です（引数が1つの場合と2以上の場合で動作が変わります）')
+    async def poll(self, ctx, arg1=None, *args):
+        """
+        このコマンドを実行すると、リアクションを利用し簡易的な投票ができます。
+        ＊1人1票にはできません。リアクションの制限で20を超える設問は不可能です。
+        """
+        usage = '/pollの使い方\n複数選択（1〜20まで）: \n `/poll 今日のランチは？ お好み焼き カレーライス`\n Yes/No: \n`/poll 明日は晴れる？`'
+        msg = f'🗳 **{arg1}**'
+
+        if arg1 is None:
+            await ctx.channel.send(usage)
+        elif len(args) == 0:
+            message = await ctx.channel.send(msg)
+            await message.add_reaction('⭕')
+            await message.add_reaction('❌')
+        elif len(args) > 20:
+            await ctx.channel.send(f'複数選択の場合、引数は1〜20にしてください。（{len(args)}個与えられています。）')
+        else:
+            embed = discord.Embed()
+            for  emoji, arg in zip(POLL_CHAR, args):
+                embed.add_field(name=emoji, value=arg) # inline=False
+            message = await ctx.channel.send(msg, embed=embed)
+
+            for  emoji, arg in zip(POLL_CHAR, args):
+                await message.add_reaction(emoji)
 
     @wordWolf.error
     async def wordWolf_error(self, ctx, error):
         if isinstance(error, commands.CommandError):
-            logger.error(error)
+            LOG.error(error)
             await ctx.send(error)
 
     @ngWordGame.error
     async def ngWordGame_error(self, ctx, error):
         if isinstance(error, commands.CommandError):
-            logger.error(error)
+            LOG.error(error)
             await ctx.send(error)
 
     @coyoteGame.error
     async def coyoteGame_error(self, ctx, error):
         if isinstance(error, commands.CommandError):
-            logger.error(error)
+            LOG.error(error)
             await ctx.send(error)
 
     async def delayedMessage(self, ctx, messsage, delayed_seconds=None):

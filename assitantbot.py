@@ -1,22 +1,46 @@
 from discord.ext import commands  # Bot Commands Frameworkをインポート
 from cogs.modules import settings
-from logging import basicConfig, getLogger
+from logging import basicConfig, getLogger, StreamHandler, FileHandler, Formatter, NOTSET
+from datetime import timedelta, timezone
 
-import discord
-import textwrap
+import discord, textwrap, os, datetime
 # 先頭に下記を追加
 import keep_alive
 
-basicConfig(level=settings.LOG_LEVEL)
-logger = getLogger(__name__)
+# 時間
+JST = timezone(timedelta(hours=9), 'JST')
+now = datetime.datetime.now(JST)
+
+# ストリームハンドラの設定
+stream_handler = StreamHandler()
+stream_handler.setLevel(settings.LOG_LEVEL)
+stream_handler.setFormatter(Formatter("%(asctime)s@ %(name)s [%(levelname)s] %(funcName)s: %(message)s"))
+
+# 保存先の有無チェック
+if not os.path.isdir('./Log'):
+    os.makedirs('./Log', exist_ok=True)
+
+# ファイルハンドラの設定
+file_handler = FileHandler(
+    f"./Log/log-{now:%Y%m%d_%H%M%S}.log"
+)
+file_handler.setLevel(settings.LOG_LEVEL)
+file_handler.setFormatter(
+    Formatter("%(asctime)s@ %(name)s [%(levelname)s] %(funcName)s: %(message)s")
+)
+
+# ルートロガーの設定
+basicConfig(level=NOTSET, handlers=[stream_handler, file_handler])
+
+LOG = getLogger('word_wolf')
 
 # 読み込むCogの名前を格納
 INITIAL_EXTENSIONS = [
-    'cogs.messagecog'
-    , 'cogs.admincog'
-    , 'cogs.reactionchannelercog'
-    , 'cogs.onmessagecog'
-    , 'cogs.gamecog'
+#    'cogs.messagecog'
+#    , 'cogs.admincog'
+#    , 'cogs.reactionchannelercog'
+#    , 'cogs.onmessagecog'
+    'cogs.gamecog'
 ]
 
 # カラー
@@ -35,11 +59,11 @@ class AssistantBot(commands.Bot):
             try:
                 self.load_extension(cog)
             except Exception:
-                logger.warning("traceback:", stack_info=True)
+                LOG.warning("traceback:", stack_info=True)
 
     # Botの準備完了時に呼び出されるイベント
     async def on_ready(self):
-        logger.info('We have logged in as {0}'.format(self.user))
+        LOG.info('We have logged in as {0}'.format(self.user))
 
 # クラス定義。HelpCommandクラスを継承。
 class Help(commands.HelpCommand):
