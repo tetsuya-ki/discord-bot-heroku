@@ -13,7 +13,7 @@ attrs = "20.2.0"
 chardet = "3.0.4"
 colorama = "0.4.3"
 DateTime = "4.3"
-"discord.py" = "^1.5.1"
+"discord.py" = "^1.6.0"
 idna = "2.10"
 isort = "5.5.1"
 lazy-object-proxy = "1.4.3"
@@ -33,6 +33,7 @@ yarl = "1.5.1"
 "zope.interface" = "^5.1.0"
 mojimoji = "0.0.11"
 flask = "^1.1.2"
+discord-py-interactions = "^3.0.2"
 
 [tool.poetry.dev-dependencies]
 
