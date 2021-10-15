@@ -10,6 +10,9 @@ from .modules import settings
 from .modules.savefile import SaveFile
 from discord_slash import cog_ext, SlashContext
 from discord_slash.utils import manage_commands  # Allows us to manage the command settings.
+from discord_slash.utils.manage_components import ComponentContext
+from .modules.members import Members
+from .modules import wordwolfbuttons
 
 import asyncio
 import random
@@ -37,6 +40,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
         self.wordWolfJson = None
         self.ngWordGameJson = None
         self.savefile = SaveFile()
+        self.ww_members = Members()
 
     # cogが準備できたら読み込みする
     @commands.Cog.listener()
@@ -89,15 +93,6 @@ class GameCog(commands.Cog, name='ゲーム用'):
         引数(answer_minutes)として投票開始までの時間（3などの正数。単位は「分」）を与えることができます。デフォルトは2分です。
         3人増えるごとにワードウルフは増加します(3−5人→ワードウルフは1人、6−8人→ワードウルフは2人)
         """
-        make_team = MakeTeam(ctx.guild.me)
-        make_team.my_connected_vc_only_flg = True
-        await make_team.get_members(ctx)
-
-        if make_team.mem_len < 3:
-            msg = f'ワードウルフを楽しむには3人以上のメンバーが必要です(現在、{make_team.mem_len}人しかいません)'
-            await ctx.send(msg, hidden = True)
-            return
-
         if answer_minutes is None:
             answer_minutes = self.DEFAULT_TIME
         elif answer_minutes.isdecimal():
@@ -109,53 +104,82 @@ class GameCog(commands.Cog, name='ゲーム用'):
             msg = f'ワードウルフはそんなに長い時間するものではないです(現在、{answer_minutes}分を指定しています。{self.MAX_TIME}分以内にして下さい)'
             await ctx.send(msg, hidden = True)
             return
+        self.ww_members.set_minutes(answer_minutes)
 
-        #　お題の選定
-        choiced_item = random.choice(self.wordWolfJson.list)
-        odai = self.wordWolfJson.dict[choiced_item]
-        citizen_odai, wolf_odai = random.sample(odai, 2)
+        msg =   'ワードウルフを始めます！　この中に、**ワードウルフ**が紛れ込んでいます(本人も知りません！)。\n'\
+                'DMでお題が配られますが、**ワードウルフだけは別のお題**が配られます(お題は2種類あります)。会話の中で不審な言動を察知し、みごとに'\
+                '投票でワードウルフを当てることができたら、市民の勝ち。**間違えて「市民をワードウルフ」だと示してしまった場合、ワードウルフの勝ち**です！！'
+        await ctx.send(msg)
+        await ctx.send('ボタン', components=[wordwolfbuttons.join_action_row])
 
-        # ワードウルフの数設定
-        wolf_numbers = make_team.mem_len // 3
-        msg =   f'ワードウルフを始めます！　この中に、**{wolf_numbers}人のワードウルフ**が紛れ込んでいます(本人も知りません！)。\n'\
-                f'DMでお題が配られますが、**ワードウルフだけは別のお題**が配られます(お題は2種類あります)。会話の中で不審な言動を察知し、みごとに'\
-                f'投票でワードウルフを当てることができたら、市民の勝ち。**間違えて「市民をワードウルフ」だと示してしまった場合、ワードウルフの勝ち**です！！\n'\
-                f'DMに送られたお題を確認し、**{answer_minutes}分話し合いののち、投票を実施**してください！！　今から開始します！'
-        start_msg =  await ctx.send(msg)
+    @commands.Cog.listener()
+    async def on_component(self, ctx: ComponentContext):
 
-        # メンバーをシャッフル
-        random.shuffle(make_team.vc_members)
-        netabare_msg = f'**ワードウルフのお題は||「{wolf_odai}」||**でした！\nワードウルフは'
+        if ctx.custom_id == wordwolfbuttons.CUSTOM_ID_JOIN_WORD_WOLF:
+            self.ww_members.add_member(ctx.author)
+            LOG.debug(f'追加:{ctx.author.display_name}')
+            await ctx.edit_origin(content=f'{ctx.author.display_name}が参加しました!(参加人数:{self.ww_members.len})', components=[wordwolfbuttons.join_action_row,wordwolfbuttons.leave_action_row,wordwolfbuttons.start_action_row])
 
-        # それぞれに役割をDMで送信
-        for player in make_team.vc_members:
-            if wolf_numbers > 0:
-                player_odai = wolf_odai
-                wolf_numbers = wolf_numbers - 1
-                netabare_msg += f'||{player.display_name}||さん '
-            else:
-                player_odai = citizen_odai
-            dm = await player.create_dm()
-            await dm.send(f'{player.mention}さんのワードは**「{player_odai}」**です！\n開始メッセージへのリンク: {start_msg.jump_url}')
+        if ctx.custom_id == wordwolfbuttons.CUSTOM_ID_LEAVE_WORD_WOLF:
+            self.ww_members.remove_member(ctx.author)
+            LOG.debug(f'削除:{ctx.author.display_name}')
+            await ctx.edit_origin(content=f'{ctx.author.display_name}が離脱しました!(参加人数:{self.ww_members.len})', components=[wordwolfbuttons.join_action_row,wordwolfbuttons.leave_action_row,wordwolfbuttons.start_action_row])
 
-        netabare_msg += 'でした！　お疲れ様でした！'
+        if ctx.custom_id == wordwolfbuttons.CUSTOM_ID_EXTEND_WORD_WOLF:
+            self.ww_members.add_minutes(1)
+            LOG.debug(f'1分追加:{ctx.author.display_name}より依頼')
+        if ctx.custom_id == wordwolfbuttons.CUSTOM_ID_START_WORD_WOLF:
+            LOG.debug(f'開始:{ctx.author.display_name}より依頼')
+            # ワードウルフ開始
+            if self.ww_members.len < 3:
+                msg = f'ワードウルフを楽しむには3人以上のメンバーが必要です(現在、{self.ww_members.len}人しかいません)'
+                await ctx.edit_origin(content=msg, components=[wordwolfbuttons.join_action_row,wordwolfbuttons.leave_action_row,wordwolfbuttons.start_action_row])
+                return
 
-        voting_msg = '投票の時間が近づいてきました。下記のメッセージで投票をお願いします。\n'\
-                    '`/simple-poll 誰がワードウルフ？'
-        for player in make_team.vc_members:
-            voting_msg += f'/"{player.display_name}"'
-        voting_msg += '`'
+            #　お題の選定
+            choiced_item = random.choice(self.wordWolfJson.list)
+            odai = self.wordWolfJson.dict[choiced_item]
+            citizen_odai, wolf_odai = random.sample(odai, 2)
 
-        # 投票のお願いメッセージを作成し、チャンネルに貼り付け
-        voting_time = answer_minutes * 50
-        await self.delayedMessage(ctx, voting_msg, voting_time)
+            # ワードウルフの数設定
+            wolf_numbers = self.ww_members.len // 3
+            msg =   f'ワードウルフを始めます！　この中に、**{wolf_numbers}人のワードウルフ**が紛れ込んでいます(本人も知りません！)。\n'\
+                    f'DMに送られたお題を確認し、**{self.ww_members.minutes}分話し合いののち、投票を実施**してください！！　今から開始します！'
+            start_msg =  await ctx.send(msg, components=[wordwolfbuttons.ww_extend_action_row])
 
-        # ワードウルフのネタバレメッセージを作成し、チャンネルに貼り付け
-        await self.delayedMessage(ctx, netabare_msg, (answer_minutes * 60) - voting_time)
+            # メンバーをシャッフル
+            random.shuffle(self.ww_members.get_members())
+            netabare_msg = f'**ワードウルフのお題は||「{wolf_odai}」||**でした！\nワードウルフは'
+
+            # それぞれに役割をDMで送信
+            for player in self.ww_members.get_members():
+                if wolf_numbers > 0:
+                    player_odai = wolf_odai
+                    wolf_numbers = wolf_numbers - 1
+                    netabare_msg += f'||{player.display_name}||さん '
+                else:
+                    player_odai = citizen_odai
+                dm = await player.create_dm()
+                await dm.send(f'{player.mention}さんのワードは**「{player_odai}」**です！\n開始メッセージへのリンク: {start_msg.jump_url}')
+
+            netabare_msg += 'でした！　お疲れ様でした！'
+
+            voting_msg = '投票の時間が近づいてきました。下記のメッセージで投票をお願いします。\n'\
+                        '`/simple-poll 誰がワードウルフ？'
+            for player in self.ww_members.get_members():
+                voting_msg += f'/"{player.display_name}"'
+            voting_msg += '`'
+
+            # 投票のお願いメッセージを作成し、チャンネルに貼り付け
+            voting_time = self.ww_members.minutes * 50
+            await self.delayedMessage(ctx, voting_msg, voting_time)
+
+            # ワードウルフのネタバレメッセージを作成し、チャンネルに貼り付け
+            await self.delayedMessage(ctx, netabare_msg, (self.ww_members.minutes * 60) - voting_time)
 
     # NGワードゲーム機能
     @cog_ext.cog_slash(
-    name='start-ng-word-game!',
+    name='start-ng-word-game',
     guild_ids=guilds,
     description='NGワードゲーム機能(禁止された言葉を喋ってはいけないゲーム)',
     options=[
