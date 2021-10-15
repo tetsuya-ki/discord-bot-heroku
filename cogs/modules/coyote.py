@@ -28,6 +28,9 @@ class CoyoteMember:
 class Coyote:
     DEFAULT_DECK = [20, 15, 15, 10, 10, 10, 5, 5, 5, 5, 4, 4, 4, 4, 3, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1, 0, 0, 0, '0(Night)', -5, -5, -10, '*2(Chief)', 'Max->0(Fox)', '?(Cave)']
     ID_LIST = list(string.ascii_uppercase)
+    DESCRPTION_NORMAL = 'Normal'
+    DESCRPTION_ALL = 'All'
+    DESCRPTION_NOTHING = 'Nothing'
 
     def __init__(self):
         self.members = {}
@@ -37,6 +40,7 @@ class Coyote:
         self.discards = []
         self.turn = 0
         self.description = ''
+        self.start_description = ''
 
     def set(self, members):
         self.members = {}

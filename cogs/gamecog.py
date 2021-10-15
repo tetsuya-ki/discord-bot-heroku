@@ -1,6 +1,5 @@
 import discord
 from discord.ext import commands  # Bot Commands Frameworkのインポート
-from .modules.grouping import MakeTeam
 from .modules.readjson import ReadJson
 from logging import getLogger
 from .modules.coyote import Coyote
@@ -12,7 +11,7 @@ from discord_slash import cog_ext, SlashContext
 from discord_slash.utils import manage_commands  # Allows us to manage the command settings.
 from discord_slash.utils.manage_components import ComponentContext
 from .modules.members import Members
-from .modules import wordwolfbuttons
+from .modules import gamebuttons
 
 import asyncio
 import random
@@ -41,11 +40,13 @@ class GameCog(commands.Cog, name='ゲーム用'):
         self.ngWordGameJson = None
         self.savefile = SaveFile()
         self.ww_members = Members()
+        self.ng_members = Members()
+        self.cy_members = Members()
+        self.oh_members = Members()
 
     # cogが準備できたら読み込みする
     @commands.Cog.listener()
     async def on_ready(self):
-        pass
         await self.ohgiriGames.on_ready()
         await self.wordWolf_setting()
         await self.ngWordGame_setting()
@@ -108,32 +109,31 @@ class GameCog(commands.Cog, name='ゲーム用'):
 
         msg =   'ワードウルフを始めます！　この中に、**ワードウルフ**が紛れ込んでいます(本人も知りません！)。\n'\
                 'DMでお題が配られますが、**ワードウルフだけは別のお題**が配られます(お題は2種類あります)。会話の中で不審な言動を察知し、みごとに'\
-                '投票でワードウルフを当てることができたら、市民の勝ち。**間違えて「市民をワードウルフ」だと示してしまった場合、ワードウルフの勝ち**です！！'
+                '投票でワードウルフを当てることができたら、市民の勝ち。**間違えて「市民をワードウルフ」だと示してしまった場合、ワードウルフの勝ち**です！！\n'\
+                '参加する場合、以下のボタンを押してください。'
         await ctx.send(msg)
-        await ctx.send('ボタン', components=[wordwolfbuttons.join_action_row])
+        await ctx.send('ボタン', components=[gamebuttons.ww_join_action_row])
 
     @commands.Cog.listener()
     async def on_component(self, ctx: ComponentContext):
-
-        if ctx.custom_id == wordwolfbuttons.CUSTOM_ID_JOIN_WORD_WOLF:
+        # ワードウルフ
+        if ctx.custom_id == gamebuttons.CUSTOM_ID_JOIN_WORD_WOLF:
             self.ww_members.add_member(ctx.author)
             LOG.debug(f'追加:{ctx.author.display_name}')
-            await ctx.edit_origin(content=f'{ctx.author.display_name}が参加しました!(参加人数:{self.ww_members.len})', components=[wordwolfbuttons.join_action_row,wordwolfbuttons.leave_action_row,wordwolfbuttons.start_action_row])
-
-        if ctx.custom_id == wordwolfbuttons.CUSTOM_ID_LEAVE_WORD_WOLF:
+            await ctx.edit_origin(content=f'{ctx.author.display_name}が参加しました!(参加人数:{self.ww_members.len})', components=[gamebuttons.ww_join_action_row,gamebuttons.ww_leave_action_row,gamebuttons.ww_start_action_row])
+        if ctx.custom_id == gamebuttons.CUSTOM_ID_LEAVE_WORD_WOLF:
             self.ww_members.remove_member(ctx.author)
             LOG.debug(f'削除:{ctx.author.display_name}')
-            await ctx.edit_origin(content=f'{ctx.author.display_name}が離脱しました!(参加人数:{self.ww_members.len})', components=[wordwolfbuttons.join_action_row,wordwolfbuttons.leave_action_row,wordwolfbuttons.start_action_row])
-
-        if ctx.custom_id == wordwolfbuttons.CUSTOM_ID_EXTEND_WORD_WOLF:
+            await ctx.edit_origin(content=f'{ctx.author.display_name}が離脱しました!(参加人数:{self.ww_members.len})', components=[gamebuttons.ww_join_action_row,gamebuttons.ww_leave_action_row,gamebuttons.ww_start_action_row])
+        if ctx.custom_id == gamebuttons.CUSTOM_ID_EXTEND_WORD_WOLF:
             self.ww_members.add_minutes(1)
             LOG.debug(f'1分追加:{ctx.author.display_name}より依頼')
-        if ctx.custom_id == wordwolfbuttons.CUSTOM_ID_START_WORD_WOLF:
+        if ctx.custom_id == gamebuttons.CUSTOM_ID_START_WORD_WOLF:
             LOG.debug(f'開始:{ctx.author.display_name}より依頼')
             # ワードウルフ開始
             if self.ww_members.len < 3:
                 msg = f'ワードウルフを楽しむには3人以上のメンバーが必要です(現在、{self.ww_members.len}人しかいません)'
-                await ctx.edit_origin(content=msg, components=[wordwolfbuttons.join_action_row,wordwolfbuttons.leave_action_row,wordwolfbuttons.start_action_row])
+                await ctx.edit_origin(content=msg, components=[gamebuttons.ww_join_action_row,gamebuttons.ww_leave_action_row,gamebuttons.ww_start_action_row])
                 return
 
             #　お題の選定
@@ -145,7 +145,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
             wolf_numbers = self.ww_members.len // 3
             msg =   f'ワードウルフを始めます！　この中に、**{wolf_numbers}人のワードウルフ**が紛れ込んでいます(本人も知りません！)。\n'\
                     f'DMに送られたお題を確認し、**{self.ww_members.minutes}分話し合いののち、投票を実施**してください！！　今から開始します！'
-            start_msg =  await ctx.send(msg, components=[wordwolfbuttons.ww_extend_action_row])
+            start_msg =  await ctx.send(msg, components=[gamebuttons.ww_extend_action_row])
 
             # メンバーをシャッフル
             random.shuffle(self.ww_members.get_members())
@@ -177,6 +177,119 @@ class GameCog(commands.Cog, name='ゲーム用'):
             # ワードウルフのネタバレメッセージを作成し、チャンネルに貼り付け
             await self.delayedMessage(ctx, netabare_msg, (self.ww_members.minutes * 60) - voting_time)
 
+        # NGワードゲーム
+        if ctx.custom_id == gamebuttons.CUSTOM_ID_JOIN_NGGAME:
+            self.ng_members.add_member(ctx.author)
+            LOG.debug(f'追加:{ctx.author.display_name}')
+            await ctx.edit_origin(content=f'{ctx.author.display_name}が参加しました!(参加人数:{self.ng_members.len})', components=[gamebuttons.ng_join_action_row,gamebuttons.ng_leave_action_row,gamebuttons.ng_start_action_row])
+        if ctx.custom_id == gamebuttons.CUSTOM_ID_LEAVE_NGGAME:
+            self.ng_members.remove_member(ctx.author)
+            LOG.debug(f'削除:{ctx.author.display_name}')
+            await ctx.edit_origin(content=f'{ctx.author.display_name}が離脱しました!(参加人数:{self.ng_members.len})', components=[gamebuttons.ng_join_action_row,gamebuttons.ng_leave_action_row,gamebuttons.ng_start_action_row])
+        if ctx.custom_id == gamebuttons.CUSTOM_ID_EXTEND_NGGAME:
+            self.ng_members.add_minutes(1)
+            LOG.debug(f'1分追加:{ctx.author.display_name}より依頼')
+        if ctx.custom_id == gamebuttons.CUSTOM_ID_START_NGGAME:
+            if self.ng_members.len < 2:
+                msg = f'NGワードゲームを楽しむには2人以上のメンバーが必要です(現在、{self.ng_members.len}人しかいません)'
+                await ctx.edit_origin(content=msg, components=[gamebuttons.ng_join_action_row,gamebuttons.ng_leave_action_row,gamebuttons.ng_start_action_row])
+                return
+
+            msg = f'まず、DMに送られたNGワードを確認し、相手が「NGワードを喋ってしまう」ようにトークしてください！**{self.ng_members.minutes}分で終了**です！　今から開始します！！'
+            start_msg = await ctx.send(msg)
+
+            netabare_msg = ''
+            # どの項目から選ぶかを最初に決め、その中からお題を振る
+            choiced_item = random.choice(self.ngWordGameJson.list)
+            # それぞれに役割をDMで送信
+            for player in self.ng_members.get_members():
+                #　お題の選定
+                odai = self.ngWordGameJson.dict[choiced_item]
+                ngword = random.choice(odai)
+                netabare_msg += f'{player.display_name}さん:||{ngword}||, '
+
+            for player in self.ng_members.get_members():
+                dm = await player.create_dm()
+                rpl_msg_del = f'{player.display_name}さん:(\|\|.+?\|\|, )'
+                dm_msg = re.sub(rpl_msg_del, '', netabare_msg)
+                dm_msg_open = dm_msg.replace('|', '').replace(', ', '\n')
+                await dm.send(f'{player.mention}さん 他の人のNGワードはこちらです！\n{dm_msg_open}\n開始メッセージへのリンク: {start_msg.jump_url}')
+
+            netabare_msg = re.sub(', $', '', netabare_msg)
+
+            # NGワードゲームのネタバレメッセージを作成し、チャンネルに貼り付け
+            await self.delayedMessage(ctx, 'NGワードゲームのネタバレです！\nそれぞれ、' + netabare_msg + 'でした！', self.ng_members.minutes * 60)
+
+        # コヨーテ
+        if ctx.custom_id == gamebuttons.CUSTOM_ID_JOIN_COYOTE:
+            self.cy_members.add_member(ctx.author)
+            LOG.debug(f'追加:{ctx.author.display_name}')
+            await ctx.edit_origin(content=f'{ctx.author.display_name}が参加しました!(参加人数:{self.cy_members.len})', components=[gamebuttons.cy_join_action_row,gamebuttons.cy_leave_action_row,gamebuttons.cy_start_action_row])
+        if ctx.custom_id == gamebuttons.CUSTOM_ID_LEAVE_COYOTE:
+            self.cy_members.remove_member(ctx.author)
+            LOG.debug(f'削除:{ctx.author.display_name}')
+            await ctx.edit_origin(content=f'{ctx.author.display_name}が離脱しました!(参加人数:{self.cy_members.len})', components=[gamebuttons.cy_join_action_row,gamebuttons.cy_leave_action_row,gamebuttons.cy_start_action_row])
+        if ctx.custom_id == gamebuttons.CUSTOM_ID_EXTEND_COYOTE:
+            self.cy_members.add_minutes(1)
+            LOG.debug(f'1分追加:{ctx.author.display_name}より依頼')
+        if ctx.custom_id == gamebuttons.CUSTOM_ID_START_COYOTE:
+            if self.cy_members.len < 2:
+                msg = f'コヨーテを楽しむには2人以上のメンバーが必要です(現在、{self.cy_members.len}人しかいません)'
+                await ctx.edit_origin(content=msg, components=[gamebuttons.cy_join_action_row,gamebuttons.cy_leave_action_row,gamebuttons.cy_start_action_row])
+
+                return
+            await self.startCoyote(ctx)
+            if self.coyoteGames.start_description == 'Normal':
+                """
+                説明が程よいバージョン
+                - コヨーテのルールが分かる程度に省略しています。
+                """
+                await self.coyoteLittleMessage(ctx)
+            elif self.coyoteGames.start_description == 'All':
+                """
+                説明が多いバージョン
+                - 初心者はこちらのコマンドを実行してください。
+                - コヨーテのルールが分かるように書いてありますが、一旦説明を見ながらゲームしてみると良いと思います。
+                """
+                await self.coyoteAllMessage(ctx)
+            elif self.coyoteGames.start_description == 'Nothing':
+                """
+                コヨーテを始めるコマンド（説明なし）
+                - 上級者向けの機能です。ルールを説明されずとも把握している場合にのみ推奨します。
+                """
+                msg = self.coyoteGames.create_description(True)
+                await ctx.send(msg)
+            await self.dealAndMessage(ctx)
+        if ctx.custom_id == gamebuttons.CUSTOM_ID_START_COYOTE_SET_DECK:
+            if self.cy_members.len < 2:
+                msg = f'コヨーテを楽しむには2人以上のメンバーが必要です(現在、{self.cy_members.len}人しかいません)'
+                await ctx.edit_origin(content=msg, components=[gamebuttons.cy_join_action_row,gamebuttons.cy_leave_action_row,gamebuttons.cy_start_action_row])
+                return
+            self.coyoteGames.set(self.cy_members.get_members())
+            self.coyoteGames.shuffle()
+            msg = self.coyoteGames.create_description(True)
+            await ctx.send(msg)
+            await self.dealAndMessage(ctx)
+
+        # 大喜利
+        if ctx.custom_id == gamebuttons.CUSTOM_ID_JOIN_OHGIRI:
+            self.oh_members.add_member(ctx.author)
+            LOG.debug(f'追加:{ctx.author.display_name}')
+            await ctx.edit_origin(content=f'{ctx.author.display_name}が参加しました!(参加人数:{self.oh_members.len})', components=[gamebuttons.oh_join_action_row,gamebuttons.oh_leave_action_row,gamebuttons.oh_start_action_row])
+        if ctx.custom_id == gamebuttons.CUSTOM_ID_LEAVE_OHGIRI:
+            self.oh_members.remove_member(ctx.author)
+            LOG.debug(f'削除:{ctx.author.display_name}')
+            await ctx.edit_origin(content=f'{ctx.author.display_name}が離脱しました!(参加人数:{self.oh_members.len})', components=[gamebuttons.oh_join_action_row,gamebuttons.oh_leave_action_row,gamebuttons.oh_start_action_row])
+        if ctx.custom_id == gamebuttons.CUSTOM_ID_EXTEND_OHGIRI:
+            self.oh_members.add_minutes(1)
+            LOG.debug(f'1分追加:{ctx.author.display_name}より依頼')
+        if ctx.custom_id == gamebuttons.CUSTOM_ID_START_OHGIRI:
+            if self.oh_members.len < 2:
+                msg = f'大喜利を楽しむには2人以上のメンバーが必要です(現在、{self.oh_members.len}人しかいません)'
+                await ctx.edit_origin(content=msg, components=[gamebuttons.oh_join_action_row,gamebuttons.oh_leave_action_row,gamebuttons.oh_start_action_row])
+                return
+            await self.startOhgiri(ctx)
+
     # NGワードゲーム機能
     @cog_ext.cog_slash(
     name='start-ng-word-game',
@@ -193,73 +306,25 @@ class GameCog(commands.Cog, name='ゲーム用'):
         コマンド実行者が参加しているボイスチャンネルでNGワードゲームを始めます（BOTからDMが来ますがびっくりしないでください）
         引数(answer_minutes)として終了までの時間（3などの正数。単位は「分」）を与えることができます。デフォルトは2分です。
         """
-        make_team = MakeTeam(ctx.guild.me)
-        make_team.my_connected_vc_only_flg = True
-        await make_team.get_members(ctx)
-
-        if make_team.mem_len < 2:
-            msg = f'NGワードゲームを楽しむには2人以上のメンバーが必要です(現在、{make_team.mem_len}人しかいません)'
-            await ctx.send(msg, hidden=True)
-            return
-
         if answer_minutes is None:
             answer_minutes = self.DEFAULT_TIME
         elif answer_minutes.isdecimal():
             answer_minutes = int(answer_minutes)
         else:
             answer_minutes = self.DEFAULT_TIME
+        self.ng_members.set_minutes(answer_minutes)
 
         if answer_minutes > self.MAX_TIME:
             msg = f'NGワードゲームはそんなに長い時間するものではないです(現在、{answer_minutes}分を指定しています。{self.MAX_TIME}分以内にして下さい)'
             await ctx.send(msg, hidden=True)
             return
 
-        msg =   f'NGワードゲームを始めます！　DMでそれぞれのNGワードを配りました！(**自分のNGワードのみ分かりません**)\n'\
-                f'これから**雑談し、誰かがNGワードを口走ったら、「ドーン！！！」と指摘**してください。すぐさまNGワードが妥当か話し合いください(カッコがある場合は、どちらもNGワードです)。\n'\
-                f'妥当な場合、NGワード発言者はお休みです。残った人で続けます。**最後のひとりになったら勝利**です！！\n'\
-                f'まず、DMに送られたNGワードを確認し、相手が「NGワードを喋ってしまう」ようにトークしてください！**{answer_minutes}分で終了**です！　今から開始します！！'
-        start_msg = await ctx.send(msg)
-
-        netabare_msg = ''
-        # どの項目から選ぶかを最初に決め、その中からお題を振る
-        choiced_item = random.choice(self.ngWordGameJson.list)
-        # それぞれに役割をDMで送信
-        for player in make_team.vc_members:
-            #　お題の選定
-            odai = self.ngWordGameJson.dict[choiced_item]
-            ngword = random.choice(odai)
-            netabare_msg += f'{player.display_name}さん:||{ngword}||, '
-
-        for player in make_team.vc_members:
-            dm = await player.create_dm()
-            rpl_msg_del = f'{player.display_name}さん:(\|\|.+?\|\|, )'
-            dm_msg = re.sub(rpl_msg_del, '', netabare_msg)
-            dm_msg_open = dm_msg.replace('|', '').replace(', ', '\n')
-            await dm.send(f'{player.mention}さん 他の人のNGワードはこちらです！\n{dm_msg_open}\n開始メッセージへのリンク: {start_msg.jump_url}')
-
-        netabare_msg = re.sub(', $', '', netabare_msg)
-
-        # NGワードゲームのネタバレメッセージを作成し、チャンネルに貼り付け
-        await self.delayedMessage(ctx, 'NGワードゲームのネタバレです！\nそれぞれ、' + netabare_msg + 'でした！', answer_minutes * 60)
-
-    # # コヨーテゲーム群
-    # @commands.group(aliases=['co','cog','cy','cg','coyote'], description='コヨーテするコマンド（サブコマンド必須）')
-    # async def coyoteGame(self, ctx):
-    #     """
-    #     コヨーテするコマンド群です。このコマンドだけでは実行できません。**半角スペースの後、続けて以下のサブコマンドを入力**ください。
-    #     - コヨーテを始めたい場合は、`/cy start`または`/cy startAndAllMessage`を入力してください(startは説明が短く、startAndAllMessageは全てを説明します)。
-    #     - コヨーテ中に、「コヨーテ！」をしたい場合は、`/cy coyote`を入力してください。
-    #     - コヨーテ中に、次の回を始めたい場合は、`/cy deal`を入力してください。
-    #     - コヨーテ中に、現在の状況を確認したい場合は、`/cy description`を入力してください。
-    #     - コヨーテ中に、カードの能力を確認したい場合は、`/cy card`を入力してください。
-    #     上級者向け機能
-    #     - 説明を省略して、コヨーテを始める場合は、`/cy startAndNoMessage`を入力してください。
-    #     - コヨーテ中に、ネタバレありで現在の状況を確認したい場合は、`/cy descriptionAll`を入力してください。
-    #     - `/cy setDeckAndStart`で自分でデッキを作成できます。詳しくは`/help coyoteGame setDeckAndStart`でヘルプを確認ください。
-    #     """
-    #     # サブコマンドが指定されていない場合、メッセージを送信する。
-    #     if ctx.invoked_subcommand is None:
-    #         await ctx.send('このコマンドにはサブコマンドが必要です。')
+        msg =   'NGワードゲームを始めます！　DMでそれぞれのNGワードを配りました！(**自分のNGワードのみ分かりません**)\n'\
+                'これから**雑談し、誰かがNGワードを口走ったら、「ドーン！！！」と指摘**してください。すぐさまNGワードが妥当か話し合いください(カッコがある場合は、どちらもNGワードです)。\n'\
+                '妥当な場合、NGワード発言者はお休みです。残った人で続けます。**最後のひとりになったら勝利**です！！\n'\
+                '参加する場合、以下のボタンを押してください。'
+        await ctx.send(msg)
+        await ctx.send('ボタン', components=[gamebuttons.ng_join_action_row])
 
     @cog_ext.cog_slash(
     name='start-coyote-game',
@@ -273,66 +338,44 @@ class GameCog(commands.Cog, name='ゲーム用'):
                                         choices=[
                                             manage_commands.create_choice(
                                             name='普通',
-                                            value='Normal'),
+                                            value=Coyote.DESCRPTION_NORMAL),
                                             manage_commands.create_choice(
                                             name='詳しく',
-                                            value='All'),
+                                            value=Coyote.DESCRPTION_ALL),
                                             manage_commands.create_choice(
                                             name='無し',
-                                            value='Nothing')
+                                            value=Coyote.DESCRPTION_NOTHING)
                                         ])
     ])
-    async def start(self, ctx, description: str = None):
-        await self.startCoyote(ctx)
+    async def start(self, ctx, description: str = Coyote.DESCRPTION_NORMAL):
 
-        if description is None or description == 'Normal':
-            """
-            説明が程よいバージョン
-            - コヨーテのルールが分かる程度に省略しています。
-            """
-            await self.coyoteLittleMessage(ctx)
-        elif description == 'All':
-            """
-            説明が多いバージョン
-            - 初心者はこちらのコマンドを実行してください。
-            - コヨーテのルールが分かるように書いてありますが、一旦説明を見ながらゲームしてみると良いと思います。
-            """
-            await self.coyoteAllMessage(ctx)
-        elif description == 'Nothing':
-            """
-            コヨーテを始めるコマンド（説明なし）
-            - 上級者向けの機能です。ルールを説明されずとも把握している場合にのみ推奨します。
-            """
-            msg = self.coyoteGames.create_description(True)
-            await ctx.send(msg)
-        await self.dealAndMessage(ctx)
+        msg = 'コヨーテを始めます！\n参加する場合、以下のボタンを押してください。'
+        await ctx.send(msg)
+        await ctx.send('ボタン', components=[gamebuttons.cy_join_action_row])
 
-    # @coyoteGame.command(aliases=['sds','ss','set'], description='デッキを指定して、コヨーテを始めるコマンド(説明なし)')
-    # async def setDeckAndStart(self, ctx, *, deck=None):
-    #     """
-    #     デッキを指定してコヨーテを始めるコマンド（説明なし）
-    #     - 上級者向けの機能です。ルールを説明されずとも把握している場合にのみ推奨します。
-    #     - デッキを「,」(コンマ)で区切って指定します。二重引用符などは不要です。
-    #     例：`/coyoteGame setDeckAndStart 20, 15, 15, 1, 1, 1, 1, 0, 0, 0, 0(Night), -5, -5, -10, *2(Chief), Max->0(Fox), ?(Cave), ?(Cave)`
-    #     """
-    #     make_team = MakeTeam(ctx.guild.me)
-    #     make_team.my_connected_vc_only_flg = True
-    #     await make_team.get_members(ctx)
+        self.coyoteGames.start_description = description
 
-    #     if make_team.mem_len < 2:
-    #         msg = f'コヨーテを楽しむには2人以上のメンバーが必要です(現在、{make_team.mem_len}人しかいません)'
-    #         await ctx.send(msg)
-    #         return
-    #     if deck is None:
-    #         msg = f'deckを指定してください。\n例：`/coyoteGame setDeckAndStart 20, 15, 15, 1, 1, 1, 1, 0, 0, 0, 0(Night), -5, -5, -10, *2(Chief), Max->0(Fox), ?(Cave), ?(Cave)`'
-    #         await ctx.send(msg)
-    #         return
-    #     self.coyoteGames.set(make_team.vc_members)
-    #     self.coyoteGames.setDeck(deck)
-    #     self.coyoteGames.shuffle()
-    #     msg = self.coyoteGames.create_description(True)
-    #     await ctx.send(msg)
-    #     await self.dealAndMessage(ctx)
+    @cog_ext.cog_slash(
+    name='start-coyote-game-set-deck',
+    guild_ids=guilds,
+    description='【上級者向け】デッキを指定しコヨーテを開始 :例：`/start-coyote-game-set-deck 20,0(Night),-5,*2(Chief), Max->0(Fox),?(Cave)`',
+    options=[
+        manage_commands.create_option(name='deck',
+                                    description='デッキを「,」(コンマ)で区切って指定(例：`/start-coyote-game-set-deck 20,0,0(Night),-5,*2(Chief), Max->0(Fox),?(Cave)`)',
+                                    option_type=3,
+                                    required=True)
+    ])
+    async def setDeckAndStart(self, ctx, deck=None):
+        """
+        デッキを指定してコヨーテを始めるコマンド（説明なし）
+        - 上級者向けの機能です。ルールを説明されずとも把握している場合にのみ推奨します。
+        - デッキを「,」(コンマ)で区切って指定します。二重引用符などは不要です。
+        例：`/coyoteGame setDeckAndStart 20, 15, 15, 1, 1, 1, 1, 0, 0, 0, 0(Night), -5, -5, -10, *2(Chief), Max->0(Fox), ?(Cave), ?(Cave)`
+        """
+        msg = 'デッキを指定してコヨーテを始めます！\n参加する場合、以下のボタンを押してください。'
+        await ctx.send(msg)
+        await ctx.send('ボタン', components=[gamebuttons.cyw_start_action_row])
+        self.coyoteGames.setDeck(deck)
 
     @cog_ext.cog_slash(
     name='coyote-game-coyote',
@@ -357,12 +400,17 @@ class GameCog(commands.Cog, name='ゲーム用'):
         - 1.プレイヤーのID（@マークを打つと入力しやすい）
         - 2.前プレイヤーの宣言した数
         """
+        if number.isdecimal():
+            number = int(number)
+        else:
+            number = 0
+
         if target_id is None:
-            msg = '「コヨーテする相手」(@で指定)と「コヨーテを言われた人の数字」を指定してください。例：`/coyoteGame coyote @you 99`'
+            msg = '「コヨーテする相手」(@で指定)と「コヨーテを言われた人の数字」を指定してください。例：`coyote-game-coyote @you 99`'
             await ctx.send(msg, hidden=True)
             return
         if number <= 0:
-            msg = '「コヨーテを言われた人の数字」は「1以上の整数」(0もダメです)を指定してください。例：`/coyoteGame coyote @you 99`'
+            msg = '「コヨーテを言われた人の数字」は「1以上の整数」(0もダメです)を指定してください。例：`coyote-game-coyote @you 99`'
             await ctx.send(msg, hidden=True)
             return
         if await self.coyoteStartCheckNG(ctx):
@@ -376,7 +424,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
             # IDから取得を試みる
             keys = [k for k, v in self.coyoteGames.members.items() if v.id == str(target_id).upper()]
             if len(keys) == 0:
-                msg = '「コヨーテする相手」(@で指定するか、IDで指定(aなど))と「コヨーテを言われた人の数字」を指定してください。例：`/coyoteGame coyote @you 99`'
+                msg = '「コヨーテする相手」(@で指定するか、IDで指定(aなど))と「コヨーテを言われた人の数字」を指定してください。例：`coyote-game-coyote @you 99`'
                 await ctx.send(msg)
                 return
             else:
@@ -404,7 +452,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
     @cog_ext.cog_slash(
     name='coyote-game-description',
     guild_ids=guilds,
-    description='コヨーテ！(前プレイヤーの数字がコヨーテの合計数を超えたと思った場合のコマンド)',
+    description='状況説明orカード能力の説明します',
     options=[
         manage_commands.create_option(name='description_target',
                                             description='状況説明or状況説明(ネタバレ)orカード能力説明',
@@ -517,15 +565,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
                 await ctx.send(msg)
 
     async def startCoyote(self, ctx):
-        make_team = MakeTeam(ctx.guild.me)
-        make_team.my_connected_vc_only_flg = True
-        await make_team.get_members(ctx)
-
-        if make_team.mem_len < 2:
-            msg = f'コヨーテを楽しむには2人以上のメンバーが必要です(現在、{make_team.mem_len}人しかいません)'
-            await ctx.send(msg)
-            return
-        self.coyoteGames.set(make_team.vc_members)
+        self.coyoteGames.set(self.cy_members.get_members())
         self.coyoteGames.shuffle()
 
     async def dealAndMessage(self, ctx):
@@ -556,18 +596,18 @@ class GameCog(commands.Cog, name='ゲーム用'):
             '次のプレイヤーは次のふたつのうち、「どちらか」の行動をとってください。\n'\
             '1: 数字を上げる → 前プレイヤーの宣言した数が実際にこの場にいるコヨーテの数**以下（オーバー）していない**と思う場合、**前プレイヤーより大きな数**を宣言します。\n'\
             '2: 「コヨーテ！」→ 前プレイヤーの宣言を疑います。つまり、前プレイヤーの宣言した数が実際にこの場にいるコヨーテの数よりも**大きい（オーバーした）**と思う場合、**「コヨーテ！」**と宣言します\n'\
-            '2の場合、例：`/coyoteGame coyote @you 99`のように(`@you`はidでもOK)**Discordに書き込んで**ください！（Botが結果を判定します！）\n'\
+            '2の場合、例：`coyote-game-coyote @you 99`のように(`@you`はidでもOK)**Discordに書き込んで**ください！（Botが結果を判定します！）\n'\
             '**誰かが「コヨーテ！」と宣言するまで**、時計回りで順々に交代しながら宣言する数字を上げていきます\n'
         await ctx.send(msg2)
 
         msg3 = '「コヨーテ！」と宣言された場合、直前のプレイヤーが宣言した数が当たっていたかどうか判定します。\n'\
-            '★前述の通り、Botが計算します（例：`/coyoteGame coyote @you 99`のように書き込んでくださいね）\n'\
+            '★前述の通り、Botが計算します（例：`coyote-game-coyote @you 99`のように書き込んでくださいね）\n'\
             'まず基本カードを集計したあと、特殊カード分を計算します。\n'\
             '「コヨーテ！」を**宣言された数がコヨーテの合計数をオーバー**していた場合、**「コヨーテ！」を宣言した人**の勝ち（数値を宣言した人の負け）\n'\
             '「コヨーテ！」を**宣言された数がコヨーテの合計数以下**の場合、**数値を宣言**した人の勝ち（「コヨーテ！」を宣言した人の負け）\n'\
             '負けたプレイヤーはダメージを受けます（ライフが減ります）。\n'\
             '使ったカードを捨て札にして、次の回を始めます（**今回負けた人から開始**します）。\n'\
-            '次の回を始めるには、`/coyoteGame deal`をDiscordに書き込んでください。\n'\
+            '次の回を始めるには、`/coyote-game-deal `をDiscordに書き込んでください。\n'\
             '負けたプレイヤーがその回を最後に**ゲームから脱落した場合、その回の勝者から**次の回を始めます。\n'\
             'ライフが0になったプレイヤーはゲームから脱落します。最後まで生き残ったプレイヤーが勝利です。\n'\
             'なお、コヨーテは絶賛販売中です(1,800円くらい)。気に入った方はぜひ買って遊んでみてください（このBotは許可を得て作成したものではありません）。販売:合同会社ニューゲームズオーダー, 作者:Spartaco Albertarelli, 画:TANSANFABRIK\n'\
@@ -588,9 +628,9 @@ class GameCog(commands.Cog, name='ゲーム用'):
             '次のプレイヤー：は次のふたつのうち、「どちらか」の行動をとってください。\n'\
             '1: 数字を上げる → 前プレイヤーの宣言した数が実際にこの場にいるコヨーテの数**以下（オーバー）していない**と思う場合、**前プレイヤーより大きな数**を宣言します。\n'\
             '2: 「コヨーテ！」→ 前プレイヤーの宣言を疑います。つまり、前プレイヤーの宣言した数が実際にこの場にいるコヨーテの数よりも**大きい（オーバーした）**と思う場合、**「コヨーテ！」**と宣言します\n'\
-            '2の場合、例：`/coyoteGame coyote @you 99`のように(`@you`はidでもOK)**Discordに書き込んで**ください！（Botが結果を判定します！）\n'\
+            '2の場合、例：`coyote-game-coyote @you 99`のように(`@you`はidでもOK)**Discordに書き込んで**ください！（Botが結果を判定します！）\n'\
             '**誰かが「コヨーテ！」と宣言するまで**、時計回り(ボイスチャンネルを下に進む)で順々に交代しながら宣言する**数字を上げて**いきます\n'\
-            '次の回を始めるには、`/coyoteGame deal`をDiscordに書き込んでください（**今回負けた人から開始**します）。\n'\
+            '次の回を始めるには、`/coyote-game-deal `をDiscordに書き込んでください（**今回負けた人から開始**します）。\n'\
             '負けたプレイヤーがその回を最後に**ゲームから脱落した場合、その回の勝者から**次の回を始めます。\n'\
             'ライフが0になったプレイヤーはゲームから脱落します。最後まで生き残ったプレイヤーが勝利です。\n'\
             'なお、コヨーテは絶賛販売中です(1,800円くらい)。気に入った方はぜひ買って遊んでみてください（このBotは許可を得て作成したものではありません）。販売:合同会社ニューゲームズオーダー, 作者:Spartaco Albertarelli, 画:TANSANFABRIK\n'\
@@ -612,21 +652,6 @@ class GameCog(commands.Cog, name='ゲーム用'):
         else:
             return False
 
-    # 大喜利ゲーム群
-    # @commands.group(aliases=['o','oh','oo','oogiri','ohgiri'], description='大喜利するコマンド（サブコマンド必須）')
-    # async def ohgiriGame(self, ctx):
-    #     """
-    #     大喜利するコマンド群です。このコマンドだけでは実行できません。**半角スペースの後、続けて以下のサブコマンドを入力**ください。
-    #     - 大喜利を始めたい場合は、`/o start`を入力してください(`/o s <数字>`のように入力すると、勝利扱いの点数が設定できます)。
-    #     - 大喜利中に、回答者が回答する場合は、`/o answer <数字>`を入力してください。
-    #     - 大喜利中に、親が回答を選択したい場合は、`/o choice <数字>`を入力してください。
-    #     - 大喜利中に、現在の状況を確認したい場合は、`/o description`を入力してください。
-    #     - 大喜利中に、いい手札がない場合は、`/o discard`を入力してください(ポイント1点減点の代わりに手札を捨て、山札からカードを引きます)。
-    #     """
-    #     # サブコマンドが指定されていない場合、メッセージを送信する。
-    #     if ctx.invoked_subcommand is None:
-    #         await ctx.send('このコマンドにはサブコマンドが必要です。')
-
     @cog_ext.cog_slash(
     name='start-ohgiri-game',
     guild_ids=guilds,
@@ -642,7 +667,14 @@ class GameCog(commands.Cog, name='ゲーム用'):
         大喜利を開始
         - win_point: 勝利扱いとするポイント(デフォルトは5ポイント)
         """
-        await self.startOhgiri(ctx, win_point)
+        # win_pointが数字でなかったり、MAX_WIN_POINTを超えたり、0以下の場合は、デフォルトの値を使用する
+        if not str(win_point).isdecimal or 1 > int(win_point) or int(win_point) > self.ohgiriGames.MAX_WIN_POINT:
+            win_point = self.ohgiriGames.DEFAULT_WIN_POINT
+        self.ohgiriGames.win_point = int(win_point)
+
+        msg =   '大喜利を始めます！\n参加する場合、以下のボタンを押してください。'
+        await ctx.send(msg)
+        await ctx.send('ボタン', components=[gamebuttons.oh_join_action_row])
 
     @cog_ext.cog_slash(
     name='ohgiri-game-answer',
@@ -652,7 +684,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
         manage_commands.create_option(name='card_id',
                                     description='回答として設定する値(数字で指定)',
                                     option_type=3,
-                                    required=False)
+                                    required=True)
         , manage_commands.create_option(name='second_card_id',
                                     description='回答として設定する値(数字で指定)',
                                     option_type=3,
@@ -662,8 +694,17 @@ class GameCog(commands.Cog, name='ゲーム用'):
         """
         回答者が回答として提出するカードを設定
         - ans_number: 回答として設定する値(数字で指定)
-        例:`/o answer 1`
+        例:`/ohgiri-game-answer 1`
         """
+        if card_id.isdecimal():
+            card_id = int(card_id)
+        else:
+            card_id = None
+        if second_card_id is not None and second_card_id.isdecimal():
+            second_card_id = int(second_card_id)
+        else:
+            second_card_id = None
+
         # 始まっているかのチェック
         if len(self.ohgiriGames.members) == 0 or self.ohgiriGames.game_over:
             await ctx.send('ゲームが起動していません！', hidden=True)
@@ -696,7 +737,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
             if (len(self.ohgiriGames.members) - 1)  == len(self.ohgiriGames.field):
                 self.ohgiriGames.show_answer()
                 LOG.info('回答者が出揃ったので、場に展開！')
-                msg = self.ohgiriGames.description + f'\n{self.ohgiriGames.house.mention} 回答を読み上げたのち、好きな回答を`/o choice <数字>`で選択してください！'
+                msg = self.ohgiriGames.description + f'\n{self.ohgiriGames.house.mention} 回答を読み上げたのち、好きな回答を`/ohgiri-game-choice <数字>`で選択してください！'
                 await ctx.send(msg)
 
     @cog_ext.cog_slash(
@@ -707,13 +748,13 @@ class GameCog(commands.Cog, name='ゲーム用'):
         manage_commands.create_option(name='ans_index',
                                     description='気に入ったカードの回答番号を設定する値(数字で指定)',
                                     option_type=3,
-                                    required=False)
+                                    required=True)
     ])
     async def choice(self, ctx, ans_index=None):
         """
         親が気に入ったカードを選択する
         - ans_index: 気に入ったカードの回答番号を設定する値(数字で指定)
-        例:`/o choice 1`
+        例:`/ohgiri-game-choice 1`
         """
         # 始まっているかのチェック
         if len(self.ohgiriGames.members) == 0 or self.ohgiriGames.game_over:
@@ -721,7 +762,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
         # コマンド実行者のチェック(親以外は拒否)
         elif ctx.author != self.ohgiriGames.house:
             await ctx.send('親以外が秀逸な回答を選択することはできません！', hidden=True)
-        elif ans_index is None or not str(ans_index).isdecimal():
+        elif ans_index is None or not ans_index.isdecimal():
             await ctx.send('`ans_index`が選択されていません！', hidden=True)
         # 回答が出揃っているかチェック
         elif (len(self.ohgiriGames.members) - 1)  > len(self.ohgiriGames.field):
@@ -729,7 +770,6 @@ class GameCog(commands.Cog, name='ゲーム用'):
 
         else:
             # 場にある数かどうかのチェック
-            ans_index = str(ans_index)
             if int(ans_index) > len(self.ohgiriGames.members) - 1:
                 await ctx.send(f'{ans_index}は場に出ている最大の選択数({len(self.ohgiriGames.members) - 1})を超えています！', hidden=True)
                 return
@@ -777,25 +817,12 @@ class GameCog(commands.Cog, name='ゲーム用'):
         await ctx.message.reply(self.ohgiriGames.description)
         await self.send_ans_dm(ctx, ctx.author)
 
-    async def startOhgiri(self, ctx, win_point):
-        make_team = MakeTeam(ctx.guild.me)
-        make_team.my_connected_vc_only_flg = True
-        await make_team.get_members(ctx)
-
-        if make_team.mem_len < 2:
-            msg = f'大喜利を楽しむには2人以上のメンバーが必要です(現在、{make_team.mem_len}人しかいません)'
-            await ctx.send(msg)
-            return
-
-        # win_pointが数字でなかったり、MAX_WIN_POINTを超えたり、0以下の場合は、デフォルトの値を使用する
-        if not str(win_point).isdecimal or 1 > int(win_point) or int(win_point) > self.ohgiriGames.MAX_WIN_POINT:
-            win_point = self.ohgiriGames.DEFAULT_WIN_POINT
-
+    async def startOhgiri(self, ctx):
         # 参加者と手札の数を設定
-        await self.ohgiriGames.setting(make_team.vc_members, 12, win_point)
+        await self.ohgiriGames.setting(self.oh_members.get_members(), 12, self.ohgiriGames.win_point)
         self.ohgiriGames.shuffle()
-        msg = 'お題が提供されるので**「親」はお題を声に出して読み上げ**てください（"○○"は「まるまる」、"✕✕"は「ばつばつ」と読む）。ほかのプレイヤーは読み上げられた**お題に相応しいと思う回答**を`/o ans <数字>`で選びます。\n'\
-            + '全員が回答したら、**「親」はもっとも秀逸な回答**を`/o choice <番号>`で選択します。「親」から選ばれたプレイヤーは1点もらえます。ただし、山札から1枚カードが混ざっており、それを選択すると親はポイントが減算されます。\n'\
+        msg = 'お題が提供されるので**「親」はお題を声に出して読み上げ**てください（"○○"は「まるまる」、"✕✕"は「ばつばつ」と読む）。ほかのプレイヤーは読み上げられた**お題に相応しいと思う回答**を`/ohgiri-game-answer <数字>`で選びます。\n'\
+            + '全員が回答したら、**「親」はもっとも秀逸な回答**を`/ohgiri-game-choice <番号>`で選択します。「親」から選ばれたプレイヤーは1点もらえます。ただし、山札から1枚カードが混ざっており、それを選択すると親はポイントが減算されます。\n'\
             + f'今回のゲームの勝利点は{self.ohgiriGames.win_point}点です。'
         await ctx.send(msg)
         await self.dealAndNextGame(ctx)
@@ -812,7 +839,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
 
         msg = f'カードを配りました。DMをご確認ください。{self.ohgiriGames.description}\n親は{self.ohgiriGames.house.display_name}です！'
         if self.ohgiriGames.required_ans_num == 2:
-            msg += '\n(回答は**2つ**設定するようにしてください！ 例:`/o ans 1 2`'
+            msg += '\n(回答は**2つ**設定するようにしてください！ 例:`/ohgiri-game-answer 1 2`'
         await ctx.send(msg)
 
     async def send_ans_dm(self, ctx, player: discord.member, odai_msg:discord.message=None):

@@ -72,7 +72,7 @@ class AssistantBot(commands.Bot):
 # AssitantBotのインスタンス化および起動処理。
 if __name__ == '__main__':
     intents = discord.Intents.default()
-    intents.members = True
+    intents.members = False
     intents.typing = False
     intents.presences = False
 
