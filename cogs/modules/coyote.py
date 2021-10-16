@@ -41,11 +41,22 @@ class Coyote:
         self.turn = 0
         self.description = ''
         self.start_description = ''
+        self.set_deck_flg = False
+        self.before_deck = []
+
+    def setInit(self, members):
+        self.__init__()
+        self.before_deck = self.DEFAULT_DECK.copy()
+        self.set_deck_flg = False
+        for id, member in zip(self.ID_LIST ,members):
+            coyoteMember = CoyoteMember()
+            coyoteMember.setId(id)
+            self.members[member] = coyoteMember
 
     def set(self, members):
         self.members = {}
         self.body = []
-        self.deck = self.DEFAULT_DECK.copy()
+        self.deck = self.before_deck.copy()
         self.hands = []
         self.discards = []
         self.turn = 0
@@ -56,6 +67,7 @@ class Coyote:
             self.members[member] = coyoteMember
 
     def setDeck(self, deck:str):
+        self.set_deck_flg = True
         self.deck = []
         deck = deck.replace('"','').replace("'","").replace(' ','').replace('　','')
         card_list = deck.split(',')
@@ -67,6 +79,7 @@ class Coyote:
                 continue
             else:
                 self.deck.append(str(card))
+        self.before_deck = self.deck.copy()
 
     def shuffle(self):
         self.deck.extend(self.discards)

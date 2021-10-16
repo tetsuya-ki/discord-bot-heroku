@@ -107,7 +107,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
             return
         self.ww_members.set_minutes(answer_minutes)
 
-        msg =   'ワードウルフを始めます！　この中に、**ワードウルフ**が紛れ込んでいます(本人も知りません！)。\n'\
+        msg =   'ワードウルフを始めます(3人以上必要です)！　この中に、**ワードウルフ**が紛れ込んでいます(本人も知りません！)。\n'\
                 'DMでお題が配られますが、**ワードウルフだけは別のお題**が配られます(お題は2種類あります)。会話の中で不審な言動を察知し、みごとに'\
                 '投票でワードウルフを当てることができたら、市民の勝ち。**間違えて「市民をワードウルフ」だと示してしまった場合、ワードウルフの勝ち**です！！\n'\
                 '参加する場合、以下のボタンを押してください。'
@@ -117,14 +117,15 @@ class GameCog(commands.Cog, name='ゲーム用'):
     @commands.Cog.listener()
     async def on_component(self, ctx: ComponentContext):
         # ワードウルフ
+        wordwolf_components = [gamebuttons.ww_join_action_row,gamebuttons.ww_leave_action_row,gamebuttons.ww_start_action_row]
         if ctx.custom_id == gamebuttons.CUSTOM_ID_JOIN_WORD_WOLF:
             self.ww_members.add_member(ctx.author)
             LOG.debug(f'追加:{ctx.author.display_name}')
-            await ctx.edit_origin(content=f'{ctx.author.display_name}が参加しました!(参加人数:{self.ww_members.len})', components=[gamebuttons.ww_join_action_row,gamebuttons.ww_leave_action_row,gamebuttons.ww_start_action_row])
+            await ctx.edit_origin(content=f'{ctx.author.display_name}が参加しました!(参加人数:{self.ww_members.len})', components=wordwolf_components)
         if ctx.custom_id == gamebuttons.CUSTOM_ID_LEAVE_WORD_WOLF:
             self.ww_members.remove_member(ctx.author)
             LOG.debug(f'削除:{ctx.author.display_name}')
-            await ctx.edit_origin(content=f'{ctx.author.display_name}が離脱しました!(参加人数:{self.ww_members.len})', components=[gamebuttons.ww_join_action_row,gamebuttons.ww_leave_action_row,gamebuttons.ww_start_action_row])
+            await ctx.edit_origin(content=f'{ctx.author.display_name}が離脱しました!(参加人数:{self.ww_members.len})', components=wordwolf_components)
         if ctx.custom_id == gamebuttons.CUSTOM_ID_EXTEND_WORD_WOLF:
             self.ww_members.add_minutes(1)
             LOG.debug(f'1分追加:{ctx.author.display_name}より依頼')
@@ -133,7 +134,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
             # ワードウルフ開始
             if self.ww_members.len < 3:
                 msg = f'ワードウルフを楽しむには3人以上のメンバーが必要です(現在、{self.ww_members.len}人しかいません)'
-                await ctx.edit_origin(content=msg, components=[gamebuttons.ww_join_action_row,gamebuttons.ww_leave_action_row,gamebuttons.ww_start_action_row])
+                await ctx.edit_origin(content=msg, components=wordwolf_components)
                 return
 
             #　お題の選定
@@ -143,9 +144,9 @@ class GameCog(commands.Cog, name='ゲーム用'):
 
             # ワードウルフの数設定
             wolf_numbers = self.ww_members.len // 3
-            msg =   f'ワードウルフを始めます！　この中に、**{wolf_numbers}人のワードウルフ**が紛れ込んでいます(本人も知りません！)。\n'\
+            msg =   f'この中に、**{wolf_numbers}人のワードウルフ**が紛れ込んでいます(本人も知りません！)。\n'\
                     f'DMに送られたお題を確認し、**{self.ww_members.minutes}分話し合いののち、投票を実施**してください！！　今から開始します！'
-            start_msg =  await ctx.send(msg, components=[gamebuttons.ww_extend_action_row])
+            start_msg =  await ctx.send(msg) #(msg, components=[gamebuttons.ww_extend_action_row])
 
             # メンバーをシャッフル
             random.shuffle(self.ww_members.get_members())
@@ -178,21 +179,22 @@ class GameCog(commands.Cog, name='ゲーム用'):
             await self.delayedMessage(ctx, netabare_msg, (self.ww_members.minutes * 60) - voting_time)
 
         # NGワードゲーム
+        ngwordgame_componets = [gamebuttons.ng_join_action_row,gamebuttons.ng_leave_action_row,gamebuttons.ng_start_action_row]
         if ctx.custom_id == gamebuttons.CUSTOM_ID_JOIN_NGGAME:
             self.ng_members.add_member(ctx.author)
             LOG.debug(f'追加:{ctx.author.display_name}')
-            await ctx.edit_origin(content=f'{ctx.author.display_name}が参加しました!(参加人数:{self.ng_members.len})', components=[gamebuttons.ng_join_action_row,gamebuttons.ng_leave_action_row,gamebuttons.ng_start_action_row])
+            await ctx.edit_origin(content=f'{ctx.author.display_name}が参加しました!(参加人数:{self.ng_members.len})', components=ngwordgame_componets)
         if ctx.custom_id == gamebuttons.CUSTOM_ID_LEAVE_NGGAME:
             self.ng_members.remove_member(ctx.author)
             LOG.debug(f'削除:{ctx.author.display_name}')
-            await ctx.edit_origin(content=f'{ctx.author.display_name}が離脱しました!(参加人数:{self.ng_members.len})', components=[gamebuttons.ng_join_action_row,gamebuttons.ng_leave_action_row,gamebuttons.ng_start_action_row])
+            await ctx.edit_origin(content=f'{ctx.author.display_name}が離脱しました!(参加人数:{self.ng_members.len})', components=ngwordgame_componets)
         if ctx.custom_id == gamebuttons.CUSTOM_ID_EXTEND_NGGAME:
             self.ng_members.add_minutes(1)
             LOG.debug(f'1分追加:{ctx.author.display_name}より依頼')
         if ctx.custom_id == gamebuttons.CUSTOM_ID_START_NGGAME:
             if self.ng_members.len < 2:
                 msg = f'NGワードゲームを楽しむには2人以上のメンバーが必要です(現在、{self.ng_members.len}人しかいません)'
-                await ctx.edit_origin(content=msg, components=[gamebuttons.ng_join_action_row,gamebuttons.ng_leave_action_row,gamebuttons.ng_start_action_row])
+                await ctx.edit_origin(content=msg, components=ngwordgame_componets)
                 return
 
             msg = f'まず、DMに送られたNGワードを確認し、相手が「NGワードを喋ってしまう」ようにトークしてください！**{self.ng_members.minutes}分で終了**です！　今から開始します！！'
@@ -213,7 +215,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
                 rpl_msg_del = f'{player.display_name}さん:(\|\|.+?\|\|, )'
                 dm_msg = re.sub(rpl_msg_del, '', netabare_msg)
                 dm_msg_open = dm_msg.replace('|', '').replace(', ', '\n')
-                await dm.send(f'{player.mention}さん 他の人のNGワードはこちらです！\n{dm_msg_open}\n開始メッセージへのリンク: {start_msg.jump_url}')
+                await dm.send(f'{player.mention}さん 他の人のNGワードはこちらです！\n{dm_msg_open}開始メッセージへのリンク: {start_msg.jump_url}')
 
             netabare_msg = re.sub(', $', '', netabare_msg)
 
@@ -221,21 +223,25 @@ class GameCog(commands.Cog, name='ゲーム用'):
             await self.delayedMessage(ctx, 'NGワードゲームのネタバレです！\nそれぞれ、' + netabare_msg + 'でした！', self.ng_members.minutes * 60)
 
         # コヨーテ
+        coyote_components=[gamebuttons.cy_join_action_row,gamebuttons.cy_leave_action_row]
+        if self.coyoteGames:
+            if self.coyoteGames.set_deck_flg:
+                coyote_components.append(gamebuttons.cyw_start_action_row)
+            else:
+                coyote_components.append(gamebuttons.cy_start_action_row)
+
         if ctx.custom_id == gamebuttons.CUSTOM_ID_JOIN_COYOTE:
             self.cy_members.add_member(ctx.author)
             LOG.debug(f'追加:{ctx.author.display_name}')
-            await ctx.edit_origin(content=f'{ctx.author.display_name}が参加しました!(参加人数:{self.cy_members.len})', components=[gamebuttons.cy_join_action_row,gamebuttons.cy_leave_action_row,gamebuttons.cy_start_action_row])
+            await ctx.edit_origin(content=f'{ctx.author.display_name}が参加しました!(参加人数:{self.cy_members.len})', components=coyote_components)
         if ctx.custom_id == gamebuttons.CUSTOM_ID_LEAVE_COYOTE:
             self.cy_members.remove_member(ctx.author)
             LOG.debug(f'削除:{ctx.author.display_name}')
-            await ctx.edit_origin(content=f'{ctx.author.display_name}が離脱しました!(参加人数:{self.cy_members.len})', components=[gamebuttons.cy_join_action_row,gamebuttons.cy_leave_action_row,gamebuttons.cy_start_action_row])
-        if ctx.custom_id == gamebuttons.CUSTOM_ID_EXTEND_COYOTE:
-            self.cy_members.add_minutes(1)
-            LOG.debug(f'1分追加:{ctx.author.display_name}より依頼')
+            await ctx.edit_origin(content=f'{ctx.author.display_name}が離脱しました!(参加人数:{self.cy_members.len})', components=coyote_components)
         if ctx.custom_id == gamebuttons.CUSTOM_ID_START_COYOTE:
             if self.cy_members.len < 2:
                 msg = f'コヨーテを楽しむには2人以上のメンバーが必要です(現在、{self.cy_members.len}人しかいません)'
-                await ctx.edit_origin(content=msg, components=[gamebuttons.cy_join_action_row,gamebuttons.cy_leave_action_row,gamebuttons.cy_start_action_row])
+                await ctx.edit_origin(content=msg, components=coyote_components)
 
                 return
             await self.startCoyote(ctx)
@@ -263,30 +269,40 @@ class GameCog(commands.Cog, name='ゲーム用'):
         if ctx.custom_id == gamebuttons.CUSTOM_ID_START_COYOTE_SET_DECK:
             if self.cy_members.len < 2:
                 msg = f'コヨーテを楽しむには2人以上のメンバーが必要です(現在、{self.cy_members.len}人しかいません)'
-                await ctx.edit_origin(content=msg, components=[gamebuttons.cy_join_action_row,gamebuttons.cy_leave_action_row,gamebuttons.cy_start_action_row])
+                await ctx.edit_origin(content=msg, components=coyote_components)
                 return
             self.coyoteGames.set(self.cy_members.get_members())
             self.coyoteGames.shuffle()
             msg = self.coyoteGames.create_description(True)
             await ctx.send(msg)
             await self.dealAndMessage(ctx)
+        if ctx.custom_id == gamebuttons.CUSTOM_ID_DEAL_COYOTE:
+            if await self.coyoteStartCheckNG(ctx):
+                return
+            await self.dealAndMessage(ctx)
+        if ctx.custom_id == gamebuttons.CUSTOM_ID_DESC_CARD_COYOTE:
+            msg = self.coyoteGames.create_description_card()
+            await ctx.edit_origin(content=msg)
+        if ctx.custom_id == gamebuttons.CUSTOM_ID_DESC_TURN_COYOTE:
+            if await self.coyoteStartCheckNG(ctx, True):
+                return
+            msg = self.coyoteGames.create_description()
+            await ctx.edit_origin(content=msg)
 
         # 大喜利
+        ohgiri_components = [gamebuttons.oh_join_action_row,gamebuttons.oh_leave_action_row,gamebuttons.oh_start_action_row]
         if ctx.custom_id == gamebuttons.CUSTOM_ID_JOIN_OHGIRI:
             self.oh_members.add_member(ctx.author)
             LOG.debug(f'追加:{ctx.author.display_name}')
-            await ctx.edit_origin(content=f'{ctx.author.display_name}が参加しました!(参加人数:{self.oh_members.len})', components=[gamebuttons.oh_join_action_row,gamebuttons.oh_leave_action_row,gamebuttons.oh_start_action_row])
+            await ctx.edit_origin(content=f'{ctx.author.display_name}が参加しました!(参加人数:{self.oh_members.len})', components=ohgiri_components)
         if ctx.custom_id == gamebuttons.CUSTOM_ID_LEAVE_OHGIRI:
             self.oh_members.remove_member(ctx.author)
             LOG.debug(f'削除:{ctx.author.display_name}')
-            await ctx.edit_origin(content=f'{ctx.author.display_name}が離脱しました!(参加人数:{self.oh_members.len})', components=[gamebuttons.oh_join_action_row,gamebuttons.oh_leave_action_row,gamebuttons.oh_start_action_row])
-        if ctx.custom_id == gamebuttons.CUSTOM_ID_EXTEND_OHGIRI:
-            self.oh_members.add_minutes(1)
-            LOG.debug(f'1分追加:{ctx.author.display_name}より依頼')
+            await ctx.edit_origin(content=f'{ctx.author.display_name}が離脱しました!(参加人数:{self.oh_members.len})', components=ohgiri_components)
         if ctx.custom_id == gamebuttons.CUSTOM_ID_START_OHGIRI:
             if self.oh_members.len < 2:
                 msg = f'大喜利を楽しむには2人以上のメンバーが必要です(現在、{self.oh_members.len}人しかいません)'
-                await ctx.edit_origin(content=msg, components=[gamebuttons.oh_join_action_row,gamebuttons.oh_leave_action_row,gamebuttons.oh_start_action_row])
+                await ctx.edit_origin(content=msg, components=ohgiri_components)
                 return
             await self.startOhgiri(ctx)
 
@@ -319,8 +335,8 @@ class GameCog(commands.Cog, name='ゲーム用'):
             await ctx.send(msg, hidden=True)
             return
 
-        msg =   'NGワードゲームを始めます！　DMでそれぞれのNGワードを配りました！(**自分のNGワードのみ分かりません**)\n'\
-                'これから**雑談し、誰かがNGワードを口走ったら、「ドーン！！！」と指摘**してください。すぐさまNGワードが妥当か話し合いください(カッコがある場合は、どちらもNGワードです)。\n'\
+        msg =   'NGワードゲームを始めます(2人以上必要です)！　これからDMでそれぞれのNGワードを配ります！(**自分のNGワードのみ分かりません**)\n'\
+                '配られた後に**雑談し、誰かがNGワードを口走ったら、「ドーン！！！」と指摘**してください。すぐさまNGワードが妥当か話し合いください(カッコがある場合は、どちらもNGワードです)。\n'\
                 '妥当な場合、NGワード発言者はお休みです。残った人で続けます。**最後のひとりになったら勝利**です！！\n'\
                 '参加する場合、以下のボタンを押してください。'
         await ctx.send(msg)
@@ -348,11 +364,10 @@ class GameCog(commands.Cog, name='ゲーム用'):
                                         ])
     ])
     async def start(self, ctx, description: str = Coyote.DESCRPTION_NORMAL):
-
-        msg = 'コヨーテを始めます！\n参加する場合、以下のボタンを押してください。'
+        msg = 'コヨーテを始めます(2人以上必要です)！\n参加する場合、以下のボタンを押してください。'
         await ctx.send(msg)
         await ctx.send('ボタン', components=[gamebuttons.cy_join_action_row])
-
+        self.coyoteGames.set_deck_flg = False
         self.coyoteGames.start_description = description
 
     @cog_ext.cog_slash(
@@ -372,9 +387,9 @@ class GameCog(commands.Cog, name='ゲーム用'):
         - デッキを「,」(コンマ)で区切って指定します。二重引用符などは不要です。
         例：`/coyoteGame setDeckAndStart 20, 15, 15, 1, 1, 1, 1, 0, 0, 0, 0(Night), -5, -5, -10, *2(Chief), Max->0(Fox), ?(Cave), ?(Cave)`
         """
-        msg = 'デッキを指定してコヨーテを始めます！\n参加する場合、以下のボタンを押してください。'
+        msg = 'デッキを指定してコヨーテを始めます(2人以上必要です)！\n参加する場合、以下のボタンを押してください。'
         await ctx.send(msg)
-        await ctx.send('ボタン', components=[gamebuttons.cyw_start_action_row])
+        await ctx.send('ボタン', components=[gamebuttons.cy_join_action_row])
         self.coyoteGames.setDeck(deck)
 
     @cog_ext.cog_slash(
@@ -436,6 +451,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
 
         self.coyoteGames.coyote(ctx.author, you, number)
         await ctx.send(self.coyoteGames.description)
+        await ctx.send('ボタン', components=[gamebuttons.cy_deal_action_row, gamebuttons.cy_desc_card_action_row, gamebuttons.cy_desc_turn_action_row])
 
     @cog_ext.cog_slash(
     name='coyote-game-deal',
@@ -483,10 +499,11 @@ class GameCog(commands.Cog, name='ゲーム用'):
                                             ])
     ])
     async def description(self, ctx, description_target, reply_is_hidden:str = None):
+        hidden = True if reply_is_hidden == 'True' else False
         if description_target == 'Description-Cards':
             """カードの能力を説明します。"""
             msg = self.coyoteGames.create_description_card()
-            await ctx.send(msg)
+            await ctx.send(msg, hidden=hidden)
             return
         else:
             if await self.coyoteStartCheckNG(ctx, True):
@@ -505,7 +522,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
                 - 山札の数、山札の中身、捨て札の数、捨て札の中身、場のカード
                 """
                 msg = self.coyoteGames.create_description(True)
-            await ctx.send(msg)
+            await ctx.send(msg, hidden=hidden)
 
     @cog_ext.cog_slash(
     name='roll',
@@ -565,7 +582,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
                 await ctx.send(msg)
 
     async def startCoyote(self, ctx):
-        self.coyoteGames.set(self.cy_members.get_members())
+        self.coyoteGames.setInit(self.cy_members.get_members())
         self.coyoteGames.shuffle()
 
     async def dealAndMessage(self, ctx):
@@ -580,7 +597,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
             dm = await player.create_dm()
             rpl_msg_del = f'{player.display_name}さん:.+\n'
             dm_msg = re.sub(rpl_msg_del, '', dm_msg_all)
-            await dm.send(f'{player.mention}さん 他の人のコヨーテカードはこちらです！\n{dm_msg}\n開始メッセージへのリンク:{start_msg.jump_url}')
+            await dm.send(f'{player.mention}さん 他の人のコヨーテカードはこちらです！\n{dm_msg}開始メッセージへのリンク: {start_msg.jump_url}')
         self.coyoteGames.description = ''
 
     async def coyoteAllMessage(self, ctx):
@@ -672,7 +689,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
             win_point = self.ohgiriGames.DEFAULT_WIN_POINT
         self.ohgiriGames.win_point = int(win_point)
 
-        msg =   '大喜利を始めます！\n参加する場合、以下のボタンを押してください。'
+        msg =   '大喜利を始めます(2人以上必要です)！\n参加する場合、以下のボタンを押してください。'
         await ctx.send(msg)
         await ctx.send('ボタン', components=[gamebuttons.oh_join_action_row])
 
@@ -696,15 +713,6 @@ class GameCog(commands.Cog, name='ゲーム用'):
         - ans_number: 回答として設定する値(数字で指定)
         例:`/ohgiri-game-answer 1`
         """
-        if card_id.isdecimal():
-            card_id = int(card_id)
-        else:
-            card_id = None
-        if second_card_id is not None and second_card_id.isdecimal():
-            second_card_id = int(second_card_id)
-        else:
-            second_card_id = None
-
         # 始まっているかのチェック
         if len(self.ohgiriGames.members) == 0 or self.ohgiriGames.game_over:
             await ctx.send('ゲームが起動していません！', hidden=True)
@@ -814,7 +822,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
             await ctx.send('ゲームが起動していません！', hidden=True)
             return
         self.ohgiriGames.discard_hand(ctx.author)
-        await ctx.message.reply(self.ohgiriGames.description)
+        await ctx.send(self.ohgiriGames.description, hidden=True)
         await self.send_ans_dm(ctx, ctx.author)
 
     async def startOhgiri(self, ctx):

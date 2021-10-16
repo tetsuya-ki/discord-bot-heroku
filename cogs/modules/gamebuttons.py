@@ -12,12 +12,13 @@ CUSTOM_ID_EXTEND_NGGAME = 'ng_extend_buttons'
 CUSTOM_ID_JOIN_COYOTE  = 'cy_join_buttons'
 CUSTOM_ID_LEAVE_COYOTE = 'cy_leave_buttons'
 CUSTOM_ID_START_COYOTE = 'cy_start_buttons'
-CUSTOM_ID_EXTEND_COYOTE = 'cy_extend_buttons'
 CUSTOM_ID_START_COYOTE_SET_DECK = 'cyw_start_buttons'
+CUSTOM_ID_DEAL_COYOTE = 'cy_deal_buttons'
+CUSTOM_ID_DESC_CARD_COYOTE = 'cy_desc_card_buttons'
+CUSTOM_ID_DESC_TURN_COYOTE = 'cy_desc_turn_buttons'
 CUSTOM_ID_JOIN_OHGIRI  = 'oh_join_buttons'
 CUSTOM_ID_LEAVE_OHGIRI = 'oh_leave_buttons'
 CUSTOM_ID_START_OHGIRI = 'oh_start_buttons'
-CUSTOM_ID_EXTEND_OHGIRI = 'oh_extend_buttons'
 
 ww_join_buttons = [
     create_button(
@@ -109,22 +110,38 @@ cy_start_buttons = [
     ),
 ]
 cy_start_action_row = create_actionrow(*cy_start_buttons)
-cy_extend_buttons = [
+cyw_start_buttons = [
         create_button(
             style=ButtonStyle.gray,
-            label='延長する',
-            custom_id=CUSTOM_ID_EXTEND_COYOTE
-        ),
-    ]
-cy_extend_action_row = create_actionrow(*cy_extend_buttons)
-cyw_start_action_row = [
-        create_button(
-            style=ButtonStyle.gray,
-            label='延長する',
+            label='開始する',
             custom_id=CUSTOM_ID_START_COYOTE_SET_DECK
         ),
     ]
-cyw_start_action_row = create_actionrow(*cyw_start_action_row)
+cyw_start_action_row = create_actionrow(*cyw_start_buttons)
+cy_deal_buttons = [
+        create_button(
+            style=ButtonStyle.gray,
+            label='ディールする(次のターン)',
+            custom_id=CUSTOM_ID_DEAL_COYOTE
+        ),
+    ]
+cy_deal_action_row = create_actionrow(*cy_deal_buttons)
+cy_desc_card_buttons = [
+        create_button(
+            style=ButtonStyle.gray,
+            label='カードの説明を見る',
+            custom_id=CUSTOM_ID_DESC_CARD_COYOTE
+        ),
+    ]
+cy_desc_card_action_row = create_actionrow(*cy_desc_card_buttons)
+cy_desc_turn_buttons = [
+        create_button(
+            style=ButtonStyle.gray,
+            label='状況説明を見る',
+            custom_id=CUSTOM_ID_DESC_TURN_COYOTE
+        ),
+    ]
+cy_desc_turn_action_row = create_actionrow(*cy_desc_turn_buttons)
 
 oh_join_buttons = [
     create_button(
@@ -150,11 +167,3 @@ oh_start_buttons = [
     ),
 ]
 oh_start_action_row = create_actionrow(*oh_start_buttons)
-oh_extend_buttons = [
-        create_button(
-            style=ButtonStyle.gray,
-            label='延長する',
-            custom_id=CUSTOM_ID_EXTEND_OHGIRI
-        ),
-    ]
-oh_extend_action_row = create_actionrow(*oh_extend_buttons)
