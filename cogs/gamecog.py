@@ -79,15 +79,15 @@ class GameCog(commands.Cog, name='ゲーム用'):
 
     # ワードウルフ機能
     @cog_ext.cog_slash(
-        name='start-word-wolf',
-        guild_ids=guilds,
-        description='ワードウルフ機能(少数派のワードを与えられた人を当てるゲーム)',
-        options=[
-            manage_commands.create_option(name='answer_minutes',
-                                        description='投票開始までの時間（3などの正数。単位は「分」）を与えることができます。デフォルトは2分です',
-                                        option_type=3,
-                                        required=False)
-        ])
+    name='start-word-wolf',
+    # guild_ids=guilds,
+    description='ワードウルフ機能(少数派のワードを与えられた人を当てるゲーム)',
+    options=[
+        manage_commands.create_option(name='answer_minutes',
+                                    description='投票開始までの時間（3などの正数。単位は「分」）を与えることができます。デフォルトは2分です',
+                                    option_type=3,
+                                    required=False)
+    ])
     async def wordWolf(self, ctx, answer_minutes=None):
         """
         コマンド実行者が参加しているボイスチャンネルでワードウルフ始めます（BOTからDMが来ますがびっくりしないでください）
@@ -309,7 +309,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
     # NGワードゲーム機能
     @cog_ext.cog_slash(
     name='start-ng-word-game',
-    guild_ids=guilds,
+    # guild_ids=guilds,
     description='NGワードゲーム機能(禁止された言葉を喋ってはいけないゲーム)',
     options=[
         manage_commands.create_option(name='answer_minutes',
@@ -344,7 +344,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
 
     @cog_ext.cog_slash(
     name='start-coyote-game',
-    guild_ids=guilds,
+    # guild_ids=guilds,
     description='コヨーテ機能(場にある数値の合計を推測しつつ遊ぶゲーム)',
     options=[
         manage_commands.create_option(name='description',
@@ -372,7 +372,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
 
     @cog_ext.cog_slash(
     name='start-coyote-game-set-deck',
-    guild_ids=guilds,
+    # guild_ids=guilds,
     description='【上級者向け】デッキを指定しコヨーテを開始 :例：`/start-coyote-game-set-deck 20,0(Night),-5,*2(Chief), Max->0(Fox),?(Cave)`',
     options=[
         manage_commands.create_option(name='deck',
@@ -394,7 +394,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
 
     @cog_ext.cog_slash(
     name='coyote-game-coyote',
-    guild_ids=guilds,
+    # guild_ids=guilds,
     description='コヨーテ！(前プレイヤーの数字がコヨーテの合計数を超えたと思った場合のコマンド)',
     options=[
         manage_commands.create_option(name='target_id',
@@ -455,7 +455,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
 
     @cog_ext.cog_slash(
     name='coyote-game-deal',
-    guild_ids=guilds,
+    # guild_ids=guilds,
     description='ディール(次のターンを始める)')
     async def deal(self, ctx):
         """
@@ -467,7 +467,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
 
     @cog_ext.cog_slash(
     name='coyote-game-description',
-    guild_ids=guilds,
+    # guild_ids=guilds,
     description='状況説明orカード能力の説明します',
     options=[
         manage_commands.create_option(name='description_target',
@@ -526,7 +526,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
 
     @cog_ext.cog_slash(
     name='roll',
-    guild_ids=guilds,
+    # guild_ids=guilds,
     description='ダイスを振る(さいころを転がす)',
     options=[
         manage_commands.create_option(name='dice_and_num',
@@ -671,7 +671,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
 
     @cog_ext.cog_slash(
     name='start-ohgiri-game',
-    guild_ids=guilds,
+    # guild_ids=guilds,
     description='大喜利を開始(親が好みのネタをカードから選んで優勝するゲーム)',
     options=[
         manage_commands.create_option(name='win_point',
@@ -695,7 +695,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
 
     @cog_ext.cog_slash(
     name='ohgiri-game-answer',
-    guild_ids=guilds,
+    # guild_ids=guilds,
     description='【子】回答者がお題に提出する回答を設定',
     options=[
         manage_commands.create_option(name='card_id',
@@ -750,7 +750,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
 
     @cog_ext.cog_slash(
     name='ohgiri-game-choice',
-    guild_ids=guilds,
+    # guild_ids=guilds,
     description='【親】回答者がお題に提出する回答を設定',
     options=[
         manage_commands.create_option(name='ans_index',
@@ -792,7 +792,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
 
     @cog_ext.cog_slash(
     name='ohgiri-game-description',
-    guild_ids=guilds,
+    # guild_ids=guilds,
     description='現在の状況を説明')
     async def description_ohgiriGame(self, ctx):
         """現在の状況を説明します"""
@@ -805,7 +805,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
 
     @cog_ext.cog_slash(
     name='ohgiri-game-discard_hand',
-    guild_ids=guilds,
+    # guild_ids=guilds,
     description='ポイントを1点減点し、手札をすべて捨て、山札からカードを引く(いい回答カードがない時に使用ください)',
     options=[
         manage_commands.create_option(name='ans_index',
@@ -866,7 +866,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
     # poll機能
     @cog_ext.cog_slash(
     name='simple-poll',
-    guild_ids=guilds,
+    # guild_ids=guilds,
     description='簡易的な投票機能です(/で分割されます。「/がない」場合と「/がある」場合で動作が変わります)',
     options=[
         manage_commands.create_option(name='poll_message',
