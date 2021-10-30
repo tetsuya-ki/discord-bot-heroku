@@ -122,7 +122,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
     @commands.Cog.listener()
     async def on_component(self, ctx: ComponentContext):
         # ワードウルフ
-        wordwolf_components = [gamebuttons.ww_join_action_row,gamebuttons.ww_leave_action_row,gamebuttons.ww_start_action_row]
+        wordwolf_components = [gamebuttons.ww_join_action_row,gamebuttons.ww_leave_action_row,gamebuttons.ww_start_action_row,gamebuttons.ww_purge_action_row]
         if ctx.custom_id == gamebuttons.CUSTOM_ID_JOIN_WORD_WOLF:
             if ctx.guild_id in self.ww_members:
                 self.ww_members[ctx.guild_id].add_member(ctx.author)
@@ -144,6 +144,10 @@ class GameCog(commands.Cog, name='ゲーム用'):
             else:
                 self.ww_members[ctx.guild_id] = Members()
             LOG.debug(f'1分追加:{ctx.author.display_name}より依頼')
+        if ctx.custom_id == gamebuttons.CUSTOM_ID_PURGE_WORD_WOLF:
+            self.ww_members[ctx.guild_id] = Members()
+            LOG.debug(f'参加者クリア:{ctx.author.display_name}')
+            await ctx.edit_origin(content=f'参加者がクリアされました(参加人数:{self.ww_members[ctx.guild_id].len})', components=wordwolf_components)
         if ctx.custom_id == gamebuttons.CUSTOM_ID_START_WORD_WOLF:
             LOG.debug(f'開始:{ctx.author.display_name}より依頼')
             if ctx.guild_id not in self.ww_members:
@@ -199,7 +203,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
             await self.delayedMessage(ctx, netabare_msg, (self.ww_members[ctx.guild_id].minutes * 60) - voting_time)
 
         # NGワードゲーム
-        ngwordgame_componets = [gamebuttons.ng_join_action_row,gamebuttons.ng_leave_action_row,gamebuttons.ng_start_action_row]
+        ngwordgame_componets = [gamebuttons.ng_join_action_row,gamebuttons.ng_leave_action_row,gamebuttons.ng_start_action_row,gamebuttons.ng_purge_action_row]
         if ctx.custom_id == gamebuttons.CUSTOM_ID_JOIN_NGGAME:
             if ctx.guild_id in self.ng_members:
                 self.ng_members[ctx.guild_id].add_member(ctx.author)
@@ -224,6 +228,10 @@ class GameCog(commands.Cog, name='ゲーム用'):
                 self.ng_members[ctx.guild_id] = Members()
                 return
             LOG.debug(f'1分追加:{ctx.author.display_name}より依頼')
+        if ctx.custom_id == gamebuttons.CUSTOM_ID_PURGE_NGGAME:
+            self.ng_members[ctx.guild_id] = Members()
+            LOG.debug(f'参加者クリア:{ctx.author.display_name}')
+            await ctx.edit_origin(content=f'参加者がクリアされました(参加人数:{self.ng_members[ctx.guild_id].len})', components=ngwordgame_componets)
         if ctx.custom_id == gamebuttons.CUSTOM_ID_START_NGGAME:
             if ctx.guild_id not in self.ng_members:
                 msg = f'ゲームが始まっていません。`/start-ng-word-game`でゲームを開始してください。'
@@ -267,6 +275,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
                 coyote_components.append(gamebuttons.cyw_start_action_row)
             else:
                 coyote_components.append(gamebuttons.cy_start_action_row)
+            coyote_components.append(gamebuttons.cy_purge_action_row)
 
         if ctx.custom_id == gamebuttons.CUSTOM_ID_JOIN_COYOTE:
             if ctx.guild_id in self.cy_members:
@@ -285,6 +294,11 @@ class GameCog(commands.Cog, name='ゲーム用'):
                 self.cy_members[ctx.guild_id] = Members()
             LOG.debug(f'削除:{ctx.author.display_name}')
             await ctx.edit_origin(content=f'{ctx.author.display_name}が離脱しました!(参加人数:{self.cy_members[ctx.guild_id].len})', components=coyote_components)
+        if ctx.custom_id == gamebuttons.CUSTOM_ID_PURGE_COYOTE:
+            self.coyoteGames[ctx.guild_id] = Coyote()
+            self.cy_members[ctx.guild_id] = Members()
+            LOG.debug(f'参加者クリア:{ctx.author.display_name}')
+            await ctx.edit_origin(content=f'参加者がクリアされました(参加人数:{self.cy_members[ctx.guild_id].len})', components=coyote_components)
         if ctx.custom_id == gamebuttons.CUSTOM_ID_START_COYOTE:
             if ctx.guild_id not in self.cy_members:
                 msg = f'ゲームが始まっていません。`/start-coyote-game`でゲームを開始してください。'
@@ -352,7 +366,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
             await ctx.edit_origin(content=msg)
 
         # 大喜利
-        ohgiri_components = [gamebuttons.oh_join_action_row,gamebuttons.oh_leave_action_row,gamebuttons.oh_start_action_row]
+        ohgiri_components = [gamebuttons.oh_join_action_row,gamebuttons.oh_leave_action_row,gamebuttons.oh_start_action_row,gamebuttons.oh_purge_action_row]
         if ctx.custom_id == gamebuttons.CUSTOM_ID_JOIN_OHGIRI:
             if ctx.guild_id in self.oh_members:
                 self.oh_members[ctx.guild_id].add_member(ctx.author)
@@ -372,6 +386,11 @@ class GameCog(commands.Cog, name='ゲーム用'):
                 self.ohgiriGames[ctx.guild_id].file_path = self.ohgiriGames['default'].file_path
             LOG.debug(f'削除:{ctx.author.display_name}')
             await ctx.edit_origin(content=f'{ctx.author.display_name}が離脱しました!(参加人数:{self.oh_members[ctx.guild_id].len})', components=ohgiri_components)
+        if ctx.custom_id == gamebuttons.CUSTOM_ID_PURGE_OHGIRI:
+            self.oh_members[ctx.guild_id] = Members()
+            self.ohgiriGames[ctx.guild_id] = Ohgiri()
+            LOG.debug(f'参加者クリア:{ctx.author.display_name}')
+            await ctx.edit_origin(content=f'参加者がクリアされました(参加人数:{self.oh_members[ctx.guild_id].len})', components=ohgiri_components)
         if ctx.custom_id == gamebuttons.CUSTOM_ID_START_OHGIRI:
             if ctx.guild_id not in self.oh_members:
                 msg = f'ゲームが始まっていません。`/start-ohgiri-game`でゲームを開始してください。'
