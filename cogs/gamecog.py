@@ -185,7 +185,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
                 else:
                     player_odai = citizen_odai
                 dm = await player.create_dm()
-                await dm.send(f'{player.mention}さんのワードは**「{player_odai}」**です！\n開始メッセージへのリンク: {start_msg.jump_url}')
+                await dm.send(f'{player.mention}さんのワードは**「{player_odai}」**です！\n開始メッセージへのリンク: {self.rewrite_link_at_me(start_msg.jump_url, ctx.guild_id)}')
 
             netabare_msg += 'でした！　お疲れ様でした！'
 
@@ -261,7 +261,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
                 rpl_msg_del = f'{player.display_name}さん:(\|\|.+?\|\|, )'
                 dm_msg = re.sub(rpl_msg_del, '', netabare_msg)
                 dm_msg_open = dm_msg.replace('|', '').replace(', ', '\n')
-                await dm.send(f'{player.mention}さん 他の人のNGワードはこちらです！\n{dm_msg_open}開始メッセージへのリンク: {start_msg.jump_url}')
+                await dm.send(f'{player.mention}さん 他の人のNGワードはこちらです！\n{dm_msg_open}開始メッセージへのリンク: {self.rewrite_link_at_me(start_msg.jump_url, ctx.guild_id)}')
 
             netabare_msg = re.sub(', $', '', netabare_msg)
 
@@ -716,7 +716,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
             dm = await player.create_dm()
             rpl_msg_del = f'{player.display_name}さん:.+\n'
             dm_msg = re.sub(rpl_msg_del, '', dm_msg_all)
-            await dm.send(f'{player.mention}さん 他の人のコヨーテカードはこちらです！\n{dm_msg}開始メッセージへのリンク: {start_msg.jump_url}')
+            await dm.send(f'{player.mention}さん 他の人のコヨーテカードはこちらです！\n{dm_msg}開始メッセージへのリンク: {self.rewrite_link_at_me(start_msg.jump_url, ctx.guild_id)}')
         self.coyoteGames[ctx.guild_id].description = ''
 
     async def coyoteAllMessage(self, ctx):
@@ -984,7 +984,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
             dm_msg += f'{card_id}: {card_message}\n'
         # お題のメッセージが指定されている場合、リンクを付与
         if odai_msg is not None:
-            dm_msg += f'お題へのリンク: {odai_msg.jump_url}'
+            dm_msg += f'お題へのリンク: {self.rewrite_link_at_me(odai_msg.jump_url, ctx.guild_id)}'
         await dm.send(f'{player.mention}さん あなたの手札はこちらです！\n{dm_msg}')
 
     # poll機能
@@ -1044,6 +1044,17 @@ class GameCog(commands.Cog, name='ゲーム用'):
     async def delayedMessage(self, ctx, messsage, delayed_seconds=None):
         await asyncio.sleep(delayed_seconds)
         await ctx.send(messsage)
+
+    def rewrite_link_at_me(self, link:str='', guild_id:int=None):
+        """
+        スレッドの中のリンク取得が想定外(一応遷移できるが)のため、修正
+        こうあるべき: https://discord.com/channels/<guild_id>/<channel_id>/<message_id>
+        実際: https://discord.com/channels/@me//<channel_id>/<message_id>
+        """
+        if guild_id:
+            return str(link).replace('@me', str(guild_id))
+        else:
+            return ''
 
 def setup(bot):
     bot.add_cog(GameCog(bot)) # GameCogにBotを渡してインスタンス化し、Botにコグとして登録する
