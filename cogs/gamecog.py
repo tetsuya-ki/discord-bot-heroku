@@ -106,11 +106,11 @@ class GameCog(commands.Cog, name='ゲーム用'):
             msg = f'ワードウルフはそんなに長い時間するものではないです(現在、{answer_minutes}分を指定しています。{self.MAX_TIME}分以内にして下さい)'
             await ctx.send(msg, hidden = True)
             return
-        if ctx.guild_id in self.ww_members:
-            self.ww_members[ctx.guild_id].set_minutes(answer_minutes)
-        else:
+
+        # このコマンドが実行された時点でギルドごとのメンバーが設定されていなければ、作っておく
+        if not ctx.guild_id in self.ww_members:
             self.ww_members[ctx.guild_id] = Members()
-            self.ww_members[ctx.guild_id].set_minutes(answer_minutes)
+        self.ww_members[ctx.guild_id].set_minutes(answer_minutes)
 
         msg =   'ワードウルフを始めます(3人以上必要です)！　この中に、**ワードウルフ**が紛れ込んでいます(本人も知りません！)。\n'\
                 'DMでお題が配られますが、**ワードウルフだけは別のお題**が配られます(お題は2種類あります)。会話の中で不審な言動を察知し、みごとに'\
@@ -427,10 +427,11 @@ class GameCog(commands.Cog, name='ゲーム用'):
             answer_minutes = int(answer_minutes)
         else:
             answer_minutes = self.DEFAULT_TIME
-        if ctx.guild_id in self.ng_members:
-            self.ng_members[ctx.guild_id].set_minutes(answer_minutes)
-        else:
+
+        # このコマンドが実行された時点でギルドごとのメンバーが設定されていなければ、作っておく
+        if not ctx.guild_id in self.ng_members:
             self.ng_members[ctx.guild_id] = Members()
+        self.ng_members[ctx.guild_id].set_minutes(answer_minutes)
 
         if answer_minutes > self.MAX_TIME:
             msg = f'NGワードゲームはそんなに長い時間するものではないです(現在、{answer_minutes}分を指定しています。{self.MAX_TIME}分以内にして下さい)'
