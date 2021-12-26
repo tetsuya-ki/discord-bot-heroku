@@ -869,6 +869,8 @@ class GameCog(commands.Cog, name='ゲーム用'):
                 LOG.info('回答者が出揃ったので、場に展開！')
                 msg = self.ohgiriGames[ctx.guild_id].description + f'\n{self.ohgiriGames[ctx.guild_id].house.mention} 回答を読み上げたのち、好きな回答を`/ohgiri-game-choice <数字>`で選択してください！'
                 await ctx.send(msg)
+            else:
+                await ctx.send('回答ありがとうございます', hidden=True)
 
     @cog_ext.cog_slash(
     name='ohgiri-game-choice',
