@@ -639,24 +639,37 @@ class GameCog(commands.Cog, name='ゲーム用'):
                                     description='`/roll 1d6`のように、左側にダイスの数、右側にダイスの種類(最大値)を指定してください',
                                     option_type=3,
                                     required=True)
+        , manage_commands.create_option(name='reply_is_hidden',
+                                    description='Botの実行結果を全員に見せるどうか(デフォルトは全員に見せる))',
+                                    option_type=3,
+                                    required=False,
+                                    choices=[
+                                        manage_commands.create_choice(
+                                        name='自分のみ',
+                                        value='True'),
+                                        manage_commands.create_choice(
+                                        name='全員に見せる',
+                                        value='False')
+                                    ])
     ])
-    async def roll(self, ctx, dice_and_num):
+    async def roll(self, ctx, dice_and_num, reply_is_hidden:str = None):
         """
         ダイスを振る(さいころを転がす)コマンド
         - `/roll 1d6`のように、左側にダイスの数、右側にダイスの種類(最大値)を指定してください
         """
+        hidden = True if reply_is_hidden == 'True' else False
         default_error_msg = '`/roll 1d6`のように指定してください。'
         if dice_and_num is None:
-            await ctx.send(default_error_msg)
+            await ctx.send(default_error_msg, hidden=False)
             return
         diceAndNum = str(dice_and_num).lower()
         if 'd' not in diceAndNum:
             msg = 'dが必ず必要です。'
-            await ctx.send(msg + default_error_msg)
+            await ctx.send(msg + default_error_msg, hidden=False)
             return
         list = str(diceAndNum).split('d')
         if len(list) != 2:
-            await ctx.send(default_error_msg)
+            await ctx.send(default_error_msg, hidden=False)
             return
         elif len(list) == 2:
             msg = ''
@@ -666,17 +679,17 @@ class GameCog(commands.Cog, name='ゲーム用'):
                 dice_num = int(list[0])
             else:
                 msg = 'dの左側が数字ではありません。'
-                await ctx.send(msg + default_error_msg)
+                await ctx.send(msg + default_error_msg, hidden=False)
                 return
             if list[1].isdecimal():
                 max_num = int(list[1])
             else:
                 msg = 'dの右側が数字ではありません。'
-                await ctx.send(msg + default_error_msg)
+                await ctx.send(msg + default_error_msg, hidden=False)
                 return
             if max_num < 1 or dice_num < 1:
                 msg = 'dの左右は1以上である必要があります。'
-                await ctx.send(msg + default_error_msg)
+                await ctx.send(msg + default_error_msg, hidden=False)
                 return
             for i in range(dice_num):
                 value = random.randint(1, max_num)
@@ -685,7 +698,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
             else:
                 if dice_num > 1:
                     msg += f' → {sum}'
-                await ctx.send(msg)
+                await ctx.send(msg, hidden=hidden)
 
     async def startCoyote(self, ctx):
         self.coyoteGames[ctx.guild_id].setInit(self.cy_members[ctx.guild_id].get_members())
