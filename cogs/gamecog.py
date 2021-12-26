@@ -662,13 +662,13 @@ class GameCog(commands.Cog, name='ゲーム用'):
             msg = ''
             sum = 0
             # ダイスの数、ダイスの最大値についてのチェックと数値化
-            if self.coyoteGames[ctx.guild_id].is_num(list[0]):
+            if list[0].isdecimal():
                 dice_num = int(list[0])
             else:
                 msg = 'dの左側が数字ではありません。'
                 await ctx.send(msg + default_error_msg)
                 return
-            if self.coyoteGames[ctx.guild_id].is_num(list[1]):
+            if list[1].isdecimal():
                 max_num = int(list[1])
             else:
                 msg = 'dの右側が数字ではありません。'
