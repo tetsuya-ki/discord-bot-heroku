@@ -76,9 +76,11 @@ class OnMessageCog(commands.Cog, name="メッセージイベント用"):
 
         # チャンネルにファイルを添付する(複数ある場合、filesで添付)
         if (len(files) > 1):
-            await targetMessage.reply('file upload', files=files)
+            await targetMessage.reply('file upload', files=files
+                , mention_author=False)
         elif (len(files) == 1):
-            await targetMessage.reply('file upload', file=files.pop())
+            await targetMessage.reply('file upload', file=files.pop()
+                , mention_author=False)
         else:
             return
 
