@@ -1,4 +1,3 @@
-from discord import embeds
 from discord import message
 from discord.ext import commands  # Bot Commands Frameworkのインポート
 from .modules.savefile import SaveFile
@@ -68,8 +67,11 @@ class OnMessageCog(commands.Cog, name="メッセージイベント用"):
             if img_url:
                 path = await self.savefile.download_file_to_dir(img_url, saved_path)
                 if path is not None:
-                    files.append(discord.File(path))
-                    logger.debug('save file: ' + path)
+                    embed_data = discord.Embed() 
+                    embed_data.set_thumbnail(url=f'attachment://{path}')
+                    full_path = saved_path + os.sep + path
+                    files.append(discord.File(full_path, filename=path))
+                    logger.debug('save file: ' + full_path)
             else:
                 logger.debug('url is empty.')
                 return
@@ -77,9 +79,11 @@ class OnMessageCog(commands.Cog, name="メッセージイベント用"):
         # チャンネルにファイルを添付する(複数ある場合、filesで添付)
         if (len(files) > 1):
             await targetMessage.reply('file upload', files=files
+                # channel.sendではembedsは送信できない(webhook.sendのみ)
                 , mention_author=False)
         elif (len(files) == 1):
             await targetMessage.reply('file upload', file=files.pop()
+                , embed=embed_data
                 , mention_author=False)
         else:
             return
