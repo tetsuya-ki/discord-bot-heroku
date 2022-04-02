@@ -2,7 +2,7 @@ aiohttp==3.7.4
 async-timeout==3.0.1
 attrs==20.3.0
 chardet==3.0.4
-discord.py==1.6.0
+git+https://github.com/Rapptz/discord.py@master
 idna==3.1
 mojimoji==0.0.11
 multidict==4.7.6
