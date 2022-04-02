@@ -240,6 +240,12 @@ Discord用のBot。discord.pyのBot Commands Frameworkを使用して実装。�
   - NGワードゲーム機能で使用するJSONをURLから取得する場合に設定(Cogを読み込む際に取得されます)。環境変数がない場合は、[jsonファイル](https://github.com/tetsuya-ki/discord-bot-heroku/blob/master/cogs/modules/files/wordwolf.json)を使用
 - COUNT_RANK_SETTING=5
   - `/countMessage`と`/countReaction`で使用するランキングの数を設定。未指定の場合、5として扱う。
+- APPLICATION_ID="99999999"
+  - あなたのBotの`APPLICATION ID`を指定する(スラッシュコマンドを使う上で設定が必須となります)
+    - [開発者ポータル](https://discord.com/developers/applications/)の該当Botの`General Information`の上部にある、`APPLICATION ID`
+- ENABLE_SLASH_COMMAND_GUILD_ID="99999999"
+  - あなたのBotのテストする際はテスト用のギルドですぐに使用したいものと思われます(グローバルコマンドは適用まで時間がかかってしまう)
+  - その場合、この環境変数にテスト用ギルドのIDを設定することで、すぐにスラッシュコマンドが試せます(ギルドコマンドとして設定する)
 
 ## ローカルでの動かし方
 
