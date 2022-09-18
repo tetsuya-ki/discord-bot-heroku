@@ -13,11 +13,11 @@ class MakeTeam:
         self.my_connected_vc_only_flg = False
         self.me = me
 
-    def set_mem(self, ctx):
-        guild = ctx.guild
+    def set_mem(self, interaction):
+        guild = interaction.guild
 
-        if self.my_connected_vc_only_flg and ctx.author.voice is not None:
-            self.v_channels = [ctx.author.voice.channel]
+        if self.my_connected_vc_only_flg and interaction.author.voice is not None:
+            self.v_channels = [interaction.author.voice.channel]
         else:
             self.v_channels = guild.voice_channels
 

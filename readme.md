@@ -6,21 +6,23 @@ Discord用のBot。discord.pyのBot Commands Frameworkを使用して実装。�
 
 1. [機能](#機能)
 
-1. [通常用カテゴリ(messagecog.pyで実装)](#通常用カテゴリmessagecogpyで実装)
+1. [WIP_通常用カテゴリ(messagecog.pyで実装)](#通常用カテゴリmessagecogpyで実装)
 
 1. [管理用カテゴリ(admincog.pyで実装)](#管理用カテゴリadmincogpyで実装)
 
-1. [リアクションチャンネラーカテゴリ(reactionchannelercog.pyで実装)](#リアクションチャンネラーカテゴリreactionchannelercogpyで実装)
+1. [WIP_リアクションチャンネラーカテゴリ(reactionchannelercog.pyで実装)](#リアクションチャンネラーカテゴリreactionchannelercogpyで実装)
 
-1. [ゲームカテゴリ(gamecog.pyで実装)](#ゲームカテゴリgamecogpyで実装)
+1. [WIP_ゲームカテゴリ(gamecog.pyで実装)](#ゲームカテゴリgamecogpyで実装)
 
-1. [メッセージイベント用(onmessagecog.pyで実装)](#メッセージイベント用onmessagecogpyで実装)
+1. [WIP_メッセージイベント用(onmessagecog.pyで実装)](#メッセージイベント用onmessagecogpyで実装)
 
-1. [カテゴリ未設定](#カテゴリ未設定)
+1. [WIP_カテゴリ未設定](#カテゴリ未設定)
 
 1. [環境変数の説明](#環境変数の説明)
 
-1. [ローカルでの動かし方](#ローカルでの動かし方)
+1. [ローカルでの動かし方(Poetry)](#ローカルでの動かし方poetry)
+
+1. [ローカルでの動かし方](#ローカルでの動かし方poetryを使用しない方法)
 
 1. [Dockerでの動かし方](#dockerでの動かし方)
 
@@ -238,6 +240,8 @@ Discord用のBot。discord.pyのBot Commands Frameworkを使用して実装。�
   - ワードウルフ機能で使用するJSONをURLから取得する場合に設定(Cogを読み込む際に取得されます)。環境変数がない場合は、[jsonファイル](https://github.com/tetsuya-ki/discord-bot-heroku/blob/master/cogs/modules/files/wordwolf.json)を使用
 - NGWORD_GAME_JSON_URL=ngword_game_json_url
   - NGワードゲーム機能で使用するJSONをURLから取得する場合に設定(Cogを読み込む際に取得されます)。環境変数がない場合は、[jsonファイル](https://github.com/tetsuya-ki/discord-bot-heroku/blob/master/cogs/modules/files/wordwolf.json)を使用
+- USE_IF_AVAILABLE_FILE=True
+  - 各JSONファイルがあればそちらを優先的に使用するかどうか。デフォルトはTrue
 - COUNT_RANK_SETTING=5
   - `/countMessage`と`/countReaction`で使用するランキングの数を設定。未指定の場合、5として扱う。
 - APPLICATION_ID="99999999"
@@ -247,36 +251,48 @@ Discord用のBot。discord.pyのBot Commands Frameworkを使用して実装。�
   - あなたのBotのテストする際はテスト用のギルドですぐに使用したいものと思われます(グローバルコマンドは適用まで時間がかかってしまう)
   - その場合、この環境変数にテスト用ギルドのIDを設定することで、すぐにスラッシュコマンドが試せます(ギルドコマンドとして設定する)
 
-## ローカルでの動かし方
+## ローカルでの動かし方(Poetry)
+
+1. Install Poetry  
+<https://python-poetry.org/docs/#installation>
+
+2. Install modules  
+`poetry install`
+
+3. create .env  
+`.env.sample`を参考に`.env`を作成する  
+Botは[こちら](https://discord.com/developers/applications)で作成し、トークンを取得する（トークンは厳重に管理すること！）  
+＊環境変数を修正する際は、[環境変数の説明](#環境変数の説明)を参照すること！
+
+4. Start Bot  
+`poetry run python assistantbot.py `
+
+## ローカルでの動かし方(Poetryを使用しない方法)
 
 - 詳しくは[wiki](https://github.com/tetsuya-ki/discord-bot-heroku/wiki)を参照ください！
 
-1. Install modules
-
-    Mac: `pip3 install -r requirements.txt`  
-    Windows: `py -3 pip install -r requirements.txt`
+1. Install modules  
+Mac: `pip3 install -r requirements.txt`  
+Windows: `py -3 pip install -r requirements.txt`
 
 2. create .env  
 `.env.sample`を参考に`.env`を作成する  
 Botは[こちら](https://discord.com/developers/applications)で作成し、トークンを取得する（トークンは厳重に管理すること！）  
 ＊環境変数を修正する際は、[環境変数の説明](#環境変数の説明)を参照すること！
 
-3. Start Bot
-
-    Mac: `python3 assitantbot.py`  
-    Windows: `py -3 assitantbot.py`
+3. Start Bot  
+Mac: `python3 assistantbot.py`  
+Windows: `py -3 assistantbot.py`
 
 ## Dockerでの動かし方
 
 - 詳しくは[wiki](https://github.com/tetsuya-ki/discord-bot-heroku/wiki)を参照ください！
 
-1. Docker imageを作成（または、Docker HubからPull）
-
+1. Docker imageを作成（または、Docker HubからPull）  
 1-1. Make Docker Image(Build by yourself)  
-    `docker build . -t discordbotheroku:latest .`
-
-1-2. Pull from Docker Hub
-    `docker pull tk2812/discord-bot-heroku:latest`
+`docker build . -t discordbotheroku:latest .`  
+1-2. Pull from Docker Hub  
+`docker pull tk2812/discord-bot-heroku:latest`
 
 2. Make .env-docker file  
 `.env-docker.sample`を参考に`.env-docker`を作成する(=の両端はスペース無しが良さそう。以下のスタイルなら動いた)  

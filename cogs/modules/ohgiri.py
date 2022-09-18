@@ -6,8 +6,121 @@ from os.path import join, dirname
 from logging import getLogger
 from . import settings
 from .savefile import SaveFile
+from .members import Members
 
-logger = getLogger(__name__)
+LOG = getLogger('assistantbot')
+
+class OhrgiriStart(discord.ui.View):
+    def __init__(self, oh_members, ohgiriGames, msg):
+        super().__init__()
+        self.oh_members = oh_members
+        self.ohgiriGames = ohgiriGames
+        self.msg = msg
+
+    @discord.ui.button(label='参加する', style=discord.ButtonStyle.green)
+    async def join(self, interaction, button: discord.ui.Button):
+        if interaction.guild_id in self.oh_members:
+            self.oh_members[interaction.guild_id].add_member(interaction.user)
+        else:
+            self.oh_members[interaction.guild_id] = Members()
+            self.ohgiriGames[interaction.guild_id] = Ohgiri()
+            self.ohgiriGames[interaction.guild_id].file_path = self.ohgiriGames['default'].file_path
+            self.oh_members[interaction.guild_id].add_member(interaction.user)
+        LOG.debug(f'追加:{interaction.user.display_name}')
+        await interaction.response.edit_message(content=f'{interaction.user.display_name}が参加しました!(参加人数:{self.oh_members[interaction.guild_id].len})', view=self)
+
+    @discord.ui.button(label='離脱する', style=discord.ButtonStyle.red)
+    async def leave(self, interaction, button: discord.ui.Button):
+        if interaction.guild_id in self.oh_members:
+            self.oh_members[interaction.guild_id].remove_member(interaction.user)
+        else:
+            self.oh_members[interaction.guild_id] = Members()
+            self.ohgiriGames[interaction.guild_id] = Ohgiri()
+            self.ohgiriGames[interaction.guild_id].file_path = self.ohgiriGames['default'].file_path
+        LOG.debug(f'削除:{interaction.user.display_name}')
+        await interaction.response.edit_message(content=f'{interaction.user.display_name}が離脱しました!(参加人数:{self.oh_members[interaction.guild_id].len})', view=self)
+
+    @discord.ui.button(label='開始する', style=discord.ButtonStyle.blurple)
+    async def start(self, interaction, button: discord.ui.Button):
+        if interaction.guild_id not in self.oh_members:
+            msg = f'ゲームが始まっていません。`/start-ohgiri-game`でゲームを開始してください。'
+            self.oh_members[interaction.guild_id] = Members()
+            self.ohgiriGames[interaction.guild_id] = Ohgiri()
+            self.ohgiriGames[interaction.guild_id].file_path = self.ohgiriGames['default'].file_path
+            await interaction.response.edit_message(content=msg, view=self)
+            return
+        if self.oh_members[interaction.guild_id].len < 2:
+            msg = f'大喜利を楽しむには2人以上のメンバーが必要です(現在、{self.oh_members[interaction.guild_id].len}人しかいません)'
+            await interaction.response.edit_message(content=msg, view=self)
+            return
+        await self.startOhgiri(interaction)
+
+    @discord.ui.button(label='参加者をクリアする', style=discord.ButtonStyle.grey)
+    async def clear(self, interaction, button: discord.ui.Button):
+        self.oh_members[interaction.guild_id] = Members()
+        self.ohgiriGames[interaction.guild_id] = Ohgiri()
+        LOG.debug(f'参加者クリア:{interaction.user.display_name}')
+        await interaction.response.edit_message(content=f'参加者がクリアされました(参加人数:{self.oh_members[interaction.guild_id].len})', view=self)
+
+    @discord.ui.button(label='終了する', style=discord.ButtonStyle.grey)
+    async def close(self, interaction, button: discord.ui.Button):
+        self.oh_members[interaction.guild_id] = Members()
+        self.ohgiriGames[interaction.guild_id] = Ohgiri()
+        LOG.debug(f'終了:{interaction.user.display_name}')
+        self.stop()
+        await interaction.response.edit_message(content=f'終了しました', view=self)
+
+    async def startOhgiri(self, interaction: discord.Interaction):
+        # 参加者と手札の数を設定
+        await self.ohgiriGames[interaction.guild_id].setting(self.oh_members[interaction.guild_id].get_members(), 12, self.ohgiriGames[interaction.guild_id].win_point)
+        self.ohgiriGames[interaction.guild_id].shuffle()
+        msg = 'お題が提供されるので**「親」はお題を声に出して読み上げ**てください（"○○"は「まるまる」、"✕✕"は「ばつばつ」と読む）。ほかのプレイヤーは読み上げられた**お題に相応しいと思う回答**を`/ohgiri-game-answer <数字>`で選びます。\n'\
+            + '全員が回答したら、**「親」はもっとも秀逸な回答**を`/ohgiri-game-choice <番号>`で選択します。「親」から選ばれたプレイヤーは1点もらえます。ただし、山札から1枚カードが混ざっており、それを選択すると親はポイントが減算されます。\n'\
+            + f'今回のゲームの勝利点は{self.ohgiriGames[interaction.guild_id].win_point}点です。'
+        await interaction.response.send_message(msg)
+        await self.dealAndNextGame(interaction)
+
+    async def dealAndNextGame(self, interaction: discord.Interaction):
+        self.ohgiriGames[interaction.guild_id].deal()
+
+        # お題を表示
+        if interaction.message is not None:
+            odai_msg = await interaction.message.reply(f'お題：{self.ohgiriGames[interaction.guild_id].odai}')
+        else:
+            odai_msg = await interaction.channel.last_message.reply(f'お題：{self.ohgiriGames[interaction.guild_id].odai}')
+
+        # DMで回答カードを示す
+        for player in self.ohgiriGames[interaction.guild_id].members:
+            await self.send_ans_dm(interaction, player, odai_msg)
+
+        msg = f'カードを配りました。DMをご確認ください。{self.ohgiriGames[interaction.guild_id].description}\n親は{self.ohgiriGames[interaction.guild_id].house.display_name}です！'
+        if self.ohgiriGames[interaction.guild_id].required_ans_num == 2:
+            msg += '\n(回答は**2つ**設定するようにしてください！ 例:`/ohgiri-game-answer 1 2`'
+        await interaction.message.reply(msg)
+
+    async def send_ans_dm(self, interaction: discord.Interaction, player: discord.member, odai_msg:discord.message=None):
+        dm_msg  = ''
+        if self.ohgiriGames[interaction.guild_id].house == player:
+            dm_msg = 'あなたは親です！　カード選択はできません。回答が出揃った後、お好みの回答を選択ください。\n'
+        dm = await player.create_dm()
+        for card_id in self.ohgiriGames[interaction.guild_id].members[player].cards:
+            card_message = self.ohgiriGames[interaction.guild_id].ans_dict[card_id]
+            dm_msg += f'{card_id}: {card_message}\n'
+        # お題のメッセージが指定されている場合、リンクを付与
+        if odai_msg is not None:
+            dm_msg += f'お題へのリンク: {self.rewrite_link_at_me(odai_msg.jump_url, interaction.guild_id)}'
+        await dm.send(f'{player.mention}さん あなたの手札はこちらです！\n{dm_msg}')
+
+    def rewrite_link_at_me(self, link:str='', guild_id:int=None):
+        """
+        スレッドの中のリンク取得が想定外(一応遷移できるが)のため、修正
+        こうあるべき: https://discord.com/channels/<guild_id>/<channel_id>/<message_id>
+        実際: https://discord.com/channels/@me//<channel_id>/<message_id>
+        """
+        if guild_id:
+            return str(link).replace('@me', str(guild_id))
+        else:
+            return ''
 
 class OhgiriMember:
     """
@@ -25,7 +138,7 @@ class Answer:
         self.answer_index = None # 画面にある番号(画面に表示する前にまとめて採番して設定するのでinitではNone)
         self.second_card_id = second_card_id # 2つ目の回答カード配列の配列番号
 
-class Ohgiri:
+class Ohgiri():
     """
     大喜利ゲームのクラス
     """
@@ -51,15 +164,14 @@ class Ohgiri:
         self.savefile = SaveFile()
         self.game_over = False
         self.win_point = 5 # 勝利扱いとするポイント
+        self.file_path = self.file_path = join(dirname(__file__), 'files' + os.sep + self.FILE)
 
     async def on_ready(self):
         json_path = join(dirname(__file__), 'files' + os.sep + 'temp' + os.sep + self.FILE)
-        # 環境変数に大喜利用JSONのURLが登録されている場合はそちらを使用
-        if settings.OHGIRI_JSON_URL:
+        # 環境変数に大喜利用JSONのURLが登録されており、可能ならファイルを使用がFalseの場合はそちらを使用
+        if settings.OHGIRI_JSON_URL and not settings.USE_IF_AVAILABLE_FILE:
             self.file_path = await self.savefile.download_file(settings.OHGIRI_JSON_URL,  json_path)
-            logger.info(f'大喜利JSONのURLが登録されているため、JSONを保存しました。\n{self.file_path}')
-        else:
-            self.file_path = join(dirname(__file__), 'files' + os.sep + self.FILE)
+            LOG.info(f'大喜利JSONのURLが登録されているため、JSONを保存しました。\n{self.file_path}')
 
     async def init_card(self):
         json_data = {}
@@ -69,7 +181,7 @@ class Ohgiri:
                 json_data = json.load(f)
         except (FileNotFoundError, json.JSONDecodeError, EOFError) as e:
             # JSON変換失敗、読み込みに失敗したらなにもしない
-            logger.error(e)
+            LOG.error(e)
 
         # お題配列を取り出してお題カードデッキを作る
         self.deck_odai = json_data['subject']
@@ -106,7 +218,7 @@ class Ohgiri:
         random.shuffle(self.deck_ans)
         message = 'シャッフルしました。\n'
         self.description += message
-        logger.info(message)
+        LOG.info(message)
 
     def deal(self):
         """
@@ -144,7 +256,7 @@ class Ohgiri:
     def retern_discards_to_deck(self, name, target_discards, target_deck):
         message = f'{name}がなくなったので山札と捨て札を混ぜて、'
         self.description += message
-        logger.info(message)
+        LOG.info(message)
         target_deck.extend(target_discards)
         target_discards = []
         self.shuffle()

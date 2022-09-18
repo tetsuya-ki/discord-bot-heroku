@@ -1,4 +1,4 @@
-import os
+import os, discord
 from os.path import join, dirname
 from dotenv import load_dotenv
 from logging import DEBUG, INFO, WARN, ERROR
@@ -8,6 +8,12 @@ def if_env(str):
         return False
     else:
         return True
+
+def if_env_defalut_true(str):
+    if str is None or str.upper() == 'TRUE':
+        return True
+    else:
+        return False
 
 def get_log_level(str):
     if str is None:
@@ -28,6 +34,10 @@ def num_env(param):
     else:
         return int(param)
 
+def split_guild_env(str):
+    guilds = [] if str is None else list(map(discord.Object, str.split(';')))
+    return guilds
+
 load_dotenv(verbose=True)
 dotenv_path = join(dirname(__file__), 'files' + os.sep + '.env')
 load_dotenv(dotenv_path)
@@ -46,4 +56,5 @@ REACTION_CHANNELER_PERMIT_WEBHOOK_ID = os.environ.get('REACTION_CHANNELER_PERMIT
 WORDWOLF_JSON_URL = os.environ.get('WORDWOLF_JSON_URL')
 NGWORD_GAME_JSON_URL = os.environ.get('NGWORD_GAME_JSON_URL')
 APPLICATION_ID = os.environ.get('APPLICATION_ID')
-ENABLE_SLASH_COMMAND_GUILD_ID = os.environ.get('ENABLE_SLASH_COMMAND_GUILD_ID')
+ENABLE_SLASH_COMMAND_GUILD_ID = split_guild_env(os.environ.get('ENABLE_SLASH_COMMAND_GUILD_ID'))
+USE_IF_AVAILABLE_FILE = if_env_defalut_true(os.environ.get('USE_IF_AVAILABLE_FILE'))

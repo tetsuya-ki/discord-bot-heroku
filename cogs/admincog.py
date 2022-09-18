@@ -1,16 +1,14 @@
-from datetime import date
-from discord import channel
 from discord import app_commands
 from discord.ext import commands  # Bot Commands Frameworkのインポート
 from .modules import settings
 from .modules.auditlogchannel import AuditLogChannel
-from logging import DEBUG, getLogger
+from logging import DEBUG
 
 import discord
 import datetime
 import asyncio
-
-logger = getLogger(__name__)
+from logging import getLogger
+logger = getLogger('assistantbot')
 
 # コグとして用いるクラスを定義。
 class AdminCog(commands.Cog):
@@ -28,7 +26,7 @@ class AdminCog(commands.Cog):
     # @app_commands.command(description="Echoes a command.")
     # @app_commands.describe(echo="What to echo.")
     # async def echo(self, interaction:discord.Interaction, echo: str = "Hello, world!"):
-    #     await interaction.response.send_message(echo, ephemeral=False) 
+    #     await interaction.response.send_message(echo, ephemeral=False)
     #     # Change ephemeral to True if you want only the author to see that message
 
     # 監査ログの取得
@@ -134,39 +132,13 @@ class AdminCog(commands.Cog):
         def is_me(m):
             return self.command_author == m.author or (m.author.bot and settings.PURGE_TARGET_IS_ME_AND_BOT)
 
-        # 指定がない、または、不正な場合は、コマンドを削除。そうではない場合、コマンドを削除し、指定の数だけ削除する
-        if limit_num is None:
-            await interaction.response.send_message('オプションとして、1以上の数値を指定してください。', ephemeral=True)
-            return
-        if type(limit_num) == str and limit_num.isdecimal():
-            limit_num = int(limit_num)
-        else:
-            await interaction.response.send_message('有効な数字ではないようです。オプションは1以上の数値を指定してください。', ephemeral=True)
-            return
-
-        if limit_num > 1000:
-            limit_num = 1000
-        elif limit_num < 1:
-            await interaction.response.send_message('オプションは1以上の数値を指定してください。', ephemeral=True)
-            return
-
         deleted = await interaction.channel.purge(limit=limit_num, check=is_me)
-        await interaction.response.send_message('{0}個のメッセージを削除しました。'.format(len(deleted)))
+        # なぜかinteraction.response.send_messageだと「discord.errors.InteractionResponded」になるので、直接返信。その後レスポンスを返す
+        await interaction.channel.send(content='{0}個のメッセージを削除しました。'.format(len(deleted)))
+        await interaction.response.send_message('DONE')
 
     # チャンネル管理コマンド群
     channel = app_commands.Group(name="channel", description='チャンネルを操作するコマンド（サブコマンド必須）')
-    # @commands.group(aliases=['ch'], description='チャンネルを操作するコマンド（サブコマンド必須）')
-    # async def channel(self, ctx):
-    # """
-    # チャンネルを管理するコマンド群です。このコマンドだけでは管理できません。半角スペースの後、続けて以下のサブコマンドを入力ください。
-    # - チャンネルを作成したい場合は、`make`を入力し、チャンネル名を指定してください。
-    # - プライベートなチャンネルを作成したい場合は`privateMake`を入力し、チャンネル名を指定してください。
-    # - チャンネルを閲覧できるロールを削除したい場合、`roleDelete`を入力し、ロール名を指定してください。
-    # - トピックを変更したい場合は、`topic`を入力し、トピックに設定したい文字列を指定してください。
-    # """
-        # サブコマンドが指定されていない場合、メッセージを送信する。
-        # if ctx.invoked_subcommand is None:
-        #     await ctx.send('このコマンドにはサブコマンドが必要です。')
 
     # channelコマンドのサブコマンドmake
     # チャンネルを作成する
@@ -480,9 +452,10 @@ class AdminCog(commands.Cog):
             await interaction.response.send_message('削除数は1以上の数値を指定してください。', ephemeral=True)
             return
 
-        # 違和感を持たせないため、コマンドを削除した分を省いた削除数を通知する。
         deleted = await interaction.channel.purge(limit=limit_num, check=is_me_and_contain_keyword)
-        await interaction.response.send_message(f'{len(deleted)}個のメッセージを削除しました。', ephemeral=True)
+        # なぜかinteraction.response.send_messageだと「discord.errors.InteractionResponded」になるので、直接返信。その後レスポンスを返す
+        await interaction.channel.send(content='{0}個のメッセージを削除しました。'.format(len(deleted)))
+        await interaction.response.send_message('DONE')
 
     # チャンネル作成時に実行されるイベントハンドラを定義
     @commands.Cog.listener()
@@ -551,4 +524,4 @@ class AdminCog(commands.Cog):
         await to_channel.send(msg)
 
 async def setup(bot):
-    await bot.add_cog(AdminCog(bot), guilds=[discord.Object(id=465376233115353098)]) # AdminCogにBotを渡してインスタンス化し、Botにコグとして登録する
+    await bot.add_cog(AdminCog(bot)) # AdminCogにBotを渡してインスタンス化し、Botにコグとして登録する
