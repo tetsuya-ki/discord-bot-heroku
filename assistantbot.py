@@ -31,8 +31,8 @@ LOG = getLogger('assistantbot')
 
 # 読み込むCogの名前を格納
 INITIAL_EXTENSIONS = [
-    # 'cogs.messagecog'
-    'cogs.admincog'
+    'cogs.messagecog'
+    , 'cogs.admincog'
     # , 'cogs.reactionchannelercog'
     # , 'cogs.onmessagecog'
     , 'cogs.gamecog'
