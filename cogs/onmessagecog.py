@@ -109,5 +109,5 @@ class OnMessageCog(commands.Cog, name="メッセージイベント用"):
         else:
             return
 
-def setup(bot):
-    bot.add_cog(OnMessageCog(bot)) # OnMessageCogにBotを渡してインスタンス化し、Botにコグとして登録する
+async def setup(bot):
+    await bot.add_cog(OnMessageCog(bot)) # OnMessageCogにBotを渡してインスタンス化し、Botにコグとして登録する

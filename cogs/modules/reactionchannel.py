@@ -193,12 +193,12 @@ class ReactionChannel:
             self.rc_err = '保管に失敗しました。'
             LOG.error(self.rc_err)
 
-    # 追加するリアクションチャネルが問題ないかチェック
-    async def check(self, ctx, reaction:str, channel:str, is_webhook:bool = False):
+    # 追加するリアクションチャンネルが問題ないかチェック
+    async def check(self, interaction: discord.Integration, reaction:discord.Reaction, channel:discord.TextChannel, webhook_url:str, is_webhook:bool = False):
         reaction_id = None
         if reaction.count(':') == 2:
             reaction_id = reaction.split(':')[1]
-        guild = ctx.guild
+        guild = interaction.guild
         additem = f'{reaction}+{channel}'
         LOG.debug(f'＊＊追加のチェック＊＊, reaction: {reaction}, channel: {channel}')
         # 絵文字が不正な場合(guildに登録された絵文字なら'yes'のような文字が入っているし、そうでない場合は1文字のはず -> 🐈‍⬛,がありえるので緩和)
@@ -215,15 +215,15 @@ class ReactionChannel:
         # webhookの場合のチェック
         if is_webhook:
             async with aiohttp.ClientSession() as session:
-                async with session.get(channel) as r:
-                    LOG.debug(channel)
+                async with session.get(webhook_url) as r:
+                    LOG.debug(webhook_url)
                     if r.status != 200:
                         self.rc_err = 'Webhookが不正なので登録できません。'
                         LOG.info(self.rc_err)
                         return False
         else:
             # チャンネルが不正(ギルドに存在しないチャンネル)な場合
-            get_channel = discord.utils.get(guild.text_channels, name=channel)
+            get_channel = discord.utils.get(guild.text_channels, name=channel.name)
             if get_channel is None:
                 self.rc_err = 'チャンネルが不正なので登録できません。'
                 return False
@@ -241,27 +241,17 @@ class ReactionChannel:
         return True
 
     # リアクションチャンネルを追加
-    async def add(self, ctx, reaction:str, channel:str):
+    async def add(self, interaction: discord.Interaction, reaction:discord.Reaction, channel:discord.TextChannel, webhook_url:str):
         LOG.debug(f'＊＊追加＊＊, reaction: {reaction}, channel: {channel}')
-        guild = ctx.guild
+        guild = interaction.guild
         await self.set_rc(guild)
 
-        # チャンネルがID指定の場合はギルドからチャンネル名を取得
-        if channel.count('#') == 1:
-            channel_id = channel.split('#')[1].split('>')[0]
-            logger.debug(f'check channel:{channel_id}')
-            channel_info = None
-            if channel_id.isdecimal():
-                channel_info = guild.get_channel(int(channel_id))
-            if channel_info is not None:
-                channel = channel_info.name
 
         is_webhook = False
-        if self.WEBHOOK_URL in channel:
+        if webhook_url is not None and self.WEBHOOK_URL in webhook_url:
             is_webhook = True
-        if await self.check(ctx, reaction, channel, is_webhook) is False:
+        if await self.check(interaction, reaction, channel, webhook_url, is_webhook) is False:
             return self.rc_err
-        get_channel = discord.utils.get(guild.text_channels, name=channel)
 
         succeeded_channel_or_webhook = ''
         addItem = []
@@ -269,13 +259,12 @@ class ReactionChannel:
         addItem.append(reaction)
         if is_webhook:
             # 環境変数に登録されているものかチェック
-            ch_webhook_id = str(re.search(self.WEBHOOK_URL+r'(\d+)/', channel).group(1))
+            ch_webhook_id = str(re.search(self.WEBHOOK_URL+r'(\d+)/', webhook_url).group(1))
             reaction_channeler_permit_webhook_ids = '' if settings.REACTION_CHANNELER_PERMIT_WEBHOOK_ID is None else settings.REACTION_CHANNELER_PERMIT_WEBHOOK_ID
             reaction_channeler_permit_webhook_id_list = reaction_channeler_permit_webhook_ids.replace(' ', '').split(';')
             l_in = [s for s in reaction_channeler_permit_webhook_id_list if (ch_webhook_id or 'all') in s.lower()]
             # 環境変数に登録されていないものの場合、先頭に「※」を付与
             add_messsage = ''
-            webhook_url = channel
             if len(l_in) == 0:
                 webhook_url = re.sub('^※?', '※', webhook_url)
                 add_messsage = self.NOT_PERMIT_WEBHOOK_MESSAGE
@@ -283,9 +272,9 @@ class ReactionChannel:
             addItem.append('')
             succeeded_channel_or_webhook = f'{webhook_url}\n{add_messsage}'
         else:
-            addItem.append(get_channel.name)
-            addItem.append(get_channel.id)
-            succeeded_channel_or_webhook = f'<#{get_channel.id}>'
+            addItem.append(channel.name)
+            addItem.append(channel.id)
+            succeeded_channel_or_webhook = f'<#{channel.id}>'
 
         # 追加
         self.reaction_channels.append(addItem)
@@ -301,8 +290,8 @@ class ReactionChannel:
         LOG.info(msg)
         return msg
 
-    async def list(self, ctx):
-        guild = ctx.guild
+    async def list(self, interaction: discord.Interaction):
+        guild = interaction.guild
         await self.set_rc(guild)
         LOG.debug(f'＊＊リスト＊＊, {self.guild_reaction_channels}')
         text = ''
@@ -321,9 +310,9 @@ class ReactionChannel:
             return f'＊現在登録されているリアクションチャンネルの一覧です！({len(self.guild_reaction_channels)}種類)\n{text}'
 
     # 全削除
-    async def purge(self, ctx):
+    async def purge(self, interaction: discord.Interaction):
         LOG.debug('＊＊リアクションチャンネラーを全部削除＊＊')
-        guild = ctx.guild
+        guild = interaction.guild
         await self.set_rc(guild)
         for test in map(str, self.reaction_channels):
             LOG.debug(test)
@@ -342,34 +331,24 @@ class ReactionChannel:
         return '全てのリアクションチャンネラーの削除に成功しました！'
 
     # 削除
-    async def delete(self, ctx, reaction:str, channel:str):
+    async def delete(self, interaction: discord.Interaction, reaction:discord.Reaction, channel:discord.TextChannel, webhook_url:str):
         LOG.debug(f'＊＊削除＊＊, reaction: {reaction}, channel: {channel}')
-        guild = ctx.guild
+        guild = interaction.guild
         await self.set_rc(guild)
 
-        # チャンネルがID指定の場合はギルドからチャンネル名を取得
-        if channel.count('#') == 1:
-            channel_id = channel.split('#')[1].split('>')[0]
-            logger.debug(f'check channel:{channel_id}')
-            channel_info = None
-            if channel_id.isdecimal():
-                channel_info = guild.get_channel(int(channel_id))
-            if channel_info is not None:
-                channel = channel_info.name
 
-        get_channel = discord.utils.get(guild.text_channels, name=channel)
         deleteItem = []
         deleteItem.append(guild.id)
         deleteItem.append(reaction)
         channel_or_webhook_msg = ''
-        if self.WEBHOOK_URL in channel:
-            deleteItem.append(channel)
+        if webhook_url is not None and self.WEBHOOK_URL in webhook_url:
+            deleteItem.append(webhook_url)
             deleteItem.append('')
-            channel_or_webhook_msg = f'{channel}'
+            channel_or_webhook_msg = webhook_url
         else:
-            deleteItem.append(get_channel.name)
-            deleteItem.append(get_channel.id)
-            channel_or_webhook_msg = f'<#{get_channel.id}>'
+            deleteItem.append(channel.name)
+            deleteItem.append(channel.id)
+            channel_or_webhook_msg = f'<#{channel.id}>'
 
         # 削除
         self.reaction_channels = [s for s in self.reaction_channels if s != deleteItem]
@@ -377,8 +356,8 @@ class ReactionChannel:
         self.guild_rc_txt_lists = [s for s in self.guild_rc_txt_lists if s != '+'.join(map(str, deleteItem[1:]))]
         self.rc_len = len(self.reaction_channels)
         # Webhookの場合、先頭に「※」をつけて再度削除する(有効でない時は※付与するため...)
-        if self.WEBHOOK_URL in channel:
-            deleteItem[2] = '※' + channel
+        if webhook_url is not None and self.WEBHOOK_URL in webhook_url:
+            deleteItem[2] = '※' + webhook_url
             self.reaction_channels = [s for s in self.reaction_channels if s != deleteItem]
             self.guild_reaction_channels = [s for s in self.guild_reaction_channels if s != deleteItem[1:]]
             self.guild_rc_txt_lists = [s for s in self.guild_rc_txt_lists if s != '+'.join(map(str, deleteItem[1:]))]

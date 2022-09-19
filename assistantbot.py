@@ -33,8 +33,8 @@ LOG = getLogger('assistantbot')
 INITIAL_EXTENSIONS = [
     'cogs.messagecog'
     , 'cogs.admincog'
-    # , 'cogs.reactionchannelercog'
-    # , 'cogs.onmessagecog'
+    , 'cogs.reactionchannelercog'
+    , 'cogs.onmessagecog'
     , 'cogs.gamecog'
 ]
 
