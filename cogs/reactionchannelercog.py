@@ -189,6 +189,8 @@ class ReactionChannelerCog(commands.Cog, name="リアクションチャンネラ
             channel = guild.get_channel(payload.channel_id)
             message = await channel.fetch_message(payload.message_id)
             await message.unpin()
+            await message.reply('ピン留めが解除されました', mention_author=False)
+
             return
 
     # リアクションをもとにチャンネルへ投稿する非同期関数を定義
@@ -231,6 +233,17 @@ class ReactionChannelerCog(commands.Cog, name="リアクションチャンネラ
             elif len(contents) > 1:
                 contents[0] += ' ＊長いので分割しました＊'
 
+            # 画像を設定
+            img_url = None
+            for embed in message.embeds:
+                if embed.image.url:
+                    img_url = embed.image.url
+                    break
+                dicted_data = embed.to_dict()
+                if 'thumbnail' in dicted_data and 'url' in dicted_data['thumbnail']:
+                    img_url = dicted_data['thumbnail']['url']
+                    break
+
             is_webhook = False
             channel = ''
             # Webhookの場合
@@ -243,6 +256,8 @@ class ReactionChannelerCog(commands.Cog, name="リアクションチャンネラ
             embed = discord.Embed(description = contents[0], type='rich')
             embed.set_author(name=reaction[0] + ' :reaction_channeler', url='https://github.com/tetsuya-ki/discord-bot-heroku/')
             embed.set_thumbnail(url=message.author.display_avatar)
+            if img_url is not None:
+                embed.set_image(url=img_url)
 
             created_at = message.created_at.replace(tzinfo=datetime.timezone.utc)
             created_at_jst = created_at.astimezone(datetime.timezone(datetime.timedelta(hours=9)))

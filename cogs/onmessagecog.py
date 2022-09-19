@@ -48,6 +48,7 @@ class OnMessageCog(commands.Cog, name="メッセージイベント用"):
         if len(targetMessage.embeds)  == 0:
             return
 
+        embeds = []
         for embed in targetMessage.embeds:
             current_path = os.path.dirname(os.path.abspath(__file__))
             saved_path = ''.join([current_path, os.sep, self.FILEPATH.replace('/', os.sep)])
@@ -65,8 +66,9 @@ class OnMessageCog(commands.Cog, name="メッセージイベント用"):
             if img_url:
                 path = await self.savefile.download_file_to_dir(img_url, saved_path)
                 if path is not None:
-                    embed_data = discord.Embed() 
+                    embed_data = discord.Embed()
                     embed_data.set_thumbnail(url=f'attachment://{path}')
+                    embeds.append(embed_data)
                     full_path = saved_path + os.sep + path
                     files.append(discord.File(full_path, filename=path))
                     LOG.debug('save file: ' + full_path)
@@ -74,15 +76,13 @@ class OnMessageCog(commands.Cog, name="メッセージイベント用"):
                 LOG.debug('url is empty.')
                 return
 
-        # チャンネルにファイルを添付する(複数ある場合、filesで添付)
-        if (len(files) > 1):
-            await targetMessage.reply('file upload', files=files
-                # channel.sendではembedsは送信できない(webhook.sendのみ)
-                , mention_author=False)
-        elif (len(files) == 1):
-            await targetMessage.reply('file upload', file=files.pop()
-                , embed=embed_data
-                , mention_author=False)
+        # チャンネルにファイルを添付する
+        if (len(files) > 0):
+            await targetMessage.reply(
+                'file upload',
+                files=files,
+                embeds=embeds,
+                mention_author=False)
         else:
             return
 

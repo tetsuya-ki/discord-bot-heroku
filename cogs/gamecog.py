@@ -98,7 +98,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
         # もう入力できない想定
         if answer_minutes > self.MAX_TIME:
             msg = f'ワードウルフはそんなに長い時間するものではないです(現在、{answer_minutes}分を指定しています。{self.MAX_TIME}分以内にして下さい)'
-            await interaction.response.send_message(msg, hidden = True)
+            await interaction.response.send_message(msg, ephemeral=True)
             return
 
         # このコマンドが実行された時点でギルドごとのメンバーが設定されていなければ、作っておく
