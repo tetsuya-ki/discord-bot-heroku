@@ -16,6 +16,8 @@ class AdminCog(commands.Cog):
     管理用の機能です。
     """
     TIMEOUT_TIME = 30.0
+    SHOW_ME = '自分のみ'
+    SHOW_ALL = '全員に見せる'
 
     # AdminCogクラスのコンストラクタ。Botを受取り、インスタンス変数として保持。
     def __init__(self, bot):
@@ -23,16 +25,12 @@ class AdminCog(commands.Cog):
         self.command_author = None
         self.audit_log_channel = AuditLogChannel()
 
-    # @app_commands.command(description="Echoes a command.")
-    # @app_commands.describe(echo="What to echo.")
-    # async def echo(self, interaction:discord.Interaction, echo: str = "Hello, world!"):
-    #     await interaction.response.send_message(echo, ephemeral=False)
-    #     # Change ephemeral to True if you want only the author to see that message
-
     # 監査ログの取得
-    # @commands.command(aliases=['getal','auditlog','gal'],description='監査ログを取得します')
-    @app_commands.command(name='get-audit-log', description='監査ログを取得します')
-    @app_commands.describe(limit_num='指定された場合、新しいものを先頭にその件数だけ取得(未指定の場合はふるいものを先頭に3,000件取得')
+    @app_commands.command(
+        name='get-audit-log',
+        description='監査ログを取得します')
+    @app_commands.describe(
+        limit_num='指定された場合、新しいものを先頭にその件数だけ取得(未指定の場合はふるいものを先頭に3,000件取得')
     async def getAuditLog(self, interaction: discord.Interaction, limit_num: str=None):
         """
         監査ログを取得します。ただし、とても読みづらい形式です。。。
@@ -42,6 +40,7 @@ class AdminCog(commands.Cog):
         first_entry_times = 0
         oldest_first_flag = True
         audit_log = 0
+        await interaction.response.defer()
 
         if limit_num is None:
             limit_num = 3000
@@ -65,10 +64,10 @@ class AdminCog(commands.Cog):
             await to_channel.send(start)
 
         LOG.debug(start)
-        first_entry_list = await interaction.guild.audit_logs(limit=1, oldest_first=oldest_first_flag).flatten()
+        first_entry_list = [audit_logs async for audit_logs in  interaction.guild.audit_logs(limit=1, oldest_first=oldest_first_flag)]
         first_entry = first_entry_list[0]
 
-        logger.debug(f'{audit_log}: (fet:{first_entry_times}) {first_entry}')
+        LOG.debug(f'{audit_log}: (fet:{first_entry_times}) {first_entry}')
 
         async for entry in interaction.guild.audit_logs(limit=limit_num, oldest_first=oldest_first_flag):
             if first_entry.id == entry.id:
@@ -85,7 +84,8 @@ class AdminCog(commands.Cog):
         end = f'end getAuditLog ({audit_log}回で終了)'
         if (settings.LOG_LEVEL == DEBUG):
             await to_channel.send(end)
-        logger.debug(end)
+        LOG.debug(end)
+        await interaction.followup.send("処理完了", ephemeral=False)
 
     # 監査ログをチャンネルに送信
     async def sendAuditLogEntry(self, to_channel, entry, audit_log_times):
@@ -118,33 +118,44 @@ class AdminCog(commands.Cog):
         await to_channel.send(msg, embed=embed)
 
     # メッセージの削除
-    # @commands.command(aliases=['pg','del','delete'],description='メッセージを削除します')
-    @app_commands.command(name='purge', description='メッセージを削除します')
-    @app_commands.describe(limit_num='削除するメッセージの数')
-    async def purge(self, interaction: discord.Interaction, limit_num: app_commands.Range[int, 1, 1000]):
+    @app_commands.command(
+        name='purge',
+        description='メッセージを削除します')
+    @app_commands.describe(
+        limit_num='削除するメッセージの数')
+    @app_commands.describe(
+        reply_is_hidden='Botの実行結果を全員に見せるどうか(デフォルトは全員に見せる)')
+    async def purge(self,
+                    interaction: discord.Interaction,
+                    limit_num: app_commands.Range[int, 1, 1000],
+                    reply_is_hidden: Literal['自分のみ', '全員に見せる'] = SHOW_ME):
         """
         自分かBOTのメッセージを削除します。
         削除するメッセージの数が必要です。
         なお、BOTにメッセージの管理権限、メッセージの履歴閲覧権限、メッセージの閲覧権限がない場合は失敗します。
         """
+        hidden = True if reply_is_hidden == self.SHOW_ME else False
         self.command_author = interaction.user
         # botかコマンドの実行主かチェック
         def is_me(m):
-            return self.command_author == m.author or (m.author.bot and settings.PURGE_TARGET_IS_ME_AND_BOT)
+            return (self.command_author == m.author \
+                    or (m.author.bot and settings.PURGE_TARGET_IS_ME_AND_BOT)) \
+                    and m.type == discord.MessageType.default
 
+        await interaction.response.defer()
         deleted = await interaction.channel.purge(limit=limit_num, check=is_me)
-        # なぜかinteraction.response.send_messageだと「discord.errors.InteractionResponded」になるので、直接返信。その後レスポンスを返す
-        await interaction.channel.send(content='{0}個のメッセージを削除しました。'.format(len(deleted)))
-        await interaction.response.send_message('DONE')
+        await interaction.followup.send(content='{0}個のメッセージを削除しました。'.format(len(deleted)), ephemeral=hidden)
 
     # チャンネル管理コマンド群
     channel = app_commands.Group(name="channel", description='チャンネルを操作するコマンド（サブコマンド必須）')
 
     # channelコマンドのサブコマンドmake
     # チャンネルを作成する
-    # @channel.command(aliases=['c','m','mk','craft'], description='チャンネルを作成します')
-    @channel.command(name='make', description='チャンネルを作成します（コマンドを打ったチャンネルの所属するカテゴリに作成されます）')
-    @app_commands.describe(channel_name='チャンネル名')
+    @channel.command(
+        name='make',
+        description='チャンネルを作成します（コマンドを打ったチャンネルの所属するカテゴリに作成されます）')
+    @app_commands.describe(
+        channel_name='チャンネル名')
     async def make(self, interaction: discord.Interaction, channel_name: str=None):
         """
         引数に渡したチャンネル名でテキストチャンネルを作成します（コマンドを打ったチャンネルの所属するカテゴリに作成されます）。
@@ -170,12 +181,12 @@ class AdminCog(commands.Cog):
         confirm_text = f'{category_text}パブリックなチャンネル **{channel_name}** を作成してよろしいですか？ 問題ない場合、30秒以内に👌(ok_hand)のリアクションをつけてください。'
         try:
             confirm_msg = await interaction.channel.send(confirm_text)
-            await interaction.response.send_message(f'チャンネル作成中です。確認のため、チャンネルを確認してください。\n{confirm_msg.jump_url}', ephemeral=True)
+            await interaction.response.send_message(f'チャンネル作成中です。チャンネルを確認してください。\n{confirm_msg.jump_url}', ephemeral=True)
         except (discord.HTTPException,discord.NotFound,discord.Forbidden) as e:
             dm = await interaction.user.create_dm()
             confirm_text2 = f'チャンネルに送信できないのでDMで失礼します。\n{confirm_text}'
             confirm_msg = await dm.send(confirm_text2)
-            await interaction.response.send_message(f'チャンネル作成中です。確認のため、DMを確認してください。\n{confirm_msg.jump_url}', ephemeral=True)
+            await interaction.response.send_message(f'チャンネル作成中です。DMを確認してください。\n{confirm_msg.jump_url}', ephemeral=True)
 
         def check(reaction, user):
             return user == self.command_author and str(reaction.emoji) == '👌'
@@ -200,9 +211,11 @@ class AdminCog(commands.Cog):
 
     # channelコマンドのサブコマンドprivateMake
     # チャンネルを作成する
-    # @channel.command(aliases=['p','pm','pmk', 'pcraft', 'primk'], description='プライベートチャンネルを作成します')
-    @channel.command(name='private-make', description='プライベートチャンネルチャンネルを作成します（コマンドを打ったチャンネルの所属するカテゴリに作成されます）')
-    @app_commands.describe(channel_name='チャンネル名')
+    @channel.command(
+        name='private-make',
+        description='プライベートチャンネルチャンネルを作成します（コマンドを打ったチャンネルの所属するカテゴリに作成されます）')
+    @app_commands.describe(
+        channel_name='チャンネル名')
     async def privateMake(self, interaction: discord.Interaction, channel_name: str=None):
         """
         引数に渡したチャンネル名でプライベートなテキストチャンネルを作成します（コマンドを打ったチャンネルの所属するカテゴリに作成されます）。
@@ -283,9 +296,11 @@ class AdminCog(commands.Cog):
 
     # channelコマンドのサブコマンドtopic
     # チャンネルのトピックを設定する
-    # @channel.command(aliases=['t', 'tp'], description='チャンネルにトピックを設定します')
-    @channel.command(name='topic', description='チャンネルにトピックを設定します')
-    @app_commands.describe(topic_word='トピック')
+    @channel.command(
+        name='topic',
+        description='チャンネルにトピックを設定します')
+    @app_commands.describe(
+        topic_word='トピック')
     async def topic(self, interaction: discord.Interaction, topic_word: str=None):
         """
         引数に渡した文字列でテキストチャンネルのトピックを設定します。
@@ -330,9 +345,11 @@ class AdminCog(commands.Cog):
 
     # channelコマンドのサブコマンドroleDel
     # チャンネルのロールを削除する（テキストチャンネルが見えないようにする）
-    # @channel.command(aliases=['rd', 'roledel', 'deleterole' 'delrole', 'dr'], description='チャンネルのロールを削除します')
-    @channel.command(name='role-delete', description='チャンネルのロールを削除します')
-    @app_commands.describe(target_role='見れなくする対象のロール(このロール以下が見られなくなる)')
+    @channel.command(
+        name='role-delete',
+        description='チャンネルのロールを削除します')
+    @app_commands.describe(
+        target_role='見れなくする対象のロール(このロール以下が見られなくなる)')
     async def roleDelete(self, interaction: discord.Interaction, target_role: str=None):
         """
         指定したロールがテキストチャンネルを見れないように設定します（自分とおなじ権限まで指定可能（ただしチャンネルに閲覧できるロールがない場合、表示されなくなります！））。
@@ -421,16 +438,25 @@ class AdminCog(commands.Cog):
                 await confirm_msg.reply(f'チャンネル「{interaction.channel.name}」からロール**「{target_role}」**の閲覧権限を削除しました！')
 
     # 指定した文章を含むメッセージを削除するコマンド
-    # @commands.command(aliases=['dm','dem','delm'],description='指定した文章を含むメッセージを削除します')
-    @channel.command(name='delete-message', description='指定した文章を含むメッセージを削除します')
-    @app_commands.describe(keyword='削除対象のキーワード(必須)')
-    @app_commands.describe(limit_num='削除対象とするメッセージの数(任意。デフォルトは1)')
-    async def deleteMessage(self, interaction: discord.Interaction, keyword :str=None, limit_num: str='1'):
+    @channel.command(
+        name='delete-message',
+        description='指定した文章を含むメッセージを削除します')
+    @app_commands.describe(
+        keyword='削除対象のキーワード(必須)')
+    @app_commands.describe(
+        limit_num='削除対象とするメッセージの数(任意。デフォルトは1)')
+    @app_commands.describe(
+        reply_is_hidden='Botの実行結果を全員に見せるどうか(デフォルトは全員に見せる)')
+    async def deleteMessage(self,
+                            interaction: discord.Interaction,
+                            keyword :str=None, limit_num: str='1',
+                            reply_is_hidden: Literal['自分のみ', '全員に見せる'] = SHOW_ME):
         """
         自分かBOTの指定した文章を含むメッセージを削除します。
         削除対象のキーワード(必須)、削除対象とするメッセージの数(任意。デフォルトは1)
         なお、BOTにメッセージの管理権限、メッセージの履歴閲覧権限、メッセージの閲覧権限がない場合は失敗します。
         """
+        hidden = True if reply_is_hidden == self.SHOW_ME else False
         self.command_author = interaction.user
         # botかコマンドの実行主かチェックし、キーワードを含むメッセージのみ削除
         def is_me_and_contain_keyword(m):
@@ -452,10 +478,9 @@ class AdminCog(commands.Cog):
             await interaction.response.send_message('削除数は1以上の数値を指定してください。', ephemeral=True)
             return
 
+        await interaction.response.defer()
         deleted = await interaction.channel.purge(limit=limit_num, check=is_me_and_contain_keyword)
-        # なぜかinteraction.response.send_messageだと「discord.errors.InteractionResponded」になるので、直接返信。その後レスポンスを返す
-        await interaction.channel.send(content='{0}個のメッセージを削除しました。'.format(len(deleted)))
-        await interaction.response.send_message('DONE')
+        await interaction.followup.send(content='{0}個のメッセージを削除しました。'.format(len(deleted)), ephemeral=hidden)
 
     # チャンネル作成時に実行されるイベントハンドラを定義
     @commands.Cog.listener()
