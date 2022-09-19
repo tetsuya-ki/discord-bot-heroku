@@ -1,4 +1,6 @@
 import discord
+import random
+import os
 from discord import app_commands
 from discord.ext import commands  # Bot Commands Frameworkのインポート
 from typing import Literal
@@ -14,11 +16,6 @@ from .modules.members import Members
 from .modules import games
 from logging import getLogger
 LOG = getLogger('assistantbot')
-
-import asyncio
-import random
-import re
-import os
 
 POLL_CHAR = ['🇦','🇧','🇨','🇩','🇪','🇫','🇬','🇭','🇮','🇯','🇰','🇱','🇲','🇳','🇴','🇵','🇶','🇷','🇸','🇹']
 

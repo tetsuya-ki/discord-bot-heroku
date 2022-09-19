@@ -1,16 +1,14 @@
-from discord.ext import commands  # Bot Commands Frameworkのインポート
-from .modules.grouping import MakeTeam
-from .modules.radiko import Radiko
-from .modules import settings
-from logging import getLogger
-
 import discord
 import re
 import time
+from discord.ext import commands  # Bot Commands Frameworkのインポート
+from discord import app_commands
+from typing import Literal
+from .modules.grouping import MakeTeam
+from .modules.radiko import Radiko, Pref
+from logging import getLogger
 
-logger = getLogger(__name__)
-
-POLL_CHAR = ['🇦','🇧','🇨','🇩','🇪','🇫','🇬','🇭','🇮','🇯','🇰','🇱','🇲','🇳','🇴','🇵','🇶','🇷','🇸','🇹']
+LOG = getLogger('assistantbot')
 
 # コグとして用いるクラスを定義。
 class MessageCog(commands.Cog, name='通常用'):
@@ -223,7 +221,7 @@ class MessageCog(commands.Cog, name='通常用'):
 
         elapsed_time = time.time() - start_time
         elapsed_time_text = '経過時間:{:.2f}'.format(elapsed_time) + '[sec]'
-        logger.info(f'{sep_channels}({numbers}件) → {elapsed_time_text}')
+        LOG.info(f'{sep_channels}({count_numbers}件) → {elapsed_time_text}')
         message += elapsed_time_text
 
         await ctx.send(message)
@@ -282,7 +280,7 @@ class MessageCog(commands.Cog, name='通常用'):
 
         elapsed_time = time.time() - start_time
         elapsed_time_text = '経過時間:{:.2f}'.format(elapsed_time) + '[sec]'
-        logger.info(f'{sep_channels}({numbers}件) → {elapsed_time_text}')
+        LOG.info(f'{sep_channels}({count_numbers}件) → {elapsed_time_text}')
         message += elapsed_time_text
 
         await ctx.send(message)

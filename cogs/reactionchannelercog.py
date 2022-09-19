@@ -1,16 +1,17 @@
-from discord.ext import commands  # Bot Commands Frameworkのインポート
-from .modules.reactionchannel import ReactionChannel
-from .modules import settings
-from .onmessagecog import OnMessageCog
-from logging import getLogger
-from discord import Webhook, AsyncWebhookAdapter
-
 import discord
 import datetime
 import asyncio
 import aiohttp
+from discord.ext import commands  # Bot Commands Frameworkのインポート
+from discord import app_commands
+from discord import Webhook
+from logging import getLogger
+from typing import Literal
+from .modules.reactionchannel import ReactionChannel
+from .modules import settings
+from .onmessagecog import OnMessageCog
 
-logger = getLogger(__name__)
+LOG = getLogger('assistantbot')
 
 # コグとして用いるクラスを定義。
 class ReactionChannelerCog(commands.Cog, name="リアクションチャンネラー"):
@@ -29,7 +30,7 @@ class ReactionChannelerCog(commands.Cog, name="リアクションチャンネラ
     # cogが準備できたら読み込みする
     @commands.Cog.listener()
     async def on_ready(self):
-        logger.info(f"load reaction-channeler's guilds{self.bot.guilds}")
+        LOG.info(f"load reaction-channeler's guilds{self.bot.guilds}")
         self.reaction_channel = ReactionChannel(self.bot.guilds, self.bot)
         self.onmessagecog = OnMessageCog(self.bot)
 
@@ -173,24 +174,24 @@ class ReactionChannelerCog(commands.Cog, name="リアクションチャンネラ
         # 入力された絵文字でフィルターされたリストを生成する
         filtered_list = [rc for rc in self.reaction_channel.guild_reaction_channels if emoji in rc]
 
-        logger.debug(f'*****emoji***** {emoji}')
+        LOG.debug(f'*****emoji***** {emoji}')
 
         # フィルターされたリストがある分だけ、チャンネルへ投稿する
         for reaction in filtered_list:
             from_channel = guild.get_channel(payload.channel_id)
             message = await from_channel.fetch_message(payload.message_id)
 
-            logger.debug('guild:'+ str(guild))
-            logger.debug('from_channel: '+ str(from_channel))
-            logger.debug('message: ' + str(message))
+            LOG.debug('guild:'+ str(guild))
+            LOG.debug('from_channel: '+ str(from_channel))
+            LOG.debug('message: ' + str(message))
 
             # 設定によって、すでに登録されたリアクションは無視する
             if settings.FIRST_REACTION_CHECK:
-                logger.debug('reactions:'+ str(message.reactions))
-                logger.debug('reactions_type_count:'+ str(len(message.reactions)))
+                LOG.debug('reactions:'+ str(message.reactions))
+                LOG.debug('reactions_type_count:'+ str(len(message.reactions)))
                 for message_reaction in message.reactions:
                     if emoji == str(message_reaction) and message_reaction.count > 1:
-                        logger.debug('Already reaction added. emoji_count:'+ str(message_reaction.count))
+                        LOG.debug('Already reaction added. emoji_count:'+ str(message_reaction.count))
                         return
 
             contents = [message.clean_content[i: i+1980] for i in range(0, len(message.clean_content), 1980)]
@@ -228,14 +229,14 @@ class ReactionChannelerCog(commands.Cog, name="リアクションチャンネラ
                     try:
                         await webhook.send('ReactionChanneler(Webhook): ' + message.jump_url, embed=embed, username='ReactionChanneler', avatar_url=message.author.avatar_url)
                     except (discord.HTTPException,discord.NotFound,discord.Forbidden,discord.InvalidArgument) as e:
-                        logger.error(e)
+                        LOG.error(e)
             elif '※' in reaction[1]:
-                logger.info('環境変数に登録されていないWebhookIDをもつWebhookのため、実行されませんでした。')
+                LOG.info('環境変数に登録されていないWebhookIDをもつWebhookのため、実行されませんでした。')
             # 通常のリアクションチャンネラー機能の実行
             else:
                 to_channel = guild.get_channel(int(reaction[2]))
-                logger.debug('setting:'+str(reaction[2]))
-                logger.debug('to_channel: '+str(to_channel))
+                LOG.debug('setting:'+str(reaction[2]))
+                LOG.debug('to_channel: '+str(to_channel))
                 await to_channel.send(reaction[1] + ': ' + message.jump_url, embed=embed)
 
     # 画像を保存

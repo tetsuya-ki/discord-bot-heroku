@@ -1,14 +1,14 @@
-from discord import app_commands
-from discord.ext import commands  # Bot Commands Frameworkのインポート
-from .modules import settings
-from .modules.auditlogchannel import AuditLogChannel
-from logging import DEBUG
-
 import discord
 import datetime
 import asyncio
-from logging import getLogger
-logger = getLogger('assistantbot')
+from discord import app_commands
+from discord.ext import commands  # Bot Commands Frameworkのインポート
+from logging import getLogger, DEBUG
+from typing import Literal
+from .modules import settings
+from .modules.auditlogchannel import AuditLogChannel
+
+LOG = getLogger('assistantbot')
 
 # コグとして用いるクラスを定義。
 class AdminCog(commands.Cog):
@@ -52,19 +52,19 @@ class AdminCog(commands.Cog):
             oldest_first_flag = False
 
         if await self.audit_log_channel.get_ch(interaction.guild) is False:
-            logger.debug(self.audit_log_channel.alc_err)
+            LOG.debug(self.audit_log_channel.alc_err)
             return
         else:
             to_channel = self.audit_log_channel.channel
 
         start = f'start getAuditLog ({audit_log}回で開始)'
 
-        logger.debug(f'oldest_first_flag:{oldest_first_flag}')
-        logger.debug(f'limit_num:{limit_num}')
+        LOG.debug(f'oldest_first_flag:{oldest_first_flag}')
+        LOG.debug(f'limit_num:{limit_num}')
         if (settings.LOG_LEVEL == DEBUG):
             await to_channel.send(start)
 
-        logger.debug(start)
+        LOG.debug(start)
         first_entry_list = await interaction.guild.audit_logs(limit=1, oldest_first=oldest_first_flag).flatten()
         first_entry = first_entry_list[0]
 
@@ -77,7 +77,7 @@ class AdminCog(commands.Cog):
             audit_log = audit_log + 1
             await self.sendAuditLogEntry(to_channel, entry, audit_log)
 
-            logger.debug(f'{audit_log}: (fet:{first_entry_times}) {entry}')
+            LOG.debug(f'{audit_log}: (fet:{first_entry_times}) {entry}')
 
             if first_entry_times > 1:
                 break
@@ -106,14 +106,14 @@ class AdminCog(commands.Cog):
                 embed.add_field(name='before.roles', value=entry.changes.before.roles)
             if hasattr(entry.changes.after, 'roles'):
                 embed.add_field(name='after.roles', value=entry.changes.after.roles)
-                logger.debug(entry.changes.after.roles)
+                LOG.debug(entry.changes.after.roles)
             if hasattr(entry.changes.before, 'channel'):
                 embed.add_field(name='before.channel', value=entry.changes.before.channel)
             if hasattr(entry.changes.after, 'channel'):
                 embed.add_field(name='after.channel', value=entry.changes.after.channel)
 
-        logger.debug(msg)
-        logger.debug(entry.changes)
+        LOG.debug(msg)
+        LOG.debug(entry.changes)
 
         await to_channel.send(msg, embed=embed)
 
@@ -240,14 +240,14 @@ class AdminCog(commands.Cog):
                 permissions.append(discord.PermissionOverwrite(read_messages=True))
         overwrites = dict(zip(guild.roles, permissions))
 
-        logger.debug('-----author\'s role-----------------------------------------------------------')
+        LOG.debug('-----author\'s role-----------------------------------------------------------')
         for author_role in self.command_author.roles:
-            logger.debug(f'id:{author_role.id}, name:{author_role.name}, position:{author_role.position}')
-        logger.debug('-----------------------------------------------------------------')
-        logger.debug('-----Guild\'s role-----------------------------------------------------------')
+            LOG.debug(f'id:{author_role.id}, name:{author_role.name}, position:{author_role.position}')
+        LOG.debug('-----------------------------------------------------------------')
+        LOG.debug('-----Guild\'s role-----------------------------------------------------------')
         for guild_role in guild.roles:
-            logger.debug(f'id:{guild_role.id}, name:{guild_role.name}, position:{guild_role.position}')
-        logger.debug('-----------------------------------------------------------------')
+            LOG.debug(f'id:{guild_role.id}, name:{guild_role.name}, position:{guild_role.position}')
+        LOG.debug('-----------------------------------------------------------------')
 
         # 念の為、確認する
         confirm_text = f'{category_text}プライベートなチャンネルを作成してよろしいですか()？ 問題ない場合、30秒以内に👌(ok_hand)のリアクションをつけてください。'
@@ -382,7 +382,7 @@ class AdminCog(commands.Cog):
         else:
             bot_role = botMember.top_role
             bot_overwrites_pair = interaction.channel.overwrites_for(bot_role).pair()
-            logger.debug(bot_overwrites_pair)
+            LOG.debug(bot_overwrites_pair)
             # 権限が初期設定なら
             if (bot_overwrites_pair[0].value == 0) and (bot_overwrites_pair[1].value == 0):
                 bot_overwrite = discord.PermissionOverwrite(read_messages=True,read_message_history=True)
@@ -485,7 +485,7 @@ class AdminCog(commands.Cog):
             category = guild.get_channel(channel.category_id)
             if category is not None:
                 str += '\nCategory: {0}'.format(category.name)
-        logger.info(f'***{str}***')
+        LOG.info(f'***{str}***')
         await self.sendGuildChannel(guild, str, channel.created_at)
 
     # メンバーGuild参加時に実行されるイベントハンドラを定義
@@ -507,14 +507,14 @@ class AdminCog(commands.Cog):
         guild = member.guild
         str = 'member: {0}が{1}しました'.format(member, event_text)
 
-        logger.info(f'***{str}***')
+        LOG.info(f'***{str}***')
 
         await self.sendGuildChannel(guild, str, dt)
 
     # 監査ログをチャンネルに送信
     async def sendGuildChannel(self, guild: discord.Guild, str: str, dt: datetime):
         if await self.audit_log_channel.get_ch(guild) is False:
-            logger.debug(self.audit_log_channel.alc_err)
+            LOG.debug(self.audit_log_channel.alc_err)
             return
         else:
             to_channel = self.audit_log_channel.channel

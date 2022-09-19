@@ -5,8 +5,10 @@ import datetime, random, hashlib
 import discord
 import re
 import mojimoji
+from logging import getLogger
 
-logger = getLogger(__name__)
+LOG = getLogger('assistantbot')
+
 
 class Radiko:
     PREF_CD = {'北海道':'01','青森県':'02','岩手県':'03','宮城県':'04','秋田県':'05','山形県':'06','福島県':'07','茨城県':'08','栃木県':'09','群馬県':'10','埼玉県':'11','千葉県':'12','東京都':'13','神奈川県':'14','新潟県':'15','富山県':'16','石川県':'17','福井県':'18','山梨県':'19','長野県':'20','岐阜県':'21','静岡県':'22','愛知県':'23','三重県':'24','滋賀県':'25','京都府':'26','大阪府':'27','兵庫県':'28','奈良県':'29','和歌山県':'30','鳥取県':'31','島根県':'32','岡山県':'33','広島県':'34','山口県':'35','徳島県':'36','香川県':'37','愛媛県':'38','高知県':'39','福岡県':'40','佐賀県':'41','長崎県':'42','熊本県':'43','大分県':'44','宮崎県':'45','鹿児島県':'46','沖縄県':'47'}
@@ -23,6 +25,14 @@ class Radiko:
         # どっちも空文字になるなら、入れ替えて検索する
         if self.convert_filter(filter) == self.convert_prefCd(areaName) == '':
             filter,areaName = areaName,filter
+        msg = 'keyword: ' + keyword + \
+                ', filter: ' + self.convert_filter(filter) + \
+                ', area: ' + self.convert_prefCd(areaName)
+        if self.convert_day(startDay) is not None:
+            msg += ', startDay: ' + self.convert_day(startDay)
+        if self.convert_day(endDay) is not None:
+            msg += ', endDay: ' + self.convert_day(endDay)
+        LOG.debug(msg)
         response = await self.search_radiko_result(keyword, self.convert_filter(filter), self.convert_prefCd(areaName), self.convert_day(startDay), self.convert_day(endDay))
 
         if response is None:
@@ -67,13 +77,13 @@ class Radiko:
             # データが1件以上ならinfoは省略
             if len(response['data']) > 1:
                 info_data_ex = info_data[:100] + '(省略)'
-                logger.debug('文字数超で省略されたinfo:' + info_data)
+                LOG.debug('文字数超で省略されたinfo:' + info_data)
             else:
                 info_data_ex = info_data
 
             if len(embed_field + data + '\ninfo:' + info_data_ex) > 1700:
                 data += '\ninfo:(文字数超えのため削除)'
-                logger.debug('文字数超で削除されたinfo:' + info_data)
+                LOG.debug('文字数超で削除されたinfo:' + info_data)
             else:
                 data += f'\ninfo:{info_data_ex}'
 
@@ -159,6 +169,6 @@ class Radiko:
                     return response
                 else:
                     self.r_err = 'Radikoの番組表検索に失敗しました。'
-                    logger.warn(self.r_err)
-                    logger.warn(r)
+                    LOG.warn(self.r_err)
+                    LOG.warn(r)
                     return
