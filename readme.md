@@ -188,20 +188,34 @@ Discord用のBot。discord.pyのBot Commands Frameworkを使用して実装。�
 `/start-ohgiri-game` 大喜利を始めるコマンド。お題を修正したい場合[jsonファイル](https://github.com/tetsuya-ki/discord-bot-heroku/blob/master/cogs/modules/files/ohgiri.json)を変更するか、[後述の環境変数](#環境変数の説明)でJSONを返すURLを設定すること
 
 - 大喜利開始(数字を渡すと、勝利点が設定される。すぐ終わらせたいなら、`/start-ohgiri-game win_point:1`等で実行)  
-  - 参加方法については[v1.0.0](https://github.com/tetsuya-ki/discord-bot-heroku/releases/tag/v1.0.0)からボタン式に変更
+  - 参加方法については[v1.0.0](https://github.com/tetsuya-ki/discord-bot-heroku/releases/tag/v1.0.0)からボタン式に変更  
+  - コマンドは以下のように表示される  
 ![image(ohgiri_start)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku_v2/start-ohgiri-game.png?raw=True)
-- 大喜利開始後、BotからくるDMの様子(ここに表示された番号を回答として選択)  
-![image(ohgiri_dm)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/ohgiri_dm.png?raw=True)
-- 大喜利の回答を選んだところ  
-![image(ohgiri_answer)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/ohgiri_answer.png?raw=True)
-- 大喜利の状況説明(経過ターン、現在の親、お題、それぞれの得点などが表示される)  
-![image(ohgiri_description)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/ohgiri_description.png?raw=True)
-- 大喜利の回答カードを捨てるコマンド(いい回答が手札にない場合使うコマンド)  
-![image(ohgiri_discard)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/ohgiri_discard.png?raw=True)
-- 親が回答を選択  
-![image(ohgiri_choice)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/ohgiri_choice.png?raw=True)
+  - コマンドを実行すると以下のように返信される  
+![image(ohgiri_start2)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku_v2/start-ohgiri-game_2.png?raw=True)
+  - 参加ボタンを押すと、ゲームに参加する  
+![image(ohgiri_button_join)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku_v2/ohgiri-game_button-join.png?raw=True)
+  - 離脱ボタンを押すと、ゲームから離脱する(ゲーム中に離脱できてしまうがやらない方が良い)  
+![image(ohgiri_button_leave)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku_v2/ohgiri-game_button-leave.png?raw=True)
+  - 開始ボタンを押すと、ゲームが始まる(人数が集まっている場合)  
+![image(ohgiri_button_start)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku_v2/ohgiri--game_button-start.png?raw=True)
+  - ターンが始まると、お題が与えられる  
+    - 回答、状況説明、カードを捨てる(1ポイント減点)ができる  
+![image(ohgiri_turn)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku_v2/ohgiri-game_turn.png?raw=True)
+- 「回答する」ボタンを押して、メニューから大喜利の回答を選ぶ
+  - 複数選択するパターンもあり、選ばれた順番に回答を格納する(表示順ではない)  
+![image(ohgiri_answer)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku_v2/ohgiri-game_button-answer.png?raw=True)
+- 「状況を確認する」ボタンを押すと、大喜利の状況説明される(経過ターン、現在の親、お題、それぞれの得点などが表示される)  
+![image(ohgiri_description)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku_v2/ohgiri-game_button-description.png?raw=True)
+- 大喜利の回答カードを捨てることも可能(いい回答が手札にない場合使うコマンド)  
+![image(ohgiri_discard)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku_v2/ohgiri-game_button-discard.png?raw=True)
+- 親が回答を選択
+  - ダミーのカードが1枚紛れ込んでおり、ダミーを選択した場合は親のポイントが1点減点され、親が継続する
+  - 人間のカードが選択された場合、選ばれた人間に1ポイント加点し、その人物が次の親になる
+![image(ohgiri_choice)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku_v2/ohgiri-game_button-choice.png?raw=True)
+
 - 親が回答を選択しゲーム終了するところ(誰かが勝利点に到達したら終了)  
-![image(ohgiri_choice2_game_over)](<https://raw.githubusercontent.com/tetsuya-ki/images/main/discord-bot-heroku/ohgiri_choice2(game_over).png>)
+![image(ohgiri_choice2_game_over)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku_v2/ohgiri-game_finish.png?raw=True)
 
 ### メッセージイベント用(onmessagecog.pyで実装)
 
