@@ -74,27 +74,11 @@ class OhrgiriStart(discord.ui.View):
         # 参加者と手札の数を設定
         await self.ohgiriGames[interaction.guild_id].setting(self.oh_members[interaction.guild_id].get_members(), 12, self.ohgiriGames[interaction.guild_id].win_point)
         self.ohgiriGames[interaction.guild_id].shuffle()
-        # スラッシュコマンド方式のメッセージ
-        # msg = 'お題が提供されるので**「親」はお題を声に出して読み上げ**てください（"○○"は「まるまる」、"✕✕"は「ばつばつ」と読む）。ほかのプレイヤーは読み上げられた**お題に相応しいと思う回答**を`/ohgiri-game-answer <数字>`で選びます。\n'\
-        #     + '全員が回答したら、**「親」はもっとも秀逸な回答**を`/ohgiri-game-choice <番号>`で選択します。「親」から選ばれたプレイヤーは1点もらえます。ただし、山札から1枚カードが混ざっており、それを選択すると親はポイントが減算されます。\n'\
-        #     + f'今回のゲームの勝利点は{self.ohgiriGames[interaction.guild_id].win_point}点です。'
         msg = 'お題が提供されるので**「親」はお題を声に出して読み上げ**てください（"○○"は「まるまる」、"✕✕"は「ばつばつ」と読む）。ほかのプレイヤーは読み上げられた**お題に相応しいと思う回答**をボタンを押して、プルダウンから回答します。\n'\
             + '全員が回答したら、**「親」はもっとも秀逸な回答**をボタンを押して、選択します。「親」から選ばれたプレイヤーは1点もらえます。ただし、山札から1枚カードが混ざっており、それを選択すると親はポイントが減算されます。\n'\
             + f'今回のゲームの勝利点は{self.ohgiriGames[interaction.guild_id].win_point}点です。'
         await interaction.response.send_message(msg)
         await self.ohgiriGames[interaction.guild_id].dealAndNextGame(interaction)
-
-
-    def rewrite_link_at_me(self, link:str='', guild_id:int=None):
-        """
-        スレッドの中のリンク取得が想定外(一応遷移できるが)のため、修正
-        こうあるべき: https://discord.com/channels/<guild_id>/<channel_id>/<message_id>
-        実際: https://discord.com/channels/@me//<channel_id>/<message_id>
-        """
-        if guild_id:
-            return str(link).replace('@me', str(guild_id))
-        else:
-            return ''
 
 class OhrgiriAnswerDropdown(discord.ui.Select):
     def __init__(self, ohgiri, guild_id: int, user: discord.User):
@@ -599,30 +583,4 @@ class Ohgiri():
         self.deal()
 
         # お題を表示
-        # if interaction.message is not None:
-        #     odai_msg = await interaction.message.reply(f'お題：{self.odai}')
-        # else:
-        #     odai_msg = await interaction.channel.last_message.reply(f'お題：{self.odai}')
         await interaction.channel.last_message.reply(f'お題：{self.odai}\n＊親は{self.house.display_name}(親以外が回答してください)', view=OhrgiriAnswer(self))
-
-        # DMで回答カードを示す
-        # for player in self.members:
-        #     await self.send_ans_dm(interaction, player, odai_msg)
-
-        # msg = f'カードを配りました。DMをご確認ください。{self.description}\n親は{self.house.display_name}です！'
-        # if self.required_ans_num == 2:
-        #     msg += '\n(回答は**2つ**設定するようにしてください！ 例:`/ohgiri-game-answer 1 2`'
-        # await interaction.channel.last_message.reply(msg, view=OhrgiriAnswer(self))
-
-    # async def send_ans_dm(self, interaction: discord.Interaction, player: discord.member, odai_msg:discord.message=None):
-    #     dm_msg  = ''
-    #     if self.house == player:
-    #         dm_msg = 'あなたは親です！　カード選択はできません。回答が出揃った後、お好みの回答を選択ください。\n'
-    #     dm = await player.create_dm()
-    #     for card_id in self.members[player].cards:
-    #         card_message = self.ans_dict[card_id]
-    #         dm_msg += f'{card_id}: {card_message}\n'
-    #     # お題のメッセージが指定されている場合、リンクを付与
-    #     if odai_msg is not None:
-    #         dm_msg += f'お題へのリンク: {self.rewrite_link_at_me(odai_msg.jump_url, interaction.guild_id)}'
-    #     await dm.send(f'{player.mention}さん あなたの手札はこちらです！\n{dm_msg}')

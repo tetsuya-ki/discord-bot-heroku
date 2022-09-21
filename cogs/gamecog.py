@@ -12,7 +12,6 @@ from os.path import join, dirname
 from .modules import settings
 from .modules.savefile import SaveFile
 from .modules.members import Members
-# from .modules import gamebuttons #あとで消す
 from .modules import games
 from logging import getLogger
 LOG = getLogger('assistantbot')
@@ -110,7 +109,6 @@ class GameCog(commands.Cog, name='ゲーム用'):
                 'DMでお題が配られますが、**ワードウルフだけは別のお題**が配られます(お題は2種類あります)。会話の中で不審な言動を察知し、みごとに'\
                 '投票でワードウルフを当てることができたら、市民の勝ち。**間違えて「市民をワードウルフ」だと示してしまった場合、ワードウルフの勝ち**です！！\n'\
                 '参加する場合、以下のボタンを押してください。'
-        # await interaction.channel.send(msg)
         view = games.WordwolfStart(self.ww_members, self.wordWolfJson, msg)
         await interaction.response.send_message(msg, view=view)
 
@@ -578,122 +576,6 @@ class GameCog(commands.Cog, name='ゲーム用'):
         self.ohgiriStart = OhrgiriStart(self.oh_members, self.ohgiriGames, msg)
         await interaction.response.send_message(msg, view=self.ohgiriStart)
 
-    ##### dropdown方式に変更したため削除 ohgiri.pyのOhrgiriAnswerあたりを参照 #####
-    # @app_commands.command(
-    #     name='ohgiri-game-answer',
-    #     description='【子】回答者がお題に提出する回答を設定')
-    # @app_commands.describe(
-    #     card_id='回答として設定する値(数字で指定)')
-    # @app_commands.describe(
-    #     second_card_id='回答として設定する値(数字で指定)')
-    # async def answer(self, interaction: discord.Interaction, card_id: str=None, second_card_id: str=None):
-    #     """
-    #     回答者が回答として提出するカードを設定
-    #     - ans_number: 回答として設定する値(数字で指定)
-    #     例:`/ohgiri-game-answer 1`
-    #     """
-    #     # 始まっているかのチェック
-    #     if interaction.guild_id not in self.ohgiriGames or len(self.ohgiriGames[interaction.guild_id].members) == 0 or self.ohgiriGames[interaction.guild_id].game_over:
-    #         await interaction.response.send_message('ゲームが起動していません！', ephemeral=True)
-    #     # コマンド実行者のチェック(親は拒否)
-    #     elif interaction.user == self.ohgiriGames[interaction.guild_id].house:
-    #         await interaction.response.send_message('親は回答を提出できません！', ephemeral=True)
-    #     # 引数が設定されているかチェック
-    #     elif card_id is None:
-    #         await interaction.response.send_message('引数`card_id`を指定してください！', ephemeral=True)
-    #     # 参加者かチェック
-    #     elif self.ohgiriGames[interaction.guild_id].members.get(interaction.user) is None:
-    #         await interaction.response.send_message(f'{interaction.user.display_name}は、参加者ではありません！', ephemeral=True)
-    #     # コマンド実行者が所持しているかチェック
-    #     elif card_id not in self.ohgiriGames[interaction.guild_id].members[interaction.user].cards:
-    #         await interaction.response.send_message(f'{card_id}は{interaction.user.display_name}の所持しているカードではありません！', ephemeral=True)
-    #     elif self.ohgiriGames[interaction.guild_id].required_ans_num == 1 and second_card_id is not None:
-    #         await interaction.response.send_message('お題で2つ設定するように指定がないので、回答は1つにしてください！', ephemeral=True)
-    #     elif self.ohgiriGames[interaction.guild_id].required_ans_num == 2 and second_card_id is None:
-    #         await interaction.response.send_message('2つめの引数`second_card_id`が設定されていません！(もう一つ数字を設定してください)', ephemeral=True)
-    #     elif self.ohgiriGames[interaction.guild_id].required_ans_num == 2 and second_card_id not in self.ohgiriGames[interaction.guild_id].members[interaction.user].cards:
-    #         await interaction.response.send_message(f'{second_card_id}は{interaction.user.display_name}の所持しているカードではありません！', ephemeral=True)
-    #     else:
-    #         LOG.debug('回答を受け取ったよ！')
-    #         # 既に回答したメンバーから再度回答を受けた場合、入れ替えた旨お知らせする
-    #         if self.ohgiriGames[interaction.guild_id].members[interaction.user].answered:
-    #             await interaction.response.send_message(f'{interaction.user.mention} 既に回答を受け取っていたため、そちらのカードと入れ替えますね！', ephemeral=True)
-    #         # カードの受領処理
-    #         self.ohgiriGames[interaction.guild_id].receive_card(card_id, interaction.user, second_card_id)
-    #         # 回答者が出そろった場合、場に出す(親は提出できないので引く)
-    #         if (len(self.ohgiriGames[interaction.guild_id].members) - 1)  == len(self.ohgiriGames[interaction.guild_id].field):
-    #             self.ohgiriGames[interaction.guild_id].show_answer()
-    #             LOG.info('回答者が出揃ったので、場に展開！')
-    #             msg = self.ohgiriGames[interaction.guild_id].description + f'\n{self.ohgiriGames[interaction.guild_id].house.mention} 回答を読み上げたのち、好きな回答を`/ohgiri-game-choice <数字>`で選択してください！'
-    #             await interaction.response.send_message(msg)
-    #         else:
-    #             await interaction.response.send_message('回答ありがとうございます', ephemeral=True)
-
-    ##### dropdown方式に変更したため削除 ohgiri.pyのOhrgiriChoiceあたりを参照 #####
-    # @app_commands.command(
-    #     name='ohgiri-game-choice',
-    #     description='【親】回答者がお題に提出する回答を設定')
-    # @app_commands.describe(
-    #     ans_index='気に入ったカードの回答番号を設定する値(数字で指定)')
-    # async def choice(self, interaction: discord.Interaction, ans_index: str=None):
-    #     """
-    #     親が気に入ったカードを選択する
-    #     - ans_index: 気に入ったカードの回答番号を設定する値(数字で指定)
-    #     例:`/ohgiri-game-choice 1`
-    #     """
-    #     # 始まっているかのチェック
-    #     if interaction.guild_id not in self.ohgiriGames or len(self.ohgiriGames[interaction.guild_id].members) == 0 or self.ohgiriGames[interaction.guild_id].game_over:
-    #         await interaction.response.send_message('ゲームが起動していません！', ephemeral=True)
-    #     # コマンド実行者のチェック(親以外は拒否)
-    #     elif interaction.user != self.ohgiriGames[interaction.guild_id].house:
-    #         await interaction.response.send_message('親以外が秀逸な回答を選択することはできません！', ephemeral=True)
-    #     elif ans_index is None or not ans_index.isdecimal():
-    #         await interaction.response.send_message('`ans_index`が選択されていません！', ephemeral=True)
-    #     # 回答が出揃っているかチェック
-    #     elif (len(self.ohgiriGames[interaction.guild_id].members) - 1)  > len(self.ohgiriGames[interaction.guild_id].field):
-    #         await interaction.response.send_message(f'回答が出揃っていません。あと{len(self.ohgiriGames[interaction.guild_id].members) - len(self.ohgiriGames[interaction.guild_id].field) -1}人提出が必要です。', ephemeral=True)
-
-    #     else:
-    #         # 場にある数かどうかのチェック
-    #         if int(ans_index) > len(self.ohgiriGames[interaction.guild_id].members) - 1:
-    #             await interaction.response.send_message(f'{ans_index}は場に出ている最大の選択数({len(self.ohgiriGames[interaction.guild_id].members) - 1})を超えています！', ephemeral=True)
-    #             return
-
-    #         # 結果を表示
-    #         self.ohgiriGames[interaction.guild_id].choose_answer(ans_index)
-    #         await interaction.response.send_message(self.ohgiriGames[interaction.guild_id].description)
-
-    #         # ゲームが終了していない場合、次のターンを開始
-    #         if not self.ohgiriGames[interaction.guild_id].game_over:
-    #             await self.ohgiriStart.dealAndNextGame(interaction)
-
-    # @app_commands.command(
-    #     name='ohgiri-game-description',
-    #     description='現在の状況を説明')
-    # async def description_ohgiriGame(self, interaction: discord.Interaction):
-    #     """現在の状況を説明します"""
-    #     # 始まっているかのチェック
-    #     if interaction.guild_id not in self.ohgiriGames or len(self.ohgiriGames[interaction.guild_id].members) == 0:
-    #         await interaction.response.send_message('ゲームが起動していません！', ephemeral=True)
-    #         return
-    #     self.ohgiriGames[interaction.guild_id].show_info()
-    #     await interaction.response.send_message(self.ohgiriGames[interaction.guild_id].description)
-
-    # @app_commands.command(
-    #     name='ohgiri-game-discard_hand',
-    #     description='ポイントを1点減点し、手札をすべて捨て、山札からカードを引く(いい回答カードがない時に使用ください)')
-    # async def discard_hand(self, interaction: discord.Interaction):
-    #     """
-    #     ポイントを1点減点し、手札をすべて捨て、山札からカードを引く（いい回答カードがない時に使用ください）
-    #     """
-    #     # 始まっているかのチェック
-    #     if interaction.guild_id not in self.ohgiriGames or len(self.ohgiriGames[interaction.guild_id].members) == 0 or self.ohgiriGames[interaction.guild_id].game_over:
-    #         await interaction.response.send_message('ゲームが起動していません！', ephemeral=True)
-    #         return
-    #     self.ohgiriGames[interaction.guild_id].discard_hand(interaction.user)
-    #     await interaction.response.send_message(self.ohgiriGames[interaction.guild_id].description, ephemeral=True)
-    #     await self.send_ans_dm(interaction, interaction.user)
-
     # poll機能
     @app_commands.command(
         name='simple-poll',
@@ -725,25 +607,6 @@ class GameCog(commands.Cog, name='ゲーム用'):
 
             for  emoji, arg in zip(POLL_CHAR, args):
                 await message.add_reaction(emoji)
-
-    # @commands.Cog.listener()
-    # async def on_slash_command_error(self, interaction: discord.Interaction, ex):
-    #     '''
-    #     slash_commandでエラーが発生した場合の動く処理
-    #     '''
-    #     try:
-    #         raise ex
-    #     except discord.ext.commands.PrivateMessageOnly:
-    #         await interaction.response.send_message(f'エラーが発生しました(DM(ダイレクトメッセージ)でのみ実行できます)', hidden = True)
-    #     except discord.ext.commands.NoPrivateMessage:
-    #         await interaction.response.send_message(f'エラーが発生しました(ギルドでのみ実行できます(DMやグループチャットでは実行できません))', hidden = True)
-    #     except discord.ext.commands.NotOwner:
-    #         await interaction.response.send_message(f'エラーが発生しました(Botのオーナーのみ実行できます)', hidden = True)
-    #     except discord.ext.commands.MissingPermissions:
-    #         if ex.missing_perms[0] == 'administrator':
-    #             await interaction.response.send_message(f'エラーが発生しました(ギルドの管理者のみ実行できます)', hidden = True)
-    #     except:
-    #         await interaction.response.send_message(f'エラーが発生しました({ex})', hidden = True)
 
 async def setup(bot):
     await bot.add_cog(GameCog(bot)) # GameCogにBotを渡してインスタンス化し、Botにコグとして登録する
