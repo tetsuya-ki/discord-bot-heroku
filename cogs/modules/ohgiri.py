@@ -583,4 +583,4 @@ class Ohgiri():
         self.deal()
 
         # お題を表示
-        await interaction.channel.last_message.reply(f'お題：{self.odai}\n＊親は{self.house.display_name}(親以外が回答してください)', view=OhrgiriAnswer(self))
+        await interaction.followup.send(f'お題：{self.odai}\n＊親は{self.house.display_name}(親以外が回答してください)', view=OhrgiriAnswer(self))
