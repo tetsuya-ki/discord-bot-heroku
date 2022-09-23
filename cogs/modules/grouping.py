@@ -1,4 +1,4 @@
-import random
+import random, discord
 
 # 改造元：https://github.com/Rabbit-from-hat/make-team/
 class MakeTeam:
@@ -13,11 +13,11 @@ class MakeTeam:
         self.my_connected_vc_only_flg = False
         self.me = me
 
-    def set_mem(self, ctx):
-        guild = ctx.guild
+    def set_mem(self, interaction: discord.Interaction):
+        guild = interaction.guild
 
-        if self.my_connected_vc_only_flg and ctx.author.voice is not None:
-            self.v_channels = [ctx.author.voice.channel]
+        if self.my_connected_vc_only_flg and interaction.user.voice is not None:
+            self.v_channels = [interaction.user.voice.channel]
         else:
             self.v_channels = guild.voice_channels
 
@@ -48,18 +48,18 @@ class MakeTeam:
         return True
 
     # メンバー取得
-    async def get_members(self, ctx):
-        self.set_mem(ctx)
+    async def get_members(self, interaction: discord.Interaction):
+        self.set_mem(interaction)
         return self.vc_list
 
     # チーム数を指定した場合のチーム分け
-    async def make_party_num(self, ctx, party_num, remainder_flag='false'):
+    async def make_party_num(self, interaction: discord.Interaction, party_num, remainder_flag='false'):
         team = []
         team_string = []
         team_members = []
         remainder = []
 
-        if self.set_mem(ctx) is False:
+        if self.set_mem(interaction) is False:
             return self.vc_state_err
 
         # 指定数の確認
@@ -95,13 +95,13 @@ class MakeTeam:
         return ('\n'.join(team_string))
 
     # チームのメンバー数を指定した場合のチーム分け
-    async def make_specified_len(self, ctx, specified_len):
+    async def make_specified_len(self, interaction: discord.Interaction, specified_len):
         team = []
         team_string = []
         team_members = []
         remainder = []
 
-        if self.set_mem(ctx) is False:
+        if self.set_mem(interaction) is False:
             return self.vc_state_err
 
         # 指定数の確認

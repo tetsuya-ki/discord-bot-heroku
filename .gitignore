@@ -101,6 +101,9 @@ first_time
 temp/
 cogs/modules/files/reaction-channel.json
 
+# Log
+Log/
+
 # vscode
 .vscode/launch.json
 .vscode/settings.json

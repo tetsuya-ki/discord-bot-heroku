@@ -1,15 +1,13 @@
-from discord import message
+import discord
+import os
+import re
 from discord.ext import commands  # Bot Commands Frameworkのインポート
 from .modules.savefile import SaveFile
 from .modules import settings
 from .modules.scrapboxsidandpnames import ScrapboxSidAndPnames
 from logging import getLogger
 
-import discord
-import os
-import re
-
-logger = getLogger(__name__)
+LOG = getLogger('assistantbot')
 
 # コグとして用いるクラスを定義。
 class OnMessageCog(commands.Cog, name="メッセージイベント用"):
@@ -34,9 +32,9 @@ class OnMessageCog(commands.Cog, name="メッセージイベント用"):
 
         rePattern = re.compile(save_file_message_target)
 
-        logger.debug(afterMessage)
-        # logger.debug(afterMessage.clean_content)
-        # logger.debug("save_target:" + save_file_message_target)
+        LOG.debug(afterMessage)
+        # LOG.debug(afterMessage.clean_content)
+        # LOG.debug("save_target:" + save_file_message_target)
         if not rePattern.search(afterMessage.clean_content):# 対象のメッセージでない場合、処理を中断
             return
         else:
@@ -50,6 +48,7 @@ class OnMessageCog(commands.Cog, name="メッセージイベント用"):
         if len(targetMessage.embeds)  == 0:
             return
 
+        embeds = []
         for embed in targetMessage.embeds:
             current_path = os.path.dirname(os.path.abspath(__file__))
             saved_path = ''.join([current_path, os.sep, self.FILEPATH.replace('/', os.sep)])
@@ -61,30 +60,29 @@ class OnMessageCog(commands.Cog, name="メッセージイベント用"):
             if 'thumbnail' in dicted_data and 'url' in dicted_data['thumbnail']:
                 img_url = dicted_data['thumbnail']['url']
 
-            # logger.debug(embed.image)
-            # logger.debug('filepath:' + saved_path)
-            logger.info(dicted_data)
+            # LOG.debug(embed.image)
+            # LOG.debug('filepath:' + saved_path)
+            LOG.info(dicted_data)
             if img_url:
                 path = await self.savefile.download_file_to_dir(img_url, saved_path)
                 if path is not None:
-                    embed_data = discord.Embed() 
+                    embed_data = discord.Embed()
                     embed_data.set_thumbnail(url=f'attachment://{path}')
+                    embeds.append(embed_data)
                     full_path = saved_path + os.sep + path
                     files.append(discord.File(full_path, filename=path))
-                    logger.debug('save file: ' + full_path)
+                    LOG.debug('save file: ' + full_path)
             else:
-                logger.debug('url is empty.')
+                LOG.debug('url is empty.')
                 return
 
-        # チャンネルにファイルを添付する(複数ある場合、filesで添付)
-        if (len(files) > 1):
-            await targetMessage.reply('file upload', files=files
-                # channel.sendではembedsは送信できない(webhook.sendのみ)
-                , mention_author=False)
-        elif (len(files) == 1):
-            await targetMessage.reply('file upload', file=files.pop()
-                , embed=embed_data
-                , mention_author=False)
+        # チャンネルにファイルを添付する
+        if (len(files) > 0):
+            await targetMessage.reply(
+                'file upload',
+                files=files,
+                embeds=embeds,
+                mention_author=False)
         else:
             return
 
@@ -111,5 +109,5 @@ class OnMessageCog(commands.Cog, name="メッセージイベント用"):
         else:
             return
 
-def setup(bot):
-    bot.add_cog(OnMessageCog(bot)) # OnMessageCogにBotを渡してインスタンス化し、Botにコグとして登録する
+async def setup(bot):
+    await bot.add_cog(OnMessageCog(bot)) # OnMessageCogにBotを渡してインスタンス化し、Botにコグとして登録する
