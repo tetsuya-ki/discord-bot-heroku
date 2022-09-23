@@ -4,7 +4,7 @@ import re
 import string
 from logging import getLogger
 
-logger = getLogger(__name__)
+LOG = getLogger(__name__)
 
 class CoyoteMember:
     DEFAULT_HP = 3
@@ -87,7 +87,7 @@ class Coyote:
         random.shuffle(self.deck)
         message = 'シャッフルしました。\n'
         self.description += message
-        logger.info(message)
+        LOG.info(message)
 
     def deal(self):
         self.turn = self.turn + 1
@@ -101,7 +101,7 @@ class Coyote:
             if len(self.deck) == 0:
                 message = 'カードがなくなったので、'
                 self.description += message
-                logger.info(message)
+                LOG.info(message)
                 self.shuffle()
 
     def coyote(self, me: discord.Member, you: discord.Member, number):
@@ -114,34 +114,34 @@ class Coyote:
             message = f'{number} > {coyotes} → 「コヨーテ！」の勝ち({me.display_name}が正しい！)\n'\
                     f'{you.display_name}に1点ダメージ。次の手番は{you.display_name}(敗者)からです。\n'
             self.description += message
-            logger.info(message)
+            LOG.info(message)
             if self.members[you].isDead:
                 self.body.append(self.members.pop(you))
                 message = f'{you.display_name}は死にました。\n'
                 if len(self.members) > 1:
                     message += f'**次は{me.display_name}(勝者)から手番を開始**してください。\n'
                 self.description += message
-                logger.info(message)
+                LOG.info(message)
         else:
             self.members[me].damage(1)
             message = f'{number} <= {coyotes} → 「コヨーテ！」の負け({you.display_name}が正しい！)\n'\
                     f'{me.display_name}に1点ダメージ。次の手番は{me.display_name}(敗者)からです。\n'
             self.description += message
-            logger.info(message)
+            LOG.info(message)
             if self.members[me].isDead:
                 self.body.append(self.members.pop(me))
                 message = f'{me.display_name}は死にました。\n'
                 if len(self.members) > 1:
                     message += f'**次は{you.display_name}(勝者)から手番を開始**してください。\n'
                 self.description += message
-                logger.info(message)
+                LOG.info(message)
 
         # 一人になったら、勝利
         if len(self.members) == 1:
             for member in self.members:
                 message = f'{member.display_name}の勝ちです！　おめでとうございます！！'
                 self.description += message
-                logger.info(message)
+                LOG.info(message)
         else:
             self.description += '現在の状況:'
             for member in self.members:
@@ -163,11 +163,11 @@ class Coyote:
                     additional_card = self.deck.pop()
                     message = f'{card}の効果で、1枚山札から引いた(値は{additional_card})。\n'
                     self.description += message
-                    logger.info(message)
+                    LOG.info(message)
                 except IndexError:
                     message = 'カードがなくなったので、'
                     self.description += message
-                    logger.info(message)
+                    LOG.info(message)
                     self.shuffle()
                     break
                 deck_plus_discards_set = set(map(str, self.discards + self.deck))
@@ -178,24 +178,24 @@ class Coyote:
                     self.discards.append(additional_card)
                     message = f'Caveを引いたため、引き直し。\n'
                     self.description += message
-                    logger.info(message)
+                    LOG.info(message)
                     if len(self.deck) == 0:
                         message = 'カードがなくなったので、'
                         self.description += message
-                        logger.info(message)
+                        LOG.info(message)
                         self.shuffle()
 
                     if cave_count > 2:
                         # 3回以上繰り返した場合は無視する
                         message = f'★Caveを3回以上引き続けたため、無視します。\n'
                         self.description += message
-                        logger.info(message)
+                        LOG.info(message)
                         break
                     else:
                         if len(deck_plus_discards_set) == 1 and 'CAVE' in deck_plus_discards_set.pop():
                             message = f'山札/捨て札にCaveしかない不正な状況のため、処理を終了。\n'
                             self.description += message
-                            logger.info(message)
+                            LOG.info(message)
                             break
                         else:
                             continue
@@ -208,7 +208,7 @@ class Coyote:
                     if len(self.deck) == 0:
                         message = 'カードがなくなったので、'
                         self.description += message
-                        logger.info(message)
+                        LOG.info(message)
                         self.shuffle()
                     if not 'CAVE' in str(additional_card).upper():
                         break
@@ -228,7 +228,7 @@ class Coyote:
                 shuffle_flg = True
                 message = f'{card}の効果で、計算終了後に山札/捨て札を混ぜてシャッフルする。\n'
                 self.description += message
-                logger.info(message)
+                LOG.info(message)
 
             # Foxカードの効果
             if 'FOX' in card.upper():
@@ -241,7 +241,7 @@ class Coyote:
                 fox_hands.append(-max_num)
                 message = f'{card}の効果で、コヨーテカードの最大値である{max_num}を0にした。\n'
                 self.description += message
-                logger.info(message)
+                LOG.info(message)
 
         # 計算
         coyotes = 0
@@ -267,7 +267,7 @@ class Coyote:
             coyotes = coyotes * 2
             message = f'{card}の効果で、2倍にした。\n'
             self.description += message
-            logger.info(message)
+            LOG.info(message)
 
         if shuffle_flg:
             self.shuffle()
