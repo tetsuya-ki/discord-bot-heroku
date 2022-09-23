@@ -12,7 +12,7 @@ Discord用のBot。discord.pyのBot Commands Frameworkを使用して実装。�
 
 1. [リアクションチャンネラーカテゴリ(reactionchannelercog.pyで実装)](#リアクションチャンネラーカテゴリreactionchannelercogpyで実装)
 
-1. [ゲームカテゴリ(gamecog.pyで実装)＊一部WIP](#ゲームカテゴリgamecogpyで実装)
+1. [ゲームカテゴリ(gamecog.pyで実装)](#ゲームカテゴリgamecogpyで実装)
 
 1. [メッセージイベント用(onmessagecog.pyで実装)](#メッセージイベント用onmessagecogpyで実装)
 
@@ -165,25 +165,47 @@ Discord用のBot。discord.pyのBot Commands Frameworkを使用して実装。�
 - BotからくるDMの様子  
 ![image(ngWordGame-2)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/ngwordgame-2.png?raw=True)
 
-`/coyoteGame` コヨーテを行うコマンド([v1.0.0](https://github.com/tetsuya-ki/discord-bot-heroku/releases/tag/v1.0.0)では使用できず/dicord.py v2.0対応中)
+`/coyoteGame` コヨーテを行うコマンド
 
-- コヨーテ開始(説明が長いですがやれば分かります！)  
-![image(coyoteGame_start)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/coyoteGame_start.png?raw=True)
+- コヨーテ開始(説明が長いですがやれば分かります！)
+  - 説明の長さが選べます
+    - 普通: 普通にゲームできる程度省略したもの(デフォルト)
+    - 詳しく: 詳しく説明
+    - 無し: 説明なし(Botでやったことある人たち用)
+![image(coyoteGame_start)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku_v2/coyoteGame_start_0.png?raw=True)
+![image(coyoteGame_start)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku_v2/coyoteGame_start.png?raw=True)
+  - 参加するボタンで参加できます
+- コヨーテ開始
+  - 相手のカードを見るボタン  
+![image(coyote_button_display)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku_v2/coyote_button_display-card.png?raw=True)
+  - コヨーテ！(モーダルでコヨーテする相手のID、相手の値を入力)  
+![image(coyote_button_coyote)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku_v2/coyote_button_coyote.png?raw=True)
+  - カード能力説明
+    - 特殊カードなどの意味を忘れたときに使用します  
+![image(coyote_button_description-card)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku_v2/coyote_button_description-card.png?raw=True)
+  - 状況説明
+    - 現在相手のHPやターンなど忘れたときに使用します  
+![image(coyote_button_description-all)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku_v2/coyote_button_description.png?raw=True)
+  - 状況説明(ネタバレ)
+    - 基本的には使わないでください
+    - 場に出してあるカードも含めて表示されます(説明などの時に使用してください)
+      - 灰色がかっているところをクリック(タップ)すると表示されます
+![image(coyote_button_description-all))](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku_v2/coyote_button_description-all.png?raw=True)
+  - コヨーテ！されると、その結果が表示されます
+![image(coyote_button_coyote-2)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku_v2/coyote_button_coyote-2.png?raw=True)
+  - その後、「状況説明(全て)」を押すこともできます(山札も見えるのでやめた方がいいかもしれません)
+![image(coyote_button2_description-all)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku_v2/coyote_button2_description-all.png?raw=True)
+- 次ターン以降
+  - ディールすることで次ターンが始まります
+![image(coyote_button2_deal)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku_v2/coyote_button2_deal.png?raw=True)
+- コヨーテの終了
+  - 生き残りが1名になった時点でゲームが終了します
+![image(coyote_finish)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku_v2/coyote_finish.png?raw=True)
 
-- コヨーテ開始やディール時のDMの様子  
-![image(coyoteGame_DM)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/coyoteGame_DM.png?raw=True)
-
-- コヨーテのディール(カードを配る)  
-![image(coyoteGame_deal)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/coyoteGame_deal.png?raw=True)
-
-- コヨーテ開始(自分でデッキを設定)  
-![image(coyoteGame_setDeckAndStart)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/coyoteGame_setDeckAndStart.png?raw=True)
-
-- コヨーテの状況説明  
-![image(coyoteGame_description)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/coyoteGame_description.png?raw=True)
-
-- コヨーテの状況説明(ネタバレ有)  
-![image(coyoteGame_descriptionAll)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/coyoteGame_descriptionAll.png?raw=True)
+- コヨーテ開始(自分でデッキを設定)
+  - デフォルトのデッキが初期表示されているので好きに編集します
+  - 新しい能力の追加などは不可能です(-100〜100までの数値の追加や、特殊カードの枚数変更などのみ)
+![image(coyoteGame_setDeckAndStart)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku_v2/coyote_button_deck.png?raw=True)
 
 `/start-ohgiri-game` 大喜利を始めるコマンド。お題を修正したい場合[jsonファイル](https://github.com/tetsuya-ki/discord-bot-heroku/blob/master/cogs/modules/files/ohgiri.json)を変更するか、[後述の環境変数](#環境変数の説明)でJSONを返すURLを設定すること
 
