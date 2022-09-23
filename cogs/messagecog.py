@@ -171,13 +171,21 @@ class MessageCog(commands.Cog, name='通常用'):
 
         sep_channels = re.sub(r',$', '', sep_channels)
         message += f'(集計チャンネル({len(count_channels)}件): {sep_channels})\n'
+        message_no_channels = f'(集計チャンネル({len(count_channels)}件): 長すぎるため省略しました...)\n'
 
         elapsed_time = time.time() - start_time
         elapsed_time_text = '経過時間:{:.2f}'.format(elapsed_time) + '[sec]'
         LOG.info(f'{sep_channels}({count_numbers}件) → {elapsed_time_text}')
         message += elapsed_time_text
+        message_no_channels += elapsed_time_text
 
-        await interaction.followup.send(message, ephemeral=hidden)
+        try:
+            await interaction.followup.send(message, ephemeral=hidden)
+        except Exception as e:
+            try:
+                await interaction.followup.send(message_no_channels, ephemeral=hidden)
+            except Exception as e:
+                await interaction.followup.send('なんらかの原因でエラーが発生しました。集計順位を減らすなどしてみてください', ephemeral=hidden)
 
     @app_commands.command(
         name='count-reaction',
@@ -240,13 +248,21 @@ class MessageCog(commands.Cog, name='通常用'):
 
         sep_channels = re.sub(r',$', '', sep_channels)
         message += f'(集計チャンネル({len(count_channels)}件): {sep_channels})\n'
+        message_no_channels = f'(集計チャンネル({len(count_channels)}件): 長すぎるため省略しました...)\n'
 
         elapsed_time = time.time() - start_time
         elapsed_time_text = '経過時間:{:.2f}'.format(elapsed_time) + '[sec]'
         LOG.info(f'{sep_channels}({count_numbers}件) → {elapsed_time_text}')
         message += elapsed_time_text
+        message_no_channels += elapsed_time_text
 
-        await interaction.followup.send(message, ephemeral=hidden)
+        try:
+            await interaction.followup.send(message, ephemeral=hidden)
+        except Exception as e:
+            try:
+                await interaction.followup.send(message_no_channels, ephemeral=hidden)
+            except Exception as e:
+                await interaction.followup.send('なんらかの原因でエラーが発生しました。集計順位を減らすなどしてみてください', ephemeral=hidden)
 
     def get_target_channels(self, interaction, channel_name):
         if channel_name is None:
