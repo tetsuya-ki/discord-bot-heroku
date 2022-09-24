@@ -172,7 +172,7 @@ class MessageCog(commands.Cog, name='通常用'):
 
         sep_channels = re.sub(r',$', '', sep_channels)
         message += f'(集計チャンネル({len(count_channels)}件): {sep_channels})\n'
-        message_no_channels = f'(集計チャンネル({len(count_channels)}件): 長すぎるため省略しました...)\n'
+        message_no_channels += f'(集計チャンネル({len(count_channels)}件): 長すぎるため省略しました...)\n'
 
         elapsed_time = time.time() - start_time
         elapsed_time_text = '経過時間:{:.2f}'.format(elapsed_time) + '[sec]'
@@ -183,6 +183,7 @@ class MessageCog(commands.Cog, name='通常用'):
         try:
             await interaction.followup.send(message, ephemeral=hidden)
         except Exception as e:
+            LOG.info('おそらく長すぎるため失敗。一部省略し再実行')
             try:
                 await interaction.followup.send(message_no_channels, ephemeral=hidden)
             except Exception as e:
@@ -250,7 +251,7 @@ class MessageCog(commands.Cog, name='通常用'):
 
         sep_channels = re.sub(r',$', '', sep_channels)
         message += f'(集計チャンネル({len(count_channels)}件): {sep_channels})\n'
-        message_no_channels = f'(集計チャンネル({len(count_channels)}件): 長すぎるため省略しました...)\n'
+        message_no_channels += f'(集計チャンネル({len(count_channels)}件): 長すぎるため省略しました...)\n'
 
         elapsed_time = time.time() - start_time
         elapsed_time_text = '経過時間:{:.2f}'.format(elapsed_time) + '[sec]'
@@ -261,6 +262,7 @@ class MessageCog(commands.Cog, name='通常用'):
         try:
             await interaction.followup.send(message, ephemeral=hidden)
         except Exception as e:
+            LOG.info('おそらく長すぎるため失敗。一部省略し再実行')
             try:
                 await interaction.followup.send(message_no_channels, ephemeral=hidden)
             except Exception as e:
