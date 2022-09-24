@@ -168,6 +168,7 @@ class MessageCog(commands.Cog, name='通常用'):
             message += f'{rank+1}位: {ranking_target[0].display_name}さん {percent}(' + '{:,}'.format(ranking_target[1]) + '件)\n'
             if rank + 1 >= ranking_num:
                 break
+        message_no_channels = message
 
         sep_channels = re.sub(r',$', '', sep_channels)
         message += f'(集計チャンネル({len(count_channels)}件): {sep_channels})\n'
@@ -245,6 +246,7 @@ class MessageCog(commands.Cog, name='通常用'):
             message += f'{rank+1}位: {ranking_target[0]} → {percent}(' + '{:,}'.format(ranking_target[1]) + '件)\n'
             if rank + 1 >= ranking_num:
                 break
+        message_no_channels = message
 
         sep_channels = re.sub(r',$', '', sep_channels)
         message += f'(集計チャンネル({len(count_channels)}件): {sep_channels})\n'
