@@ -34,6 +34,7 @@ class ReactionChannelerCog(commands.Cog, name="リアクションチャンネラ
     async def on_ready(self):
         LOG.info(f"load reaction-channeler's guilds{self.bot.guilds}")
         self.reaction_channel = ReactionChannel(self.bot.guilds, self.bot)
+        await self.reaction_channel.get_discord_attachment_file()
         self.onmessagecog = OnMessageCog(self.bot)
 
     # リアクションチャンネラーコマンド群

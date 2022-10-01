@@ -34,7 +34,7 @@ class ReactionChannel:
         # Herokuの時のみ実施
         if settings.IS_HEROKU:
             LOG.debug('Heroku mode.start get_discord_attachment_file.')
-            # # ファイルをチェックし、存在しなければ最初と見做す
+            # ファイルをチェックし、存在しなければ最初と見做す
             file_path_first_time = join(dirname(__file__), 'first_time')
             if not os.path.exists(file_path_first_time):
                 with open(file_path_first_time, 'w') as f:
@@ -49,7 +49,12 @@ class ReactionChannel:
                     LOG.debug(f'{guild}: チャンネル読み込み')
                     get_control_channel = discord.utils.get(guild.text_channels, name=self.REACTION_CHANNEL)
                     if get_control_channel is not None:
-                        last_message = await get_control_channel.history(limit=1).flatten()
+                        last_message = []
+                        try:
+                            last_message = [history async for history in get_control_channel.history(limit=1)]
+                        except:
+                            LOG.debug(f'{guild}: チャンネル読み込み失敗(多分権限がありません)')
+
                         LOG.debug(f'＋＋＋＋{last_message}＋＋＋＋')
                         if len(last_message) != 0:
                             LOG.debug(f'len: {len(last_message)}, con: {last_message[0].content}, attchSize:{len(last_message[0].attachments)}')
@@ -100,7 +105,7 @@ class ReactionChannel:
                     LOG.error(f'＊＊＊{self.REACTION_CHANNEL}の作成に失敗しました！＊＊＊')
 
             # チャンネルの最後のメッセージを確認し、所定のメッセージなら削除する
-            last_message = await get_control_channel.history(limit=1).flatten()
+            last_message = [history async for history in get_control_channel.history(limit=1)]
             if len(last_message) != 0:
                 if last_message[0].content == self.FILE:
                     await get_control_channel.purge(limit=1)
