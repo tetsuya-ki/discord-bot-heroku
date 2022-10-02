@@ -47,8 +47,10 @@ class AssistantBot(commands.Bot):
             await self.load_extension(cog) # awaitが必要
 
         # テスト中以外は環境変数で設定しないことを推奨(環境変数があれば、ギルドコマンドとして即時発行される)
-        if settings.ENABLE_SLASH_COMMAND_GUILD_ID:
+        if settings.ENABLE_SLASH_COMMAND_GUILD_ID is not None and len(settings.ENABLE_SLASH_COMMAND_GUILD_ID) > 0:
+            LOG.info(settings.ENABLE_SLASH_COMMAND_GUILD_ID)
             for guild in settings.ENABLE_SLASH_COMMAND_GUILD_ID:
+                LOG.info(guild)
                 self.tree.copy_global_to(guild=guild)
                 await self.tree.sync(guild=guild)
         else:
@@ -63,10 +65,10 @@ async def main():
 # AssistantBotのインスタンス化および起動処理。
 if __name__ == '__main__':
     intents = discord.Intents.default()
-    intents.members = True # このBotでは必須(特権インテントの設定が必要)
+    intents.members = False # gameでは不要
     intents.typing = False
     intents.presences = False
-    intents.message_content = True # このBotでは必須(特権インテントの設定が必要)
+    intents.message_content = False # gameでは不要
 
     bot = AssistantBot(
             command_prefix = '/'

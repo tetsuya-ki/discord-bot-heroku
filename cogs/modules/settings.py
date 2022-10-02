@@ -35,7 +35,13 @@ def num_env(param):
         return int(param)
 
 def split_guild_env(str):
-    guilds = [] if str is None else list(map(discord.Object, str.split(';')))
+    guilds = []
+    if str is None or str == '':
+        pass
+    elif  not ';' in str:
+        guilds.append(discord.Object(str))
+    else:
+        guilds = list(map(discord.Object, str.split(';')))
     return guilds
 
 load_dotenv(verbose=True)
