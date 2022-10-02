@@ -107,3 +107,6 @@ Log/
 # vscode
 .vscode/launch.json
 .vscode/settings.json
+
+# fly.io
+fly.toml
