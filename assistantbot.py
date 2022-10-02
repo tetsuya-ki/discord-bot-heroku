@@ -51,8 +51,10 @@ class AssistantBot(commands.Bot):
             await self.load_extension(cog) # awaitが必要
 
         # テスト中以外は環境変数で設定しないことを推奨(環境変数があれば、ギルドコマンドとして即時発行される)
-        if settings.ENABLE_SLASH_COMMAND_GUILD_ID:
+        if settings.ENABLE_SLASH_COMMAND_GUILD_ID is not None and len(settings.ENABLE_SLASH_COMMAND_GUILD_ID) > 0:
+            LOG.info(settings.ENABLE_SLASH_COMMAND_GUILD_ID)
             for guild in settings.ENABLE_SLASH_COMMAND_GUILD_ID:
+                LOG.info(guild)
                 self.tree.copy_global_to(guild=guild)
                 await self.tree.sync(guild=guild)
         else:
