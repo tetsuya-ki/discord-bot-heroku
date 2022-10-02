@@ -1,0 +1,45 @@
+app = "word-wolf"
+kill_signal = "SIGINT"
+kill_timeout = 5
+processes = []
+
+[env]
+  DISCORD_TOKEN=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+  LOG_LEVEL=INFO
+  IS_HEROKU=False
+  OHGIRI_JSON_URL=ohgiri_json_url
+  WORDWOLF_JSON_URL=wordwolf_json_url
+  NGWORD_GAME_JSON_URL=ngword_game_json_url
+  APPLICATION_ID="99999999" # YOUR_DISCORD_BOT_APPLICATION_ID
+  ENABLE_SLASH_COMMAND_GUILD_ID="__あなたのGuild_IDを入力(数字/複数あるなら;を挟むこと。グローバルコマンドの場合は入力しないこと！(その場合1時間程度登録に時間がかかる可能性があります))__"
+  USE_IF_AVAILABLE_FILE=True
+
+[experimental]
+  allowed_public_ports = []
+  auto_rollback = true
+
+[[services]]
+  http_checks = []
+  internal_port = 8080
+  processes = ["app"]
+  protocol = "tcp"
+  script_checks = []
+  [services.concurrency]
+    hard_limit = 25
+    soft_limit = 20
+    type = "connections"
+
+  [[services.ports]]
+    force_https = true
+    handlers = ["http"]
+    port = 80
+
+  [[services.ports]]
+    handlers = ["tls", "http"]
+    port = 443
+
+  [[services.tcp_checks]]
+    grace_period = "1s"
+    interval = "15s"
+    restart_limit = 0
+    timeout = "2s"

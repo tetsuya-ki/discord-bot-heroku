@@ -118,7 +118,7 @@ Log/
 docker-compose.override.yml
 
 ########################
-### .dockerignore only 
+### .dockerignore only #
 ########################
 
 # docker
@@ -129,3 +129,6 @@ Procfile
 first_time
 *.txt
 Logs/*
+
+# fly.io
+fly.toml
