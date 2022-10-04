@@ -12,7 +12,7 @@ processes = []
   NGWORD_GAME_JSON_URL=ngword_game_json_url
   APPLICATION_ID="99999999" # YOUR_DISCORD_BOT_APPLICATION_ID
   ENABLE_SLASH_COMMAND_GUILD_ID="__あなたのGuild_IDを入力(数字/複数あるなら;を挟むこと。グローバルコマンドの場合は入力しないこと！(その場合1時間程度登録に時間がかかる可能性があります))__"
-  USE_IF_AVAILABLE_FILE=True
+  USE_IF_AVAILABLE_FILE=False
 
 [experimental]
   allowed_public_ports = []

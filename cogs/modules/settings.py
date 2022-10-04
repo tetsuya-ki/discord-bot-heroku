@@ -38,7 +38,7 @@ def split_guild_env(str):
     guilds = []
     if str is None or str == '':
         pass
-    elif  not ';' in str:
+    elif not ';' in str:
         guilds.append(discord.Object(str))
     else:
         guilds = list(map(discord.Object, str.split(';')))
@@ -62,4 +62,4 @@ WORDWOLF_JSON_URL = os.environ.get('WORDWOLF_JSON_URL')
 NGWORD_GAME_JSON_URL = os.environ.get('NGWORD_GAME_JSON_URL')
 APPLICATION_ID = os.environ.get('APPLICATION_ID')
 ENABLE_SLASH_COMMAND_GUILD_ID = split_guild_env(os.environ.get('ENABLE_SLASH_COMMAND_GUILD_ID'))
-USE_IF_AVAILABLE_FILE = if_env_defalut_true(os.environ.get('USE_IF_AVAILABLE_FILE'))
+USE_IF_AVAILABLE_FILE = if_env(os.environ.get('USE_IF_AVAILABLE_FILE'))

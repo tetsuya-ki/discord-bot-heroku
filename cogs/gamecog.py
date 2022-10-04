@@ -54,6 +54,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
 
     async def wordWolf_setting(self):
         wordWolf_filepath = join(dirname(__file__), 'modules' + os.sep + 'files' + os.sep + 'temp' + os.sep + 'wordwolf.json')
+        # パスにファイルがない、または、環境変数にワードウルフJSONのURLが登録されており、可能ならファイルを使用がFalseの場合はそちらを使用
         if not os.path.exists(wordWolf_filepath) or \
             (not settings.USE_IF_AVAILABLE_FILE and settings.WORDWOLF_JSON_URL ):
             wordWolf_filepath = await self.json_setting(settings.WORDWOLF_JSON_URL, 'wordwolf.json')
@@ -64,6 +65,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
 
     async def ngWordGame_setting(self):
         ngWordGame_filepath = join(dirname(__file__), 'modules' + os.sep + 'files' + os.sep + 'temp' + os.sep + 'ngword_game.json')
+        # パスにファイルがない、または、環境変数にNGワードゲームJSONのURLが登録されており、可能ならファイルを使用がFalseの場合はそちらを使用
         if not os.path.exists(ngWordGame_filepath) or \
             (not settings.USE_IF_AVAILABLE_FILE and settings.NGWORD_GAME_JSON_URL ):
             ngWordGame_filepath = await self.json_setting(settings.NGWORD_GAME_JSON_URL, 'ngword_game.json')

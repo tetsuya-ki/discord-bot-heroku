@@ -1,6 +1,6 @@
 # このBotについて
 
-Discord用のBot。discord.pyのBot Commands Frameworkを使用して実装。大まかな機能ごとにCogを分けて開発しているため、不要な機能はCogを削除するだけで削除可能(一部機能に依存関係あり)。同様に、Cogを追加すれば機能追加も可能。
+Discord用のBot。discord.pyのBot Commands Frameworkを使用して実装。大まかな機能ごとにCogを分けて開発しているため、不要な機能はCogを削除するだけで削除可能(一部機能に依存関係あり)。同様に、Cogを追加すれば機能追加も可能。[v1.0.0](https://github.com/tetsuya-ki/discord-bot-heroku/releases/tag/v1.0.0)からスラッシュコマンドに対応しました
 
 ## Table of Contesnts
 
@@ -283,8 +283,8 @@ Discord用のBot。discord.pyのBot Commands Frameworkを使用して実装。�
   - ワードウルフ機能で使用するJSONをURLから取得する場合に設定(Cogを読み込む際に取得されます)。環境変数がない場合は、[jsonファイル](https://github.com/tetsuya-ki/discord-bot-heroku/blob/master/cogs/modules/files/wordwolf.json)を使用
 - NGWORD_GAME_JSON_URL=ngword_game_json_url
   - NGワードゲーム機能で使用するJSONをURLから取得する場合に設定(Cogを読み込む際に取得されます)。環境変数がない場合は、[jsonファイル](https://github.com/tetsuya-ki/discord-bot-heroku/blob/master/cogs/modules/files/wordwolf.json)を使用
-- USE_IF_AVAILABLE_FILE=True
-  - 各JSONファイルがあればそちらを優先的に使用するかどうか。デフォルトはTrue。[v1.0.0](https://github.com/tetsuya-ki/discord-bot-heroku/releases/tag/v1.0.0)で追加
+- USE_IF_AVAILABLE_FILE=False
+  - 各JSONファイルがあればそちらを優先的に使用するかどうか。デフォルトはFalse。[v1.0.0](https://github.com/tetsuya-ki/discord-bot-heroku/releases/tag/v1.0.0)で追加
     - テストする時、毎回同じものをダウンロードしていて意味ないなと思ったため追加
 - APPLICATION_ID="99999999"
   - あなたのBotの`APPLICATION ID`を指定する(スラッシュコマンドを使う上で設定が必須となります)。[v1.0.0](https://github.com/tetsuya-ki/discord-bot-heroku/releases/tag/v1.0.0)で追加
