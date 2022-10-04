@@ -1,2 +1,3 @@
 #!/bin/bash
-python -u assitantbot.py
+poetry install
+poetry run python assistantbot.py
