@@ -69,6 +69,7 @@ if __name__ == '__main__':
     intents.typing = False
     intents.presences = False
     intents.message_content = False # gameでは不要
+    LOG.info(settings.APPLICATION_ID)
 
     bot = AssistantBot(
             command_prefix = '/'

@@ -7,10 +7,10 @@ license = "MIT License"
 
 [tool.poetry.dependencies]
 python = "^3.8"
-"discord.py" = "2.0.0"
 python-dotenv = "^0.20.0"
 mojimoji = "^0.0.12"
 Flask = "^2.2.2"
+"discord.py" = "^2.3.2"
 
 [tool.poetry.dev-dependencies]
 
