@@ -1,17 +1,26 @@
 import discord
 import os
 import re
+import aiohttp
+import locale
+import datetime
 from discord.ext import commands  # Bot Commands Frameworkのインポート
+from logging import getLogger
+from datetime import timedelta, timezone
 from .modules.savefile import SaveFile
 from .modules import settings
 from .modules.scrapboxsidandpnames import ScrapboxSidAndPnames
-from logging import getLogger
 
 LOG = getLogger('assistantbot')
 
 # コグとして用いるクラスを定義。
 class OnMessageCog(commands.Cog, name="メッセージイベント用"):
     FILEPATH = 'modules/files/temp'
+    TWITTER_URL = 'https://twitter.com/'
+    TWITTER_OR_X_URL = 'https://twitter|x.com/'
+    TWITTER_STATUS_URL = TWITTER_OR_X_URL + '.+?/status/(\d+)'
+    TWITTER_EXPAND_URL = 'https://cdn.syndication.twimg.com/tweet-result?token=x&id='
+    JST = timezone(timedelta(hours=9), 'JST')
 
     # OnMessageCogクラスのコンストラクタ。Botを受取り、インスタンス変数として保持。
     def __init__(self, bot):
@@ -90,10 +99,17 @@ class OnMessageCog(commands.Cog, name="メッセージイベント用"):
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         botUser = self.bot.user
-        save_file_message_target = ''
 
         if message.author == botUser:# 自分は無視する
             return
+
+        # Twitter展開機能(デフォルト:TRUE)
+        if settings.USE_TWITTER_EXPANDED:
+            # Twitter展開(対象あり、かつ、embedsがない(Discordによる展開がない))
+            reSearch = re.compile(self.TWITTER_STATUS_URL).search(message.clean_content)
+            if reSearch is not None and len(reSearch.groups()) > 0 and len(message.embeds) == 0:
+                if type(reSearch.group(1)) is str:
+                    await self.twitter_url_expand(message, reSearch.group(1))
 
         if self.scrapboxSidAndPnames.SCRAPBOX_URL_PATTERN in message.clean_content and self.scrapboxSidAndPnames.setup(message.guild):
             await self.scrapbox_url_expand(message)
@@ -108,6 +124,93 @@ class OnMessageCog(commands.Cog, name="メッセージイベント用"):
                 await targetMessage.reply(embed=embed)
         else:
             return
+
+    # TwitterのURLを展開
+    async def twitter_url_expand(self, targetMessage: discord.Message, twitter_status_id: str):
+        url = self.TWITTER_EXPAND_URL + twitter_status_id
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as r:
+                LOG.debug(url)
+                LOG.debug(r.status)
+                if r.status == 200:
+                    data = await r.json()
+                    LOG.info(await r.text())
+
+                    # 画像の保存
+                    files = []
+                    embeds = []
+                    image_paths = []
+                    thumbnail_url = None
+                    if data.get('mediaDetails') is not None:
+                        for media in data.get('mediaDetails'):
+                            if media.get('media_url_https') is not None:
+                                thumbnail_url = media.get('media_url_https')
+                                current_path = os.path.dirname(os.path.abspath(__file__))
+                                saved_path = ''.join([current_path, os.sep, self.FILEPATH.replace('/', os.sep)])
+                                path = await self.savefile.download_file_to_dir(thumbnail_url, saved_path)
+                                if path is not None:
+                                    full_path = saved_path + os.sep + path
+                                    files.append(discord.File(full_path, filename=path))
+                                    image_paths.append(path)
+
+                    screen_name = data.get('user').get('screen_name')
+                    title_text = f'''{data.get('user').get('name')}(id:{data.get('user').get('id_str')}) by Twitter'''
+                    description_text = data.get('text')
+                    target_url = f'''{self.TWITTER_URL}{screen_name}/status/{twitter_status_id}'''
+                    twitter_profile_url = self.TWITTER_URL + screen_name
+
+                    # debug
+                    list = [screen_name,title_text,description_text,target_url,twitter_profile_url]
+                    for item in list:
+                        LOG.info(item)
+
+                    embed = discord.Embed(
+                        title=title_text
+                        , color=0x1da1f2
+                        , description=description_text
+                        , url=target_url
+                        )
+                    embed.set_author(
+                        name=screen_name
+                        , url=twitter_profile_url
+                        , icon_url=data.get('user').get('profile_image_url_https')
+                        )
+                    if thumbnail_url is not None:
+                        embed.set_thumbnail(url=thumbnail_url)
+                        embed.set_image(url=f'''attachment://{image_paths[0]}''')
+                    embed.add_field(name='投稿日付',value=self.iso8601_to_jst_text(data.get('created_at')))
+                    embed.add_field(name='お気に入り数',value=data.get('favorite_count'))
+                    embed.set_footer(
+                        text='From Twitter'
+                        , icon_url='https://i.imgur.com/NRad4mF.png')
+
+                    for image_path in image_paths:
+                        embed_data = discord.Embed(url=target_url)
+                        embed_data.set_image(url=f'''attachment://{image_path}''')
+                        embeds.append(embed_data)
+                    else:
+                        if len(embeds) > 0:
+                            embeds[0] = embed
+                        else:
+                            embeds.append(embed)
+
+                    # 画像あり
+                    if len(files) > 0:
+                        await targetMessage.reply(
+                            'Twitter Expanded',
+                            files=files,
+                            embeds=embeds,
+                            mention_author=False)
+                    else:
+                        await targetMessage.reply(
+                            'Twitter Expanded',
+                            embeds=embeds,
+                            mention_author=False)
+
+    def iso8601_to_jst_text(self, iso8601:str):
+        dt_utc = datetime.datetime.fromisoformat(iso8601.replace('Z', '+00:00')) # python3.11から不要だが...
+        locale.setlocale(locale.LC_TIME, 'ja_JP.UTF-8')
+        return dt_utc.astimezone(self.JST).strftime('%Y/%m/%d(%a) %H:%M:%S')
 
 async def setup(bot):
     await bot.add_cog(OnMessageCog(bot)) # OnMessageCogにBotを渡してインスタンス化し、Botにコグとして登録する
