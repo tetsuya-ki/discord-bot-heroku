@@ -58,6 +58,7 @@ class OnMessageCog(commands.Cog, name="メッセージイベント用"):
             return
 
         embeds = []
+        before_embeds_url = ''
         for embed in targetMessage.embeds:
             current_path = os.path.dirname(os.path.abspath(__file__))
             saved_path = ''.join([current_path, os.sep, self.FILEPATH.replace('/', os.sep)])
@@ -72,18 +73,19 @@ class OnMessageCog(commands.Cog, name="メッセージイベント用"):
             # LOG.debug(embed.image)
             # LOG.debug('filepath:' + saved_path)
             LOG.info(dicted_data)
-            if img_url:
+            if img_url is not None and before_embeds_url != img_url:
                 path = await self.savefile.download_file_to_dir(img_url, saved_path)
+                before_embeds_url = img_url.replace(':large','')
                 if path is not None:
-                    embed_data = discord.Embed()
-                    embed_data.set_thumbnail(url=f'attachment://{path}')
+                    embed_data = discord.Embed(url='https://discord.com')
+                    embed_data.set_image(url=f'attachment://{path}')
                     embeds.append(embed_data)
                     full_path = saved_path + os.sep + path
                     files.append(discord.File(full_path, filename=path))
                     LOG.debug('save file: ' + full_path)
             else:
                 LOG.debug('url is empty.')
-                return
+                continue
 
         # チャンネルにファイルを添付する
         if (len(files) > 0):
