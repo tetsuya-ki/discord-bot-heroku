@@ -6,8 +6,8 @@ authors = ["tetsuya-ki <64536338+tetsuya-ki@users.noreply.github.com>"]
 license = "MIT License"
 
 [tool.poetry.dependencies]
-python = "^3.8"
-"discord.py" = "2.0.0"
+python = "^3.10"
+"discord.py" = "^2.1.0"
 python-dotenv = "^0.20.0"
 mojimoji = "^0.0.12"
 

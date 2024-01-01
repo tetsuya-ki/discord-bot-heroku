@@ -73,6 +73,7 @@ if __name__ == '__main__':
     intents.typing = False
     intents.presences = False
     intents.message_content = True # このBotでは必須(特権インテントの設定が必要)
+    LOG.info(settings.APPLICATION_ID)
 
     bot = AssistantBot(
             command_prefix = '/'

@@ -61,6 +61,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
         # ファイルを読み込み、ワードウルフ用のデータを作成
         read_json = ReadJson()
         read_json.readJson(wordWolf_filepath)
+        LOG.info(read_json)
         self.wordWolfJson = read_json
 
     async def ngWordGame_setting(self):
@@ -72,6 +73,7 @@ class GameCog(commands.Cog, name='ゲーム用'):
         # ファイルを読み込み、NGワードゲーム用のデータを作成
         read_json = ReadJson()
         read_json.readJson(ngWordGame_filepath)
+        LOG.info(read_json)
         self.ngWordGameJson = read_json
 
     async def json_setting(self, json_url=None, file_name='no_name.json'):
@@ -79,8 +81,8 @@ class GameCog(commands.Cog, name='ゲーム用'):
         # URLが設定されている場合はそちらを使用
         if json_url:
             file_path = await self.savefile.download_file(json_url,  json_path)
-            LOG.info(f'JSONのURLが登録されているため、JSONを保存しました。\n{file_path}')
-            return file_path
+            LOG.info(f'JSONのURLが登録されているため、JSONを保存しました。\npath:{json_path}\nfile_path:{file_path}')
+            return json_path
 
     # ワードウルフ機能
     @app_commands.command(

@@ -4,25 +4,20 @@ Discord用のBot。discord.pyのBot Commands Frameworkを使用して実装。�
 
 ## Table of Contesnts
 
-1. [機能](#機能)
-
-1. [通常用カテゴリ(messagecog.pyで実装)](#通常用カテゴリmessagecogpyで実装)
-
-1. [管理用カテゴリ(admincog.pyで実装)](#管理用カテゴリadmincogpyで実装)
-
-1. [リアクションチャンネラーカテゴリ(reactionchannelercog.pyで実装)](#リアクションチャンネラーカテゴリreactionchannelercogpyで実装)
-
-1. [ゲームカテゴリ(gamecog.pyで実装)](#ゲームカテゴリgamecogpyで実装)
-
-1. [メッセージイベント用(onmessagecog.pyで実装)](#メッセージイベント用onmessagecogpyで実装)
-
-1. [環境変数の説明](#環境変数の説明)
-
-1. [ローカルでの動かし方(Poetry)](#ローカルでの動かし方poetry)
-
-1. [ローカルでの動かし方](#ローカルでの動かし方poetryを使用しない方法)
-
-1. [Dockerでの動かし方](#dockerでの動かし方)
+- [このBotについて](#このbotについて)
+  - [Table of Contesnts](#table-of-contesnts)
+  - [機能](#機能)
+    - [通常用カテゴリ(messagecog.pyで実装)](#通常用カテゴリmessagecogpyで実装)
+    - [管理用カテゴリ(admincog.pyで実装)](#管理用カテゴリadmincogpyで実装)
+    - [リアクションチャンネラーカテゴリ(reactionchannelercog.pyで実装)](#リアクションチャンネラーカテゴリreactionchannelercogpyで実装)
+    - [ゲームカテゴリ(gamecog.pyで実装)](#ゲームカテゴリgamecogpyで実装)
+    - [メッセージイベント用(onmessagecog.pyで実装)](#メッセージイベント用onmessagecogpyで実装)
+    - [カテゴリ未設定(削除されました)](#カテゴリ未設定削除されました)
+  - [環境変数の説明](#環境変数の説明)
+    - [廃止された環境変数](#廃止された環境変数)
+  - [ローカルでの動かし方(Poetry)](#ローカルでの動かし方poetry)
+  - [ローカルでの動かし方(Poetryを使用しない方法)](#ローカルでの動かし方poetryを使用しない方法)
+  - [Dockerでの動かし方](#dockerでの動かし方)
 
 ## 機能
 
@@ -248,6 +243,13 @@ Discord用のBot。discord.pyのBot Commands Frameworkを使用して実装。�
   - メッセージ編集時(discordによるURLの展開時）に発動する、画像保存機能([環境変数の説明](#環境変数の説明)のSAVE_FILE_MESSAGEで指定した対象のみ)
 ![image(help)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku/on_message_edit-save_image.png?raw=true)  
 
+  - メッセージ投稿時に発動する、TwitterのURL展開機能([環境変数の説明](#環境変数の説明)USE_TWITTER_EXPANDEDが未指定またはTRUEのとき実行)([v1.0.1](https://github.com/tetsuya-ki/discord-bot-heroku/releases/tag/v1.0.1)にて追加)
+    - 実行したくない場合、`USE_TWITTER_EXPANDED=FALSE`とすること
+    - 表示例1(画像あり)  
+![image(twitter_expander1)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku_v2/on_message-twitter_url_expander.png?raw=true)
+    - 表示例2(画像なし)  
+![image(twitter_expander2)](https://github.com/tetsuya-ki/images/blob/main/discord-bot-heroku_v2/on_message-twitter_url_expander2.png?raw=true)
+
 ### カテゴリ未設定(削除されました)
 
 ## 環境変数の説明
@@ -294,6 +296,9 @@ Discord用のBot。discord.pyのBot Commands Frameworkを使用して実装。�
   - その場合、この環境変数にテスト用ギルドのIDを設定することで、すぐにスラッシュコマンドが試せます(ギルドコマンドとして設定する)。[v1.0.0](https://github.com/tetsuya-ki/discord-bot-heroku/releases/tag/v1.0.0)で追加
     - 設定が**複数存在する場合、「;」を挟む必要**がある
     - 例) ENABLE_SLASH_COMMAND_GUILD_ID="99999999;88888888;77777777"
+- USE_TWITTER_EXPANDED=FALSE
+  - TwitterのURLを展開する機能
+  - 未指定またはTRUEのとき実行([v1.0.1](https://github.com/tetsuya-ki/discord-bot-heroku/releases/tag/v1.0.1)にて追加)
 
 ### 廃止された環境変数
 
