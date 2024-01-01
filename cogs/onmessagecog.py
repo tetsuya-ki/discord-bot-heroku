@@ -17,7 +17,7 @@ LOG = getLogger('assistantbot')
 class OnMessageCog(commands.Cog, name="メッセージイベント用"):
     FILEPATH = 'modules/files/temp'
     TWITTER_URL = 'https://twitter.com/'
-    TWITTER_OR_X_URL = 'https://twitter|x.com/'
+    TWITTER_OR_X_URL = 'https://(?:(?:twitter)|x)\.com/'
     TWITTER_STATUS_URL = TWITTER_OR_X_URL + '.+?/status/(\d+)'
     TWITTER_EXPAND_URL = 'https://cdn.syndication.twimg.com/tweet-result?token=x&id='
     JST = timezone(timedelta(hours=9), 'JST')
