@@ -93,7 +93,8 @@ class OnMessageCog(commands.Cog, name="メッセージイベント用"):
                 'file upload',
                 files=files,
                 embeds=embeds,
-                mention_author=False)
+                mention_author=False,
+                silent=True)
         else:
             return
 
@@ -123,7 +124,7 @@ class OnMessageCog(commands.Cog, name="メッセージイベント用"):
         if (self.scrapboxSidAndPnames.check(targetMessage)):
             embed = await self.scrapboxSidAndPnames.expand(targetMessage)
             if embed is not None:
-                await targetMessage.reply(embed=embed)
+                await targetMessage.reply(embed=embed, mention_author=False, silent=True)
         else:
             return
 
@@ -202,12 +203,14 @@ class OnMessageCog(commands.Cog, name="メッセージイベント用"):
                             'Twitter Expanded',
                             files=files,
                             embeds=embeds,
-                            mention_author=False)
+                            mention_author=False,
+                            silent=True)
                     else:
                         await targetMessage.reply(
                             'Twitter Expanded',
                             embeds=embeds,
-                            mention_author=False)
+                            mention_author=False,
+                            silent=True)
 
     def iso8601_to_jst_text(self, iso8601:str):
         dt_utc = datetime.datetime.fromisoformat(iso8601.replace('Z', '+00:00')) # python3.11から不要だが...
