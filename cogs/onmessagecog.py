@@ -20,6 +20,7 @@ class OnMessageCog(commands.Cog, name="メッセージイベント用"):
     TWITTER_OR_X_URL = 'https://(?:(?:twitter)|x)\.com/'
     TWITTER_STATUS_URL = TWITTER_OR_X_URL + '.+?/status/(\d+)'
     TWITTER_EXPAND_URL = 'https://cdn.syndication.twimg.com/tweet-result?token=x&id='
+    TWIMG_URL = '(https://pbs.twimg.com/media/.+)'
     JST = timezone(timedelta(hours=9), 'JST')
 
     # OnMessageCogクラスのコンストラクタ。Botを受取り、インスタンス変数として保持。
@@ -108,7 +109,7 @@ class OnMessageCog(commands.Cog, name="メッセージイベント用"):
 
         # Twitter展開機能(デフォルト:TRUE)
         if settings.USE_TWITTER_EXPANDED:
-            # Twitter展開(対象あり、かつ、embedsがない(Discordによる展開がない))
+            # Twitter展開(対象あり、かつ、embedsがない(Discordによる展開がない)->うまく動いていない模様...)
             reSearch = re.compile(self.TWITTER_STATUS_URL).search(message.clean_content)
             if reSearch is not None and len(reSearch.groups()) > 0 and len(message.embeds) == 0:
                 if type(reSearch.group(1)) is str:
@@ -144,73 +145,120 @@ class OnMessageCog(commands.Cog, name="メッセージイベント用"):
                     embeds = []
                     image_paths = []
                     thumbnail_url = None
-                    if data.get('mediaDetails') is not None:
-                        for media in data.get('mediaDetails'):
-                            if media.get('media_url_https') is not None:
-                                thumbnail_url = media.get('media_url_https')
-                                current_path = os.path.dirname(os.path.abspath(__file__))
-                                saved_path = ''.join([current_path, os.sep, self.FILEPATH.replace('/', os.sep)])
-                                path = await self.savefile.download_file_to_dir(thumbnail_url, saved_path)
-                                if path is not None:
-                                    full_path = saved_path + os.sep + path
-                                    files.append(discord.File(full_path, filename=path))
-                                    image_paths.append(path)
 
-                    screen_name = data.get('user').get('screen_name')
-                    title_text = f'''{data.get('user').get('name')}(id:{data.get('user').get('id_str')}) by Twitter'''
-                    description_text = data.get('text')
-                    target_url = f'''{self.TWITTER_URL}{screen_name}/status/{twitter_status_id}'''
-                    twitter_profile_url = self.TWITTER_URL + screen_name
+                    # 通常
+                    if data.get('__typename') != 'TweetTombstone':
+                        if data.get('mediaDetails') is not None:
+                            for media in data.get('mediaDetails'):
+                                if media.get('media_url_https') is not None:
+                                    thumbnail_url = media.get('media_url_https')
+                                    current_path = os.path.dirname(os.path.abspath(__file__))
+                                    saved_path = ''.join([current_path, os.sep, self.FILEPATH.replace('/', os.sep)])
+                                    path = await self.savefile.download_file_to_dir(thumbnail_url, saved_path)
+                                    if path is not None:
+                                        full_path = saved_path + os.sep + path
+                                        files.append(discord.File(full_path, filename=path))
+                                        image_paths.append(path)
 
-                    # debug
-                    list = [screen_name,title_text,description_text,target_url,twitter_profile_url]
-                    for item in list:
-                        LOG.info(item)
+                        screen_name = data.get('user').get('screen_name')
+                        title_text = f'''{data.get('user').get('name')}(id:{data.get('user').get('id_str')}) by Twitter'''
+                        description_text = data.get('text')
+                        target_url = f'''{self.TWITTER_URL}{screen_name}/status/{twitter_status_id}'''
+                        twitter_profile_url = self.TWITTER_URL + screen_name
 
-                    embed = discord.Embed(
-                        title=title_text
-                        , color=0x1da1f2
-                        , description=description_text
-                        , url=target_url
-                        )
-                    embed.set_author(
-                        name=screen_name
-                        , url=twitter_profile_url
-                        , icon_url=data.get('user').get('profile_image_url_https')
-                        )
-                    if thumbnail_url is not None:
-                        embed.set_thumbnail(url=thumbnail_url)
-                        embed.set_image(url=f'''attachment://{image_paths[0]}''')
-                    embed.add_field(name='投稿日付',value=self.iso8601_to_jst_text(data.get('created_at')))
-                    embed.add_field(name='お気に入り数',value=data.get('favorite_count'))
-                    embed.set_footer(
-                        text='From Twitter'
-                        , icon_url='https://i.imgur.com/NRad4mF.png')
+                        # debug
+                        list = [screen_name,title_text,description_text,target_url,twitter_profile_url]
+                        for item in list:
+                            LOG.info(item)
 
-                    for image_path in image_paths:
-                        embed_data = discord.Embed(url=target_url)
-                        embed_data.set_image(url=f'''attachment://{image_path}''')
-                        embeds.append(embed_data)
-                    else:
-                        if len(embeds) > 0:
-                            embeds[0] = embed
+                        embed = discord.Embed(
+                            title=title_text
+                            , color=0x1da1f2
+                            , description=description_text
+                            , url=target_url
+                            )
+                        embed.set_author(
+                            name=screen_name
+                            , url=twitter_profile_url
+                            , icon_url=data.get('user').get('profile_image_url_https')
+                            )
+                        if thumbnail_url is not None:
+                            embed.set_thumbnail(url=thumbnail_url)
+                            embed.set_image(url=f'''attachment://{image_paths[0]}''')
+                        embed.add_field(name='投稿日付',value=self.iso8601_to_jst_text(data.get('created_at')))
+                        embed.add_field(name='お気に入り数',value=data.get('favorite_count'))
+                        embed.set_footer(
+                            text='From Twitter'
+                            , icon_url='https://i.imgur.com/NRad4mF.png')
+
+                        for image_path in image_paths:
+                            embed_data = discord.Embed(url=target_url)
+                            embed_data.set_image(url=f'''attachment://{image_path}''')
+                            embeds.append(embed_data)
                         else:
-                            embeds.append(embed)
+                            if len(embeds) > 0:
+                                embeds[0] = embed
+                            else:
+                                embeds.append(embed)
 
-                    # 画像あり
-                    if len(files) > 0:
-                        await targetMessage.reply(
-                            'Twitter Expanded',
-                            files=files,
-                            embeds=embeds,
-                            mention_author=False,
-                            silent=True)
+                        # 画像あり
+                        if len(files) > 0:
+                            await targetMessage.reply(
+                                'Twitter Expanded',
+                                files=files,
+                                embeds=embeds,
+                                mention_author=False,
+                                silent=True)
+                        else:
+                            await targetMessage.reply(
+                                'Twitter Expanded',
+                                embeds=embeds,
+                                mention_author=False,
+                                silent=True)
+                    # 墓場行きは画像だけ助ける
                     else:
-                        await targetMessage.reply(
-                            'Twitter Expanded',
-                            embeds=embeds,
-                            mention_author=False,
-                            silent=True)
+                        LOG.info('This URL is TweetTombstone.')
+                        await self.save_twimg_file(targetMessage, 'TweetTombstone')
+
+    # twimgなURLを確認し、画像ならチャンネルへ添付する
+    async def save_twimg_file(self, targetMessage: discord.Message, text: str=''):
+        files = []
+        img_url = ''
+
+        twimg_list = re.compile(self.TWIMG_URL).findall(targetMessage.clean_content)
+        if len(twimg_list) == 0:
+            return
+
+        LOG.info(twimg_list)
+        before_img_url = ''
+        for img_url in twimg_list:
+            current_path = os.path.dirname(os.path.abspath(__file__))
+            saved_path = ''.join([current_path, os.sep, self.FILEPATH.replace('/', os.sep)])
+
+            img_url = img_url.replace(':large','').replace('>','')
+            LOG.debug(img_url)
+            LOG.debug('filepath:' + saved_path)
+            if img_url is not None and before_img_url != img_url:
+                before_img_url = img_url.replace(':large','')
+                path = await self.savefile.download_file_to_dir(img_url, saved_path)
+                if path is not None:
+                    full_path = saved_path + os.sep + path
+                    files.append(discord.File(full_path, filename=path, spoiler=True))
+                    LOG.info('save file: ' + full_path)
+            else:
+                LOG.info('url is empty.')
+                continue
+
+        # チャンネルにファイルを添付する
+        if (len(files) > 0):
+            message = text + ': file upload' if text is not None else 'file upload'
+            await targetMessage.reply(
+                message,
+                files=files,
+                mention_author=False,
+                silent=True)
+        else:
+            return
 
     def iso8601_to_jst_text(self, iso8601:str):
         dt_utc = datetime.datetime.fromisoformat(iso8601.replace('Z', '+00:00')) # python3.11から不要だが...
