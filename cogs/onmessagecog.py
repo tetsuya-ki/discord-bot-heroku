@@ -16,7 +16,7 @@ LOG = getLogger('assistantbot')
 # コグとして用いるクラスを定義。
 class OnMessageCog(commands.Cog, name="メッセージイベント用"):
     FILEPATH = 'modules/files/temp'
-    TWITTER_URL = 'https://twitter.com/'
+    TWITTER_URL = 'https://x.com/'
     TWITTER_OR_X_URL = 'https://(?:(?:twitter)|x)\.com/'
     TWITTER_STATUS_URL = TWITTER_OR_X_URL + '.+?/status/(\d+)'
     TWITTER_EXPAND_URL = 'https://cdn.syndication.twimg.com/tweet-result?token=x&id='
@@ -109,11 +109,10 @@ class OnMessageCog(commands.Cog, name="メッセージイベント用"):
 
         # Twitter展開機能(デフォルト:TRUE)
         if settings.USE_TWITTER_EXPANDED:
-            # Twitter展開(対象あり、かつ、embedsがない(Discordによる展開がない)->うまく動いていない模様...)
-            reSearch = re.compile(self.TWITTER_STATUS_URL).search(message.clean_content)
-            if reSearch is not None and len(reSearch.groups()) > 0 and len(message.embeds) == 0:
-                if type(reSearch.group(1)) is str:
-                    await self.twitter_url_expand(message, reSearch.group(1))
+            # Twitter展開(対象あり)
+            twitter_url = self.extract_twitter_url(message)
+            if type(twitter_url) is str and len(twitter_url) > 10:
+                await self.twitter_url_expand(message, twitter_url)
 
         if self.scrapboxSidAndPnames.SCRAPBOX_URL_PATTERN in message.clean_content and self.scrapboxSidAndPnames.setup(message.guild):
             await self.scrapbox_url_expand(message)
@@ -128,6 +127,13 @@ class OnMessageCog(commands.Cog, name="メッセージイベント用"):
                 await targetMessage.reply(embed=embed, mention_author=False, silent=True)
         else:
             return
+
+    # TwitterのURLを取り出す
+    def extract_twitter_url(self, targetMessage: discord.Message):
+        reSearch = re.compile(self.TWITTER_STATUS_URL).search(targetMessage.clean_content)
+        if reSearch is not None and len(reSearch.groups()) > 0:
+            if type(reSearch.group(1)) is str:
+                return reSearch.group(1)
 
     # TwitterのURLを展開
     async def twitter_url_expand(self, targetMessage: discord.Message, twitter_status_id: str):

@@ -291,7 +291,19 @@ class ReactionChannelerCog(commands.Cog, name="リアクションチャンネラ
         guild = self.bot.get_guild(payload.guild_id)
         channel = guild.get_channel(payload.channel_id)
         message = await channel.fetch_message(payload.message_id)
-        await self.onmessagecog.save_message_file(message)
+
+        # Twitter展開機能
+        save_flag = False
+        if settings.USE_TWITTER_EXPANDED:
+            # Twitter展開(対象あり)
+            twitter_url = self.onmessagecog.extract_twitter_url(message)
+            if type(twitter_url) is str and len(twitter_url) > 10:
+                await self.onmessagecog.twitter_url_expand(message, twitter_url)
+                save_flag = True
+        # Twitter展開しなかった場合、既存の保存機能を実行
+        if not save_flag:
+            await self.onmessagecog.save_message_file(message)
+
 
 # Bot本体側からコグを読み込む際に呼び出される関数。
 async def setup(bot):
