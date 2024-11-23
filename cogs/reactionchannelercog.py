@@ -175,7 +175,7 @@ class ReactionChannelerCog(commands.Cog, name="リアクションチャンネラ
             return
         if (payload.emoji.name == '📌') or (payload.emoji.name == '📍'):
             guild = self.bot.get_guild(payload.guild_id)
-            channel = guild.get_channel(payload.channel_id)
+            channel = guild.get_channel_or_thread(payload.channel_id)
             message = await channel.fetch_message(payload.message_id)
             await message.pin()
             return
@@ -187,7 +187,7 @@ class ReactionChannelerCog(commands.Cog, name="リアクションチャンネラ
             return
         if (payload.emoji.name == '📌') or (payload.emoji.name == '📍'):
             guild = self.bot.get_guild(payload.guild_id)
-            channel = guild.get_channel(payload.channel_id)
+            channel = guild.get_channel_or_thread(payload.channel_id)
             message = await channel.fetch_message(payload.message_id)
             await message.unpin()
             await message.reply('ピン留めが解除されました', mention_author=False)
@@ -212,7 +212,7 @@ class ReactionChannelerCog(commands.Cog, name="リアクションチャンネラ
 
         # フィルターされたリストがある分だけ、チャンネルへ投稿する
         for reaction in filtered_list:
-            from_channel = guild.get_channel(payload.channel_id)
+            from_channel = guild.get_channel_or_thread(payload.channel_id)
             message = await from_channel.fetch_message(payload.message_id)
 
             LOG.debug('guild:'+ str(guild))
@@ -281,7 +281,7 @@ class ReactionChannelerCog(commands.Cog, name="リアクションチャンネラ
                 LOG.info('環境変数に登録されていないWebhookIDをもつWebhookのため、実行されませんでした。')
             # 通常のリアクションチャンネラー機能の実行
             else:
-                to_channel = guild.get_channel(int(reaction[2]))
+                to_channel = guild.get_channel_or_thread(int(reaction[2]))
                 LOG.debug('setting:'+str(reaction[2]))
                 LOG.debug('to_channel: '+str(to_channel))
                 await to_channel.send(reaction[1] + ': ' + message.jump_url, embed=embed)
@@ -289,7 +289,10 @@ class ReactionChannelerCog(commands.Cog, name="リアクションチャンネラ
     # 画像を保存
     async def save_file(self, payload: discord.RawReactionActionEvent):
         guild = self.bot.get_guild(payload.guild_id)
-        channel = guild.get_channel(payload.channel_id)
+        channel = guild.get_channel_or_thread(payload.channel_id)
+        if type(channel) == 'NoneType':
+            LOG.info('channel is None')
+            return
         message = await channel.fetch_message(payload.message_id)
 
         # Twitter展開機能

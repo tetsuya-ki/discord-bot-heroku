@@ -170,7 +170,7 @@ class AdminCog(commands.Cog):
         # メッセージの所属するカテゴリを取得
         guild = interaction.channel.guild
         category_id = interaction.channel.category_id
-        category = guild.get_channel(category_id)
+        category = guild.get_channel_or_thread(category_id)
 
         # カテゴリーが存在するなら、カテゴリーについて確認メッセージに記載する
         category_text = ''
@@ -236,7 +236,7 @@ class AdminCog(commands.Cog):
         # メッセージの所属するカテゴリを取得
         guild = interaction.guild
         category_id = interaction.channel.category_id
-        category = guild.get_channel(category_id)
+        category = guild.get_channel_or_thread(category_id)
 
         # カテゴリーが存在するなら、カテゴリーについて確認メッセージに記載する
         category_text = ''
@@ -501,13 +501,13 @@ class AdminCog(commands.Cog):
 
         if isinstance(channel, discord.TextChannel):
             str = 'id: {0}, name: #{1}, type:{2}が{3}されました'.format(channel.id, channel.name, channel.type, event_text)
-            category = guild.get_channel(channel.category_id)
+            category = guild.get_channel_or_thread(channel.category_id)
             if category is not None:
                 str += '\nCategory: {0}, channel: <#{1}>'.format(category.name, channel.id)
             else:
                 str += '\nchannel: <#{0}>'.format(channel.id)
         elif isinstance(channel, discord.VoiceChannel):
-            category = guild.get_channel(channel.category_id)
+            category = guild.get_channel_or_thread(channel.category_id)
             if category is not None:
                 str += '\nCategory: {0}'.format(category.name)
         LOG.info(f'***{str}***')

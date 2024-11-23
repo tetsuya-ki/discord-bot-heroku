@@ -21,7 +21,7 @@ class AuditLogChannel:
                 logger.debug(ch)
             if len(channels) == 2:
                 if channels[1].isdecimal():
-                    self.channel = guild.get_channel(int(channels[1]))
+                    self.channel = guild.get_channel_or_thread(int(channels[1]))
                     logger.debug(self.channel)
                     if self.channel is not None:
                         return True
