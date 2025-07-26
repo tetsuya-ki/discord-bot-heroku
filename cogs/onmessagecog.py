@@ -154,6 +154,8 @@ class OnMessageCog(commands.Cog, name="メッセージイベント用"):
 
                     # 通常
                     if data.get('__typename') != 'TweetTombstone':
+                        text = data.get('text')
+                        video_url = None
                         if data.get('mediaDetails') is not None:
                             for media in data.get('mediaDetails'):
                                 if media.get('media_url_https') is not None:
@@ -165,11 +167,20 @@ class OnMessageCog(commands.Cog, name="メッセージイベント用"):
                                         full_path = saved_path + os.sep + path
                                         files.append(discord.File(full_path, filename=path))
                                         image_paths.append(path)
+                                    # 動画処理
+                                        text = text.replace(media.get('url'), '')
+                                        if '/video/' in media.get('expanded_url') and media.get('video_info'):
+                                            if len(media.get('video_info').get('variants')) > 1:
+                                                LOG.debug(media.get('video_info').get('variants')[1])
+                                                video_url = media.get('video_info').get('variants')[1].get('url')
+                                                LOG.debug(video_url)
+                                        else:
+                                            text = text.replace(media.get('url'), media.get('expanded_url'))
 
                         screen_name = data.get('user').get('screen_name')
                         title_text = f'''{data.get('user').get('name')}(id:{data.get('user').get('id_str')}) by Twitter'''
-                        text = data.get('text')
                         entity = data.get('entities')
+                        # URL書き換え2
                         for url in entity.get('urls'):
                             if '/photo/' in url.get('expanded_url') \
                                 or '/status/' in url.get('expanded_url'):
@@ -219,22 +230,29 @@ class OnMessageCog(commands.Cog, name="メッセージイベント用"):
 
                         # 画像あり
                         twi = None
+                        body_text = 'Twitter Expanded'
                         if len(files) > 0:
                             twi = await targetMessage.reply(
-                                'Twitter Expanded',
+                                body_text,
                                 files=files,
                                 embeds=embeds,
                                 mention_author=False,
                                 silent=True)
                         else:
                             twi = await targetMessage.reply(
-                                'Twitter Expanded',
+                                body_text,
                                 embeds=embeds,
                                 mention_author=False,
                                 silent=True)
-
+                        # 動画あり(別途返信)
+                        if video_url:
+                            await targetMessage.reply(
+                                video_url,
+                                mention_author=False,
+                                silent=True)
                         # 対応後、引用側の処理(やる気が出ないので適当)
                         if twi:
+
                             # 画像の保存
                             files = []
                             embeds = []
