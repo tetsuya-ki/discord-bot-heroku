@@ -168,7 +168,17 @@ class OnMessageCog(commands.Cog, name="メッセージイベント用"):
 
                         screen_name = data.get('user').get('screen_name')
                         title_text = f'''{data.get('user').get('name')}(id:{data.get('user').get('id_str')}) by Twitter'''
-                        description_text = data.get('text')
+                        text = data.get('text')
+                        entity = data.get('entities')
+                        for url in entity.get('urls'):
+                            if '/photo/' in url.get('expanded_url') \
+                                or '/status/' in url.get('expanded_url'):
+                                text = text.replace(url.get('url'), '')
+                            else:
+                                text = text.replace(url.get('url'), url.get('expanded_url'))
+                        if data.get('quoted_tweet'):
+                            text += '(引用リツイートあり)'
+                        description_text = text
                         target_url = f'''{self.TWITTER_URL}{screen_name}/status/{twitter_status_id}'''
                         twitter_profile_url = self.TWITTER_URL + screen_name
 
@@ -208,19 +218,99 @@ class OnMessageCog(commands.Cog, name="メッセージイベント用"):
                                 embeds.append(embed)
 
                         # 画像あり
+                        twi = None
                         if len(files) > 0:
-                            await targetMessage.reply(
+                            twi = await targetMessage.reply(
                                 'Twitter Expanded',
                                 files=files,
                                 embeds=embeds,
                                 mention_author=False,
                                 silent=True)
                         else:
-                            await targetMessage.reply(
+                            twi = await targetMessage.reply(
                                 'Twitter Expanded',
                                 embeds=embeds,
                                 mention_author=False,
                                 silent=True)
+
+                        # 対応後、引用側の処理(やる気が出ないので適当)
+                        if twi:
+                            # 画像の保存
+                            files = []
+                            embeds = []
+                            image_paths = []
+                            thumbnail_url = None
+
+                            # 通常
+                            quote = data.get('quoted_tweet')
+                            if quote:
+                                if quote.get('mediaDetails') is not None:
+                                    for qmedia in quote.get('mediaDetails'):
+                                        if qmedia.get('media_url_https') is not None:
+                                            thumbnail_url = qmedia.get('media_url_https')
+                                            current_path = os.path.dirname(os.path.abspath(__file__))
+                                            saved_path = ''.join([current_path, os.sep, self.FILEPATH.replace('/', os.sep)])
+                                            path = await self.savefile.download_file_to_dir(thumbnail_url, saved_path)
+                                            if path is not None:
+                                                full_path = saved_path + os.sep + path
+                                                files.append(discord.File(full_path, filename=path))
+                                                image_paths.append(path)
+
+                                screen_name = quote.get('user').get('screen_name')
+                                title_text = f'''{quote.get('user').get('name')}(id:{quote.get('user').get('id_str')}) by Twitter(Quoted)'''
+                                text = str(quote.get('text'))
+                                entity = quote.get('entities')
+                                for media in entity.get('media'):
+                                    if '/photo/' in media.get('expanded_url'):
+                                        text = text.replace(media.get('url'), '')
+                                    else:
+                                        text = text.replace(media.get('url'), media.get('expanded_url'))
+                                description_text = text
+                                target_url = f'''{self.TWITTER_URL}{screen_name}/status/{quote.get('id_str')}'''
+                                twitter_profile_url = self.TWITTER_URL + screen_name
+                                embed = discord.Embed(
+                                    title=title_text
+                                    , color=0x1da1f2
+                                    , description=description_text
+                                    , url=target_url
+                                    )
+                                embed.set_author(
+                                    name=screen_name
+                                    , url=twitter_profile_url
+                                    , icon_url=quote.get('user').get('profile_image_url_https')
+                                    )
+                                if thumbnail_url is not None:
+                                    embed.set_thumbnail(url=thumbnail_url)
+                                    embed.set_image(url=f'''attachment://{image_paths[0]}''')
+                                embed.add_field(name='投稿日付',value=self.iso8601_to_jst_text(quote.get('created_at')))
+                                embed.add_field(name='お気に入り数',value=quote.get('favorite_count'))
+                                embed.add_field(name='リツイート数',value=quote.get('retweet_count'))
+                                embed.set_footer(
+                                    text='From Twitter'
+                                    , icon_url='https://i.imgur.com/NRad4mF.png')
+
+                                for image_path in image_paths:
+                                    embed_data = discord.Embed(url=target_url)
+                                    embed_data.set_image(url=f'''attachment://{image_path}''')
+                                    embeds.append(embed_data)
+                                else:
+                                    if len(embeds) > 0:
+                                        embeds[0] = embed
+                                    else:
+                                        embeds.append(embed)
+                                if len(files) > 0:
+                                    await twi.reply(
+                                        'Twitter Expanded2',
+                                        files=files,
+                                        embeds=embeds,
+                                        mention_author=False,
+                                        silent=True)
+                                else:
+                                    await twi.reply(
+                                        'Twitter Expanded2',
+                                        embeds=embeds,
+                                        mention_author=False,
+                                        silent=True)
                     # 墓場行きは画像だけ助ける
                     else:
                         LOG.info('This URL is TweetTombstone.')
