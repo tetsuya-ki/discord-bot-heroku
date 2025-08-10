@@ -167,9 +167,9 @@ class OnMessageCog(commands.Cog, name="メッセージイベント用"):
                                         full_path = saved_path + os.sep + path
                                         files.append(discord.File(full_path, filename=path))
                                         image_paths.append(path)
-                                    # 動画処理
+                                        # 動画処理(expanded_urlに/video/があるか、typeがgifの場合)
                                         text = text.replace(media.get('url'), '')
-                                        if '/video/' in media.get('expanded_url') and media.get('video_info'):
+                                        if ('/video/' in media.get('expanded_url') or 'gif' in media.get('type')) and media.get('video_info'):
                                             if len(media.get('video_info').get('variants')) > 1:
                                                 LOG.debug(media.get('video_info').get('variants')[1])
                                                 video_url = media.get('video_info').get('variants')[1].get('url')
