@@ -181,13 +181,14 @@ class OnMessageCog(commands.Cog, name="メッセージイベント用"):
                         screen_name = data.get('user').get('screen_name')
                         title_text = f'''{data.get('user').get('name')}(id:{data.get('user').get('id_str')}) by Twitter'''
                         entity = data.get('entities')
+                        medias = entity.get('media')
                         # URL書き換え2
-                        for url in entity.get('urls'):
-                            if '/photo/' in url.get('expanded_url') \
-                                or '/status/' in url.get('expanded_url'):
-                                text = text.replace(url.get('url'), '')
+                        for media in medias:
+                            if '/photo/' in media.get('expanded_url') \
+                                or '/status/' in media.get('expanded_url'):
+                                text = text.replace(media.get('url'), '')
                             else:
-                                text = text.replace(url.get('url'), url.get('expanded_url'))
+                                text = text.replace(media.get('url'), media.get('expanded_url'))
                         if data.get('quoted_tweet'):
                             text += '(引用リツイートあり)'
                         description_text = text
